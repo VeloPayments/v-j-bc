@@ -12,6 +12,7 @@
 
     <modules>
         <module>vjblockchain-java</module>
+        <module>vjblockchain-native</module>
     </modules>
 
 </project>

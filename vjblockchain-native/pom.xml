@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>vjblockchain-native</artifactId>
+    <packaging>so</packaging>
+
+    <parent>
+        <groupId>com.velopayments.blockchain</groupId>
+        <artifactId>vjblockchain-parent</artifactId>
+        <version>0.1.0</version>
+    </parent>
+
+    <properties>
+        <!-- vpr options -->
+        <VPR_DIR>${project.basedir}/../lib/vcblockchain/lib/vpr</VPR_DIR>
+        <VPR_INCLUDE_PATH>${VPR_DIR}/include</VPR_INCLUDE_PATH>
+        <VPR_CFLAGS>-I ${VPR_INCLUDE_PATH}</VPR_CFLAGS>
+
+        <!-- vccrypt options -->
+        <VCCRYPT_DIR>${project.basedir}/../lib/vcblockchain/lib/vccrypt</VCCRYPT_DIR>
+        <VCCRYPT_INCLUDE_PATH>${VCCRYPT_DIR}/include</VCCRYPT_INCLUDE_PATH>
+        <VCCRYPT_CFLAGS>-I ${VCCRYPT_INCLUDE_PATH}</VCCRYPT_CFLAGS>
+
+        <!-- vccert options -->
+        <VCCERT_DIR>${project.basedir}/../lib/vcblockchain/lib/vccert</VCCERT_DIR>
+        <VCCERT_INCLUDE_PATH>${VCCERT_DIR}/include</VCCERT_INCLUDE_PATH>
+        <VCCERT_CFLAGS>-I ${VCCERT_INCLUDE_PATH}</VCCERT_CFLAGS>
+
+        <!-- vcmodel options -->
+        <VCMODEL_DIR>${project.basedir}/../lib/vcblockchain/lib/vcmodel</VCMODEL_DIR>
+        <VCMODEL_INCLUDE_PATH>${VCMODEL_DIR}/include</VCMODEL_INCLUDE_PATH>
+        <VCMODEL_CFLAGS>-I ${VCMODEL_INCLUDE_PATH}</VCMODEL_CFLAGS>
+
+        <!-- vcdb options -->
+        <VCDB_DIR>${project.basedir}/../lib/vcblockchain/lib/vcdb</VCDB_DIR>
+        <VCDB_INCLUDE_PATH>${VCDB_DIR}/include</VCDB_INCLUDE_PATH>
+        <VCDB_CFLAGS>-I ${VCDB_INCLUDE_PATH}</VCDB_CFLAGS>
+
+        <VCBLOCKCHAIN_DIR>${project.basedir}/../lib/vcblockchain</VCBLOCKCHAIN_DIR>
+        <VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR>${VCBLOCKCHAIN_DIR}/build/host/checked</VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR>
+        <VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR>${VCBLOCKCHAIN_DIR}/build/host/release</VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR>
+        <VCBLOCKCHAIN_HOST_CHECKED_LINK>-L ${VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR} -lvcblockchain</VCBLOCKCHAIN_HOST_CHECKED_LINK>
+        <VCBLOCKCHAIN_HOST_RELEASE_LINK>-L ${VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR} -lvcblockchain</VCBLOCKCHAIN_HOST_RELEASE_LINK>
+
+        <VJBLOCKCHAIN_CFLAGS>-I ${project.build.directory}/vjblockchain-javah</VJBLOCKCHAIN_CFLAGS>
+
+        <TOOLCHAIN_DIR>/opt/vctoolchain</TOOLCHAIN_DIR>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>toolchain-override</id>
+            <activation>
+                <property>
+                    <name>env.TOOLCHAIN_DIR</name>
+                </property>
+            </activation>
+            <properties>
+                <TOOLCHAIN_DIR>${env.TOOLCHAIN_DIR}</TOOLCHAIN_DIR>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.velopayments.blockchain</groupId>
+            <artifactId>vjblockchain-java</artifactId>
+            <version>0.1.0</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>1.0-alpha-8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <javahOS>linux</javahOS>
+
+                    <compilerProvider>generic-classic</compilerProvider>
+		    <compilerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</compilerExecutable>
+                    <compilerStartOptions>
+                        <compilerStartOption>
+                            ${VPR_CFLAGS} ${VCCRYPT_CFLAGS} ${VCCERT_CFLAGS}
+                            ${VCMODEL_CFLAGS} ${VCDB_CFLAGS} ${VJBLOCKCHAIN_CFLAGS}
+                            -fPIC -Wall -Werror -Wextra -O2
+                        </compilerStartOption>
+                    </compilerStartOptions>
+		    <linkerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</linkerExecutable>
+                    <linkerStartOptions>
+                        <linkerStartOption>
+                            -shared
+                        </linkerStartOption>
+                    </linkerStartOptions>
+                    <linkerEndOptions>
+                        <linkerEndOption>
+                            ${VCBLOCKCHAIN_HOST_RELEASE_LINK}
+                        </linkerEndOption>
+                    </linkerEndOptions>
+                    <linkerFinalName>libvjblockchain-native</linkerFinalName>
+                    <sources>
+                        <source>
+                            <directory>src/main/native</directory>
+                            <includes>**/*.c</includes>
+                        </source>
+                    </sources>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>javah</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <javahOS>linux</javahOS>
+                            <javahProvider>default</javahProvider>
+                            <javahOutputDirectory>${project.build.directory}/vjblockchain-javah</javahOutputDirectory>
+                            <javahOutputFileName>vjblockchain.h</javahOutputFileName>
+                            <javahClassNames>
+                                <javahClassName>com.velopayments.blockchain.cert.CertificateBuilder</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.cert.CertificateParser</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateBuilder</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateReader</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.crypt.EncryptionKeyPair</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.crypt.SigningKeyPair</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.init.Initializer</javahClassName>
+                            </javahClassNames>
+                        </configuration>
+                        <goals>
+                            <goal>javah</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
