@@ -49,8 +49,23 @@
                 <configuration>
                     <forkMode>once</forkMode>
                     <argLine>-Djava.library.path=${project.basedir}/../vjblockchain-native/target</argLine>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${project.basedir}/target/vjblockchain-java-0.1.0.jar</additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
             </plugin>
         </plugins>
+
+        <resources>
+            <resource>
+                <directory>${project.basedir}/../vjblockchain-native/target</directory>
+                <includes>
+                    <include>*.so</include>
+                    <include>*.jnilib</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
 </project>
