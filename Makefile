@@ -1,11 +1,14 @@
 .PHONY: ALL vcblockchain-build vcblockchain-test vcblockchain-clean
-.PHONY: mvn-compile mvn-package mvn-clean model-check clean
+.PHONY: mvn-compile mvn-install mvn-package mvn-clean model-check clean
 
 MODEL_MAKEFILES?= \
 	$(foreach file,\
 	    $(wildcard vjblockchain-native/models/*.mk),$(notdir $(file)))
 
-ALL: mvn-package model-check
+ALL: mvn-install model-check
+
+mvn-install: mvn-package
+	(cd vjblockchain-java && mvn install)
 
 mvn-package: mvn-compile
 	mvn package
