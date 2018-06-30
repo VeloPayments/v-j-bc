@@ -54,6 +54,7 @@
                     <additionalClasspathElements>
                         <additionalClasspathElement>${project.basedir}/target/vjblockchain-java-0.1.0.jar</additionalClasspathElement>
                     </additionalClasspathElements>
+                    <workingDirectory>${java.io.tmpdir}</workingDirectory>
                 </configuration>
             </plugin>
         </plugins>

@@ -24,6 +24,7 @@
 #include "../../../../com/velopayments/blockchain/cert/UnknownArtifactException.h"
 #include "../../../../com/velopayments/blockchain/cert/UnknownArtifactTypeException.h"
 #include "../../../../com/velopayments/blockchain/cert/UnknownEntityException.h"
+#include "../../../../com/velopayments/blockchain/client/AgentConnection.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
@@ -34,6 +35,7 @@
 #include "../../../../java/util/AbstractMap_SimpleEntry.h"
 #include "../../../../java/util/HashMap.h"
 #include "../../../../java/util/LinkedList.h"
+#include "../../../../java/util/Optional.h"
 #include "../../../../java/util/UUID.h"
 
 volatile bool vjblockchain_initialized = false;
@@ -94,6 +96,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     MODEL_ASSERT(MODEL_PROP_VALID_VCCERT_BUILDER_OPTIONS(&builder_opts));
 
     /* register Java classes used by vjblockchain. */
+    INIT_OR_FAIL("AgentConnection",
+                 AgentConnection_register(env));
     INIT_OR_FAIL("AttestationException",
                  AttestationException_register(env));
     INIT_OR_FAIL("CertificateBuilder",
@@ -120,6 +124,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  Integer_register(env));
     INIT_OR_FAIL("LinkedList",
                  LinkedList_register(env));
+    INIT_OR_FAIL("Optional",
+                 Optional_register(env));
     INIT_OR_FAIL("SimpleEntry",
                  SimpleEntry_register(env));
     INIT_OR_FAIL("SigningKeyPair",
