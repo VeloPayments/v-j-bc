@@ -4,6 +4,7 @@ import com.velopayments.blockchain.cert.*;
 import com.velopayments.blockchain.crypt.*;
 import java.nio.ByteBuffer;
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.Optional;
 import java.util.UUID;
@@ -201,16 +202,50 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getTransactionById(dummyTxnId).isPresent(), is(true));
 
+            /* get the new block UUID. */
+            UUID newBlockId = conn.getLatestBlockId();
+
             /* the latest block in the blockchain should not be the root block.
              */
             assertThat(
-                conn.getLatestBlockId(), not(zeroUUID));
+                newBlockId, not(zeroUUID));
 
             /* we should be able to get the latest block from the agent
              * connection. */
             assertThat(
-                conn.getBlockById(conn.getLatestBlockId()).isPresent(),
+                conn.getBlockById(newBlockId).isPresent(),
                 is(true));
+
+            /* given the zero UUID, the next UUID should be the newBlockId. */
+            assertThat(
+                conn.getNextBlockId(zeroUUID).orElseThrow(
+                    () -> new IOException()),
+                is(newBlockId));
+
+            /* given the zero UUID, the previous UUID should be empty. */
+            assertThat(
+                conn.getPrevBlockId(zeroUUID).isPresent(),
+                is(false));
+
+            /* given the new block UUID, the previous UUID should be the zero
+             * UUID. */
+            assertThat(
+                conn.getPrevBlockId(newBlockId).orElseThrow(
+                    () -> new IOException()),
+                is(zeroUUID));
+
+            /* given the new block UUID, the next UUID should be empty. */
+            assertThat(
+                conn.getNextBlockId(newBlockId).isPresent(),
+                is(false));
+
+            /* given the transaction id, the block id should be the new block
+             * id.
+             */
+            assertThat(
+                conn.getTransactionBlockId(dummyTxnId).orElseThrow(
+                    () -> new IOException()),
+                is(newBlockId));
 
         } finally {
             conn.close();

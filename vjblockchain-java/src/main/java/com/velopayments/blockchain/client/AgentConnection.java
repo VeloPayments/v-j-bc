@@ -119,6 +119,49 @@ public class AgentConnection {
     }
 
     /**
+     * Given a block UUID, return the next block UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param blockId       The block UUID.
+     *
+     * @return the next block UUID.
+     */
+    public Optional<UUID> getNextBlockId(UUID blockId) throws IOException {
+
+        return getNextBlockIdNative(blockId);
+    }
+
+    /**
+     * Given a block UUID, return the previous block UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param blockId       The block UUID.
+     *
+     * @return the previous block UUID.
+     */
+    public Optional<UUID> getPrevBlockId(UUID blockId) throws IOException {
+
+        return getPrevBlockIdNative(blockId);
+    }
+
+    /**
+     * Given a transaction UUID, return the block UUID associated with this
+     * transaction UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param txnId         The transaction UUID.
+     *
+     * @return the block UUID associated with the transaction UUID.
+     */
+    public Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException {
+
+        return getTransactionBlockIdNative(txnId);
+    }
+
+    /**
      * Get the block transaction for a given UUID.
      *
      * Note - this method blocks until the given block is available.
@@ -187,7 +230,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
-    public native Optional<byte[]>
+    private native Optional<byte[]>
     getBlockByIdNative(UUID blockId) throws IOException;
 
     /**
@@ -199,8 +242,45 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
-    public native Optional<byte[]>
+    private native Optional<byte[]>
     getTransactionByIdNative(UUID txnId) throws IOException;
+
+    /**
+     * Given a block UUID, return the next block UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param blockId       The block UUID.
+     *
+     * @return the next block UUID.
+     */
+    private native Optional<UUID>
+    getNextBlockIdNative(UUID blockId) throws IOException;
+
+    /**
+     * Given a block UUID, return the previous block UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param blockId       The block UUID.
+     *
+     * @return the previous block UUID.
+     */
+    private native Optional<UUID>
+    getPrevBlockIdNative(UUID blockId) throws IOException;
+
+    /**
+     * Given a transaction UUID, return the block UUID associated with this
+     * transaction UUID if available.
+     *
+     * Note - this method blocks until the block id is retrieved.
+     *
+     * @param txnId         The transaction UUID.
+     *
+     * @return the block UUID associated with the transaction UUID.
+     */
+    private native Optional<UUID>
+    getTransactionBlockIdNative(UUID txnId) throws IOException;
 
     static {
         Initializer.init();
