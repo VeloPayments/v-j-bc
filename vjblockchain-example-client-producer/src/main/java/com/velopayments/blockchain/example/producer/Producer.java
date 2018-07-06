@@ -64,9 +64,10 @@ public class Producer implements Runnable {
             builder.addUUID(
                 Field.CERTIFICATE_ID, UUID.randomUUID());
             builder.addString(
-                0x0401, "Example transaction " + Integer.valueOf(i));
+                0x0401, "Example transaction " + Integer.valueOf(i + 1));
 
-            System.out.println("Submitting transaction " + Integer.valueOf(i));
+            System.out.println(
+                "Submitting transaction " + Integer.valueOf(i + 1));
 
             conn.submit(builder.emit());
 
