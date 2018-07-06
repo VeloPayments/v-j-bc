@@ -13,6 +13,8 @@
     <modules>
         <module>vjblockchain-java</module>
         <module>vjblockchain-native</module>
+        <module>vjblockchain-example-client-producer</module>
+        <module>vjblockchain-example-client-consumer</module>
     </modules>
 
 </project>
