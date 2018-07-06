@@ -39,6 +39,11 @@
         <VCDB_INCLUDE_PATH>${VCDB_DIR}/include</VCDB_INCLUDE_PATH>
         <VCDB_CFLAGS>-I ${VCDB_INCLUDE_PATH}</VCDB_CFLAGS>
 
+        <!-- lmdb options -->
+        <LMDB_DIR>${project.basedir}/../lib/vcblockchain/lib/lmdb</LMDB_DIR>
+        <LMDB_INCLUDE_PATH>${LMDB_DIR}</LMDB_INCLUDE_PATH>
+        <LMDB_CFLAGS>-I ${LMDB_INCLUDE_PATH}</LMDB_CFLAGS>
+
         <VCBLOCKCHAIN_DIR>${project.basedir}/../lib/vcblockchain</VCBLOCKCHAIN_DIR>
         <VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR>${VCBLOCKCHAIN_DIR}/build/host/checked</VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR>
         <VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR>${VCBLOCKCHAIN_DIR}/build/host/release</VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR>
@@ -97,7 +102,8 @@
                     <compilerStartOptions>
                         <compilerStartOption>
                             ${VPR_CFLAGS} ${VCCRYPT_CFLAGS} ${VCCERT_CFLAGS}
-                            ${VCMODEL_CFLAGS} ${VCDB_CFLAGS} ${VJBLOCKCHAIN_CFLAGS}
+                            ${VCMODEL_CFLAGS} ${VCDB_CFLAGS} ${LMDB_CFLAGS}
+                            ${VJBLOCKCHAIN_CFLAGS}
                             -fPIC -Wall -Werror -Wextra -O2
                         </compilerStartOption>
                     </compilerStartOptions>

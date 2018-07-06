@@ -25,6 +25,8 @@
 #include "../../../../com/velopayments/blockchain/cert/UnknownArtifactTypeException.h"
 #include "../../../../com/velopayments/blockchain/cert/UnknownEntityException.h"
 #include "../../../../com/velopayments/blockchain/client/AgentConnection.h"
+#include "../../../../com/velopayments/blockchain/client/TransactionStatus.h"
+#include "../../../../com/velopayments/blockchain/client/TransactionSubmissionRequest.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
@@ -130,6 +132,10 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  SimpleEntry_register(env));
     INIT_OR_FAIL("SigningKeyPair",
                  SigningKeyPair_register(env));
+    INIT_OR_FAIL("TransactionStatus",
+                 TransactionStatus_register(env));
+    INIT_OR_FAIL("TransactionSubmissionRequest",
+                 TransactionSubmissionRequest_register(env));
     INIT_OR_FAIL("UnknownArtifactException",
                  UnknownArtifactException_register(env));
     INIT_OR_FAIL("UnknownArtifactTypeException",

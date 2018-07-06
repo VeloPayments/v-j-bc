@@ -15,6 +15,11 @@ public enum TransactionStatus {
     FAILED,
 
     /**
+     * The transaction was canceled at user request.
+     */
+    CANCELED,
+
+    /**
      * The transaction succeeded.
      */
     SUCCEEDED,

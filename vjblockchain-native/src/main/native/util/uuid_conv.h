@@ -20,4 +20,13 @@
  */
 jobject uuidFromBytes(JNIEnv* env, const uint8_t* uuid_bytes);
 
+/**
+ * Convert a Java UUID to a C byte array.
+ *
+ * \param env               Java environment.
+ * \param uuid              The Java UUID object.
+ * \param uuid_bytes        The buffer to receive the UUID.
+ */
+void uuidToBytes(JNIEnv* env, jobject uuid, uint8_t* uuid_bytes);
+
 #endif //PRIVATE_UUID_CONV_HEADER_GUARD

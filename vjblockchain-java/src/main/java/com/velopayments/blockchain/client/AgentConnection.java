@@ -1,6 +1,7 @@
 package com.velopayments.blockchain.client;
 
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
+import com.velopayments.blockchain.init.Initializer;
 import java.io.IOException;
 import java.util.concurrent.*;
 import java.util.*;
@@ -35,17 +36,40 @@ public class AgentConnection {
     }
 
     /**
-     * Close the client connection.
+     * Commit the current transactions to the blockchain, creating a new block
+     * if necessary.
      */
-    public void close() throws IOException {
+    public void commitTransactions() throws IOException {
 
         /* make a block with any remaining transactions. */
         if (submissionList.size() > 0) {
             makeBlockNative();
         }
+    }
+
+    /**
+     * Cancel the current transactions to the blockchain.
+     */
+    public void cancelTransactions() throws IOException {
+
+        for (TransactionSubmissionRequest req : submissionList) {
+            req.setStatus(TransactionStatus.CANCELED);
+        }
+
+        submissionList.clear();
+    }
+
+    /**
+     * Close the client connection.
+     */
+    public void close() throws IOException {
+
+        /* commit outstanding transactions. */
+        commitTransactions();
 
         /* clean up. */
         closeNative(handle);
+        handle = 0;
     }
 
     /**
@@ -177,6 +201,10 @@ public class AgentConnection {
      */
     public native Optional<byte[]>
     getTransactionByIdNative(UUID txnId) throws IOException;
+
+    static {
+        Initializer.init();
+    }
 
     /**
      * The connection string.

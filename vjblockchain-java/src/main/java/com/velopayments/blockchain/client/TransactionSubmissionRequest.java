@@ -12,7 +12,7 @@ public class TransactionSubmissionRequest {
         this.statusFuture = new FutureTask<TransactionStatus>(() -> {
                 return this.getStatus();
             });
-        setStatus(TransactionStatus.PENDING);
+        this.status = TransactionStatus.PENDING;
     }
 
     public TransactionStatus getStatus() {
@@ -21,13 +21,18 @@ public class TransactionSubmissionRequest {
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
+        this.statusFuture.run();
     }
 
     public Future<TransactionStatus> getStatusFuture() {
         return statusFuture;
     }
 
+    public byte[] getTxnData() {
+        return txnData;
+    }
+
     private byte[] txnData;
-    private Future<TransactionStatus> statusFuture;
+    private FutureTask<TransactionStatus> statusFuture;
     private TransactionStatus status;
 }

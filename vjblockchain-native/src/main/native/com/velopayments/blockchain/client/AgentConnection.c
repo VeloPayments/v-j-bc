@@ -17,6 +17,8 @@ jmethodID AgentConnection_submit = NULL;
 jmethodID AgentConnection_getLatestBlockId = NULL;
 jmethodID AgentConnection_getBlockById = NULL;
 jmethodID AgentConnection_getTransactionById = NULL;
+jfieldID AgentConnection_field_submissionList = NULL;
+jfieldID AgentConnection_field_handle = NULL;
 
 static volatile bool AgentConnection_registered = false;
 
@@ -30,7 +32,9 @@ static volatile bool AgentConnection_registered = false;
         NULL != AgentConnection_submit \
         NULL != AgentConnection_getLatestBlockId \
         NULL != AgentConnection_getBlockById \
-        NULL != AgentConnection_getTransactionById)
+        NULL != AgentConnection_getTransactionById \
+        NULL != AgentConnection_field_submissionList \
+        NULL != AgentConnection_field_handle)
 
 /**
  * Register the following AgentConnection references and make them global.
@@ -119,6 +123,20 @@ int AgentConnection_register(JNIEnv* env)
             env, AgentConnection, "getTransactionById",
             "(Ljava/util/UUID;)Ljava/util/Optional;");
     if (NULL == AgentConnection_getTransactionById)
+        return 1;
+
+    /* register submissionList field. */
+    AgentConnection_field_submissionList =
+        (*env)->GetFieldID(
+            env, AgentConnection, "submissionList", "Ljava/util/List;");
+    if (NULL == AgentConnection_field_submissionList)
+        return 1;
+
+    /* register handle field. */
+    AgentConnection_field_handle =
+        (*env)->GetFieldID(
+            env, AgentConnection, "handle", "J");
+    if (NULL == AgentConnection_field_handle)
         return 1;
 
     /* globals invariant in place. */

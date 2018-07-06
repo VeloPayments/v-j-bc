@@ -73,6 +73,18 @@ extern jmethodID AgentConnection_getBlockById;
  */
 extern jmethodID AgentConnection_getTransactionById;
 
+/* privatejava.util.List<
+ *      com.velopayments.blockchain.client.TransactionSubmissionRequest>
+ * submissionList;
+ * descriptor: Ljava/util/List;
+ */
+extern jfieldID AgentConnection_field_submissionList;
+
+/* private long handle;
+ * descriptor: J
+ */
+extern jfieldID AgentConnection_field_handle;
+
 #ifdef __cplusplus
 }
 #endif /*__cplusplus*/
