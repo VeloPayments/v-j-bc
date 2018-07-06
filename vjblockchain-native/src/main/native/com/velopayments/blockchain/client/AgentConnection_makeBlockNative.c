@@ -481,7 +481,8 @@ static int write_transaction_to_block(
         (*env)->GetArrayLength(env, array);
 
     /* get the bytes for this array. */
-    jbyte* array_bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    uint8_t* array_bytes =
+        (uint8_t*)(*env)->GetByteArrayElements(env, array, NULL);
 
     /* add the transaction to the block. */
     if (VCCERT_STATUS_SUCCESS !=
@@ -565,7 +566,7 @@ cleanup_txnrec:
         release(&alloc_opts, txnrec);
 
 cleanup_array_bytes:
-        (*env)->ReleaseByteArrayElements(env, array, array_bytes, 0);
+        (*env)->ReleaseByteArrayElements(env, array, (jbyte*)array_bytes, 0);
 
         /* clean up array. */
         (*env)->DeleteLocalRef(env, array);

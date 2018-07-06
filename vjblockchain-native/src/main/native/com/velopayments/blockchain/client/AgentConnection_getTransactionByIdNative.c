@@ -93,14 +93,14 @@ Java_com_velopayments_blockchain_client_AgentConnection_getTransactionByIdNative
     }
 
     /* get the raw bytes of this array. */
-    uint8_t* arr_bytes = (*env)->GetByteArrayElements(env, arr, NULL);
+    uint8_t* arr_bytes = (uint8_t*)(*env)->GetByteArrayElements(env, arr, NULL);
 
     /* copy the value from the database to the Java raw array. */
     memcpy(arr_bytes, ((uint8_t*)rec) + sizeof(transaction_record_t),
            rec->transaction_size);
 
     /* Release the array. */
-    (*env)->ReleaseByteArrayElements(env, arr, arr_bytes, 0);
+    (*env)->ReleaseByteArrayElements(env, arr, (jbyte*)arr_bytes, 0);
 
     /* success. */
     retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, arr);
