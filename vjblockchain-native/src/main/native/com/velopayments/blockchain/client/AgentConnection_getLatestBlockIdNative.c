@@ -55,7 +55,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_getLatestBlockIdNative(
 
     /* create a transaction for querying the database. */
     MDB_txn* txn;
-    if (0 != mdb_txn_begin(details->env, NULL, 0, &txn))
+    if (0 != mdb_txn_begin(details->env, NULL, MDB_RDONLY, &txn))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not create transaction "
