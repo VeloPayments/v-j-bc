@@ -191,7 +191,7 @@ public class CertificateBuilder {
      * @param value   The byte value to serialize.
      * @return a byte array representation of this value.
      */
-    public byte[] serializeByte(byte value) {
+    protected byte[] serializeByte(byte value) {
         ByteBuffer buf = ByteBuffer.allocate(1);
         buf.put(value);
         return buf.array();
@@ -203,7 +203,7 @@ public class CertificateBuilder {
      * @param value   The short value to serialize.
      * @return a byte array representation of this short.
      */
-    public byte[] serializeShort(int value) {
+    protected byte[] serializeShort(int value) {
         ByteBuffer buf = ByteBuffer.allocate(2);
         buf.putShort((short) value);
         return buf.array();
@@ -215,7 +215,7 @@ public class CertificateBuilder {
      * @param value   The int value to serialize.
      * @return a byte array representation of this int value.
      */
-    public byte[] serializeInt(int value) {
+    protected byte[] serializeInt(int value) {
         ByteBuffer buf = ByteBuffer.allocate(4);
         buf.putInt(value);
         return buf.array();
