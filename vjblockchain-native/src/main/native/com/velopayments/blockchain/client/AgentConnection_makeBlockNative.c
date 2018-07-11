@@ -6,6 +6,7 @@
  * \copyright 2018 Velo Payments, Inc.  All rights reserved.
  */
 
+#include <com/velopayments/blockchain/cert/Certificate.h>
 #include <com/velopayments/blockchain/client/AgentConnection.h>
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/client/TransactionStatus.h>
@@ -138,9 +139,12 @@ Java_com_velopayments_blockchain_client_AgentConnection_makeBlockNative(
     for (jint i = 0; i < sl_size; ++i)
     {
         jobject entry = (*env)->CallObjectMethod(env, sl, LinkedList_get, i);
-        jbyteArray array = (jbyteArray)
+        jobject cert = 
             (*env)->CallObjectMethod(
                 env, entry, TransactionSubmissionRequest_getTxnData);
+        jbyteArray array = (jbyteArray)
+            (*env)->CallObjectMethod(
+                env, cert, Certificate_toByteArray);
         jsize array_len =
             (*env)->GetArrayLength(env, array);
 
@@ -474,9 +478,12 @@ static int write_transaction_to_block(
     const uint8_t* block_id, jobject entry)
 {
     int retval = 0;
-    jbyteArray array = (jbyteArray)
+    jobject cert = 
         (*env)->CallObjectMethod(
             env, entry, TransactionSubmissionRequest_getTxnData);
+    jbyteArray array = (jbyteArray)
+        (*env)->CallObjectMethod(
+            env, cert, Certificate_toByteArray);
     jsize array_len =
         (*env)->GetArrayLength(env, array);
 

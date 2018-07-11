@@ -37,8 +37,8 @@ int TransactionSubmissionRequest_register(JNIEnv* env);
 extern jclass TransactionSubmissionRequest;
 
 /* public com.velopayments.blockchain.client.TransactionSubmissionRequest(
- *      byte[]);
- * descriptor: ([B)V
+ *      com.velopayments.blockchain.cert.Certificate);
+ * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)V
  */
 extern jmethodID TransactionSubmissionRequest_init;
 
@@ -59,8 +59,8 @@ extern jmethodID TransactionSubmissionRequest_setStatus;
  */
 extern jmethodID TransactionSubmissionRequest_getStatusFuture;
 
-/* public byte[] getTxnData();
- * descriptor: ()[B
+/* public com.velopayments.blockchain.cert.Certificate getTxnData();
+ * descriptor: ()Lcom/velopayments/blockchain/cert/Certificate;
  */
 extern jmethodID TransactionSubmissionRequest_getTxnData;
 

@@ -76,7 +76,8 @@ int TransactionSubmissionRequest_register(JNIEnv* env)
     /* register init method. */
     TransactionSubmissionRequest_init =
         (*env)->GetMethodID(
-            env, TransactionSubmissionRequest, "<init>", "([B)V");
+            env, TransactionSubmissionRequest, "<init>",
+            "(Lcom/velopayments/blockchain/cert/Certificate;)V");
     if (NULL == TransactionSubmissionRequest_init)
         return 1;
 
@@ -108,7 +109,7 @@ int TransactionSubmissionRequest_register(JNIEnv* env)
     TransactionSubmissionRequest_getTxnData =
         (*env)->GetMethodID(
             env, TransactionSubmissionRequest, "getTxnData",
-            "()[B");
+            "()Lcom/velopayments/blockchain/cert/Certificate;");
     if (NULL == TransactionSubmissionRequest_getTxnData)
         return 1;
 

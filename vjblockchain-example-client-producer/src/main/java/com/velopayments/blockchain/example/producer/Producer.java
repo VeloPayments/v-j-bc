@@ -1,7 +1,6 @@
 package com.velopayments.blockchain.example.producer;
 
-import com.velopayments.blockchain.cert.CertificateBuilder;
-import com.velopayments.blockchain.cert.Field;
+import com.velopayments.blockchain.cert.*;
 import com.velopayments.blockchain.client.AgentConnection;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import java.io.*;
@@ -69,7 +68,7 @@ public class Producer implements Runnable {
             System.out.println(
                 "Submitting transaction " + Integer.valueOf(i + 1));
 
-            conn.submit(builder.emit());
+            conn.submit(Certificate.fromByteArray(builder.emit()));
 
             try {
                 Thread.sleep(100);

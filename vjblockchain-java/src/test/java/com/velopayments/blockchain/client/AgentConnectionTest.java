@@ -62,7 +62,7 @@ public class AgentConnectionTest {
 
             assertThat(conn.getLatestBlockId(), is(zeroUUID));
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 
@@ -84,7 +84,7 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getBlockById(missingBlockId).isPresent(), is(false));
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 
@@ -106,7 +106,7 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getTransactionById(missingBlockId).isPresent(), is(false));
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 
@@ -125,10 +125,11 @@ public class AgentConnectionTest {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
             byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat = conn.submit(dummyTxn);
+            Future<TransactionStatus> stat =
+                conn.submit(Certificate.fromByteArray(dummyTxn));
             assertThat(stat, is(notNullValue()));
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 
@@ -148,7 +149,8 @@ public class AgentConnectionTest {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
             byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat = conn.submit(dummyTxn);
+            Future<TransactionStatus> stat =
+                conn.submit(Certificate.fromByteArray(dummyTxn));
             assertThat(stat, is(notNullValue()));
 
             /* cancel transactions. */
@@ -160,7 +162,7 @@ public class AgentConnectionTest {
             assertThat(stat.get(), is(TransactionStatus.CANCELED));
 
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 
@@ -186,7 +188,8 @@ public class AgentConnectionTest {
                 conn.getTransactionById(dummyTxnId).isPresent(), is(false));
 
             byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat = conn.submit(dummyTxn);
+            Future<TransactionStatus> stat =
+                conn.submit(Certificate.fromByteArray(dummyTxn));
             assertThat(stat, is(notNullValue()));
 
             /* commit transactions. */
@@ -248,7 +251,7 @@ public class AgentConnectionTest {
                 is(newBlockId));
 
         } finally {
-            conn.close();
+            if (null != conn) conn.close();
         }
     }
 

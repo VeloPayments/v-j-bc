@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.client;
 
+import com.velopayments.blockchain.cert.Certificate;
 import java.util.concurrent.*;
 
 /**
@@ -7,7 +8,7 @@ import java.util.concurrent.*;
  */
 public class TransactionSubmissionRequest {
 
-    public TransactionSubmissionRequest(byte[] txnData) {
+    public TransactionSubmissionRequest(Certificate txnData) {
         this.txnData = txnData;
         this.statusFuture = new FutureTask<TransactionStatus>(() -> {
                 return this.getStatus();
@@ -28,11 +29,11 @@ public class TransactionSubmissionRequest {
         return statusFuture;
     }
 
-    public byte[] getTxnData() {
+    public Certificate getTxnData() {
         return txnData;
     }
 
-    private byte[] txnData;
+    private Certificate txnData;
     private FutureTask<TransactionStatus> statusFuture;
     private TransactionStatus status;
 }

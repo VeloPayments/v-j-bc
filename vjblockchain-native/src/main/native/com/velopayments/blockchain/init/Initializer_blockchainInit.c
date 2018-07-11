@@ -16,6 +16,7 @@
 
 #include "init.h"
 #include "../../../../com/velopayments/blockchain/cert/AttestationException.h"
+#include "../../../../com/velopayments/blockchain/cert/Certificate.h"
 #include "../../../../com/velopayments/blockchain/cert/CertificateBuilder.h"
 #include "../../../../com/velopayments/blockchain/cert/CertificateContract.h"
 #include "../../../../com/velopayments/blockchain/cert/EntityReference.h"
@@ -102,6 +103,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  AgentConnection_register(env));
     INIT_OR_FAIL("AttestationException",
                  AttestationException_register(env));
+    INIT_OR_FAIL("Certificate",
+                 Certificate_register(env));
     INIT_OR_FAIL("CertificateBuilder",
                  CertificateBuilder_register(env));
     INIT_OR_FAIL("CertificateContract",

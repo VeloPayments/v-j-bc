@@ -7,6 +7,7 @@
  */
 
 #include <cbmc/model_assert.h>
+#include <com/velopayments/blockchain/cert/Certificate.h>
 #include <com/velopayments/blockchain/client/AgentConnection.h>
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
@@ -102,8 +103,13 @@ Java_com_velopayments_blockchain_client_AgentConnection_getTransactionByIdNative
     /* Release the array. */
     (*env)->ReleaseByteArrayElements(env, arr, (jbyte*)arr_bytes, 0);
 
+    /* wrap the array in a Certificate. */
+    jobject cert =
+        (*env)->CallStaticObjectMethod(
+            env, Certificate, Certificate_fromByteArray, arr);
+
     /* success. */
-    retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, arr);
+    retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, cert);
 
 cleanup_txn:
     mdb_txn_abort(txn);

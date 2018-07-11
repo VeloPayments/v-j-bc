@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.client;
 
+import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.init.Initializer;
 import java.io.IOException;
@@ -89,7 +90,7 @@ public class AgentConnection {
      *
      * @return a Future which evaluates into the status of the transaction.
      */
-    public Future<TransactionStatus> submit(byte[] transaction)
+    public Future<TransactionStatus> submit(Certificate transaction)
             throws IOException {
 
         /* drain the list by creating a block if it has 100 requests. */
@@ -170,7 +171,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
-    public Optional<byte[]> getBlockById(UUID blockId) throws IOException {
+    public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
 
         return getBlockByIdNative(blockId);
     }
@@ -184,7 +185,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
-    public Optional<byte[]> getTransactionById(UUID txnId)
+    public Optional<Certificate> getTransactionById(UUID txnId)
             throws IOException {
 
         return getTransactionByIdNative(txnId);
@@ -230,7 +231,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
-    private native Optional<byte[]>
+    private native Optional<Certificate>
     getBlockByIdNative(UUID blockId) throws IOException;
 
     /**
@@ -242,7 +243,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
-    private native Optional<byte[]>
+    private native Optional<Certificate>
     getTransactionByIdNative(UUID txnId) throws IOException;
 
     /**

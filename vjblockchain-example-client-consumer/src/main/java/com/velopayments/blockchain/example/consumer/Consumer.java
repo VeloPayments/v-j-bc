@@ -75,9 +75,10 @@ public class Consumer implements Runnable {
      */
     private void
     readBlock(AgentConnection conn, UUID blockId) throws IOException {
-        byte[] block =
+        Certificate cert =
             conn.getBlockById(blockId).orElseThrow(
                 () -> new IOException("Could not read block " + blockId));
+        byte[] block = cert.toByteArray();
 
         CertificateReader reader =
             new CertificateReader(new CertificateParser(block));

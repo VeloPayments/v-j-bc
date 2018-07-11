@@ -51,8 +51,10 @@ extern jmethodID AgentConnection_close;
 
 /* public java.util.concurrent.Future<
  *      com.velopayments.blockchain.client.TransactionStatus>
- * submit(byte[]) throws java.io.IOException;
- * descriptor: ([B)Ljava/util/concurrent/Future;
+ * submit(com.velopayments.blockchain.cert.Certificate)
+ * throws java.io.IOException;
+ * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)
+ *             Ljava/util/concurrent/Future;
  */
 extern jmethodID AgentConnection_submit;
 
@@ -61,13 +63,13 @@ extern jmethodID AgentConnection_submit;
  */
 extern jmethodID AgentConnection_getLatestBlockId;
 
-/* public java.util.Optional<byte[]>
+/* public java.util.Optional<Certificate>
  * getBlockById(java.util.UUID) throws java.io.IOException;
  * descriptor: (Ljava/util/UUID;)Ljava/util/Optional;
  */
 extern jmethodID AgentConnection_getBlockById;
 
-/* public java.util.Optional<byte[]>
+/* public java.util.Optional<Certificate>
  * getTransactionById(java.util.UUID) throws java.io.IOException;
  * descriptor: (Ljava/util/UUID;)Ljava/util/Optional;
  */
