@@ -81,7 +81,9 @@ public class Consumer implements Runnable {
         byte[] block = cert.toByteArray();
 
         CertificateReader reader =
-            new CertificateReader(new CertificateParser(block));
+            new CertificateReader(
+                new CertificateParser(
+                    Certificate.fromByteArray(block)));
 
         for (int i = 0; i < reader.count(Field.WRAPPED_TRANSACTION_TUPLE);
              ++i) {
@@ -103,7 +105,9 @@ public class Consumer implements Runnable {
     readTransaction(byte[] transaction) {
         try {
             CertificateReader reader =
-                new CertificateReader(new CertificateParser(transaction));
+                new CertificateReader(
+                    new CertificateParser(
+                        Certificate.fromByteArray(transaction)));
 
             UUID transactionID = reader.getFirst(Field.CERTIFICATE_ID).asUUID();
             String message = reader.getFirst(0x0401).asString();

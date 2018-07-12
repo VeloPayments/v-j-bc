@@ -97,7 +97,8 @@ int CertificateParser_register(JNIEnv* env)
     /* register init method */
     CertificateParser_init =
         (*env)->GetMethodID(
-            env, CertificateParser, "<init>", "([B)V");
+            env, CertificateParser, "<init>",
+            "(Lcom/velopayments/blockchain/cert/Certificate;)V");
     if (NULL == CertificateParser_init)
         return 1;
 

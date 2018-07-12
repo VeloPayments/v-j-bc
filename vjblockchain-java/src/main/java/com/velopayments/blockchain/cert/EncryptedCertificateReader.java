@@ -91,7 +91,9 @@ public class EncryptedCertificateReader extends CertificateReader {
         } else {
             for (byte[] i : fields) {
                 CertificateReader r =
-                    new CertificateReader(new CertificateParser(i));
+                    new CertificateReader(
+                            new CertificateParser(
+                                Certificate.fromByteArray(i)));
                 UUID euuid =
                     r.getFirst(Field.VELO_ENCRYPTED_SHARED_SECRET_ENTITY_UUID)
                         .asUUID();

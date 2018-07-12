@@ -55,7 +55,9 @@ public class CertificateParserTest {
         ByteBuffer cert = convShorts(TEST_CERT);
 
         //create a parser for this cert
-        CertificateParser p = new CertificateParser(cert.array());
+        CertificateParser p =
+            new CertificateParser(
+                Certificate.fromByteArray(cert.array()));
 
         //parse the raw certificate
         Map<Integer, List<byte[]>> certMap = p.parse();
@@ -75,7 +77,9 @@ public class CertificateParserTest {
         ByteBuffer cert = convShorts(TEST_CERT);
 
         //create a parser for this cert
-        CertificateParser p = new CertificateParser(cert.array());
+        CertificateParser p =
+            new CertificateParser(
+                Certificate.fromByteArray(cert.array()));
 
         //parse the raw certificate
         Map<Integer, List<byte[]>> certMap = p.parse();
@@ -105,7 +109,9 @@ public class CertificateParserTest {
         ByteBuffer cert = convShorts(TEST_CERT);
 
         //create a parser for this cert
-        CertificateParser p = new CertificateParser(cert.array());
+        CertificateParser p =
+            new CertificateParser(
+                Certificate.fromByteArray(cert.array()));
 
         //read the raw certificate
         CertificateReader r = new CertificateReader(p);
@@ -192,7 +198,9 @@ public class CertificateParserTest {
         ByteBuffer parentSigningKey = convShorts(PARENT_SIGNING_KEY);
 
         //create a parser for this cert
-        CertificateParser p = new CertificateParser(cert.array());
+        CertificateParser p =
+            new CertificateParser(
+                Certificate.fromByteArray(cert.array()));
 
         //create a mock certificate contract
         CertificateContract mockContract = mock(CertificateContract.class);

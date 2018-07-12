@@ -17,11 +17,11 @@ public class CertificateParser {
     /**
      * Create a CertificateParser instance to parse the given certificate.
      *
-     * @param rawCertificate The certificate to parse.
+     * @param cert The certificate to parse.
      */
-    public CertificateParser(byte[] rawCertificate) {
-        certificate = rawCertificate;
-        rawSize = size = rawCertificate.length;
+    public CertificateParser(Certificate cert) {
+        certificate = cert.toByteArray();
+        rawSize = size = certificate.length;
     }
 
     /**

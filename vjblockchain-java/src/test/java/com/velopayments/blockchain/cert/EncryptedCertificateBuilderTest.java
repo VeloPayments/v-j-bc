@@ -31,14 +31,14 @@ public class EncryptedCertificateBuilderTest {
         builder.addEncryptedString(8, "Foo Bar");
         builder.addEncryptedInt(9, 22);
 
-        byte[] bytes = builder.emit().toByteArray();
+        Certificate cert = builder.emit();
 
         EncryptedCertificateReader reader =
             new EncryptedCertificateReader(
                     dummyUUID,
                     subscriberKey.getPrivateKey(),
                     creatorKey.getPublicKey(),
-                    new CertificateParser(bytes));
+                    new CertificateParser(cert));
 
         reader.loadSecretKey();
 

@@ -78,7 +78,7 @@ public class CertificateBuilderTest {
 
         CertificateBuilder builder =
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -118,7 +118,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateFragmentBuilder();
         builder.addByte(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -152,7 +152,7 @@ public class CertificateBuilderTest {
 
         CertificateBuilder builder =
             CertificateBuilder.createCertificateFragmentBuilder();
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
     }
 
     /**
@@ -169,7 +169,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addByte(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -193,7 +193,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addShort(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -218,7 +218,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addInt(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -243,7 +243,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addLong(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -268,7 +268,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addUUID(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -292,7 +292,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addString(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -319,7 +319,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addDate(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -344,7 +344,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addByteArray(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.emit().toByteArray();
+        Certificate outCert = builder.emit();
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -372,7 +372,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addByte(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.sign(PARENT_UUID, PRIVATE_KEY).toByteArray();
+        Certificate outCert = builder.sign(PARENT_UUID, PRIVATE_KEY);
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);
@@ -419,7 +419,7 @@ public class CertificateBuilderTest {
             CertificateBuilder.createCertificateBuilder(CERT_TYPE);
         builder.addDate(TEST_FIELD, TEST_VALUE);
 
-        byte[] outCert = builder.sign(PARENT_UUID, PRIVATE_KEY).toByteArray();
+        Certificate outCert = builder.sign(PARENT_UUID, PRIVATE_KEY);
         assertThat(outCert, is(notNullValue()));
 
         CertificateParser p = new CertificateParser(outCert);

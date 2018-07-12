@@ -50,7 +50,7 @@ extern jfieldID CertificateParser_field_rawSize;
 extern jfieldID CertificateParser_field_size;
 
 /* public com.velopayments.blockchain.cert.CertificateParser(byte[]);
- * descriptor: ([B)V
+ * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)V
  */
 extern jmethodID CertificateParser_init;
 
