@@ -84,10 +84,11 @@ extern jmethodID CertificateBuilder_addString;
  */
 extern jmethodID CertificateBuilder_addDate;
 
-/* public byte[]
+/* public com.velopayments.blockchain.cert.Certificate
  * sign(java.util.UUID, com.velopayments.blockchain.crypt.SigningPrivateKey);
  * descriptor:
- * (Ljava/util/UUID;Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)[B
+ * (Ljava/util/UUID;Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)
+ * Lcom/velopayments/blockchain/cert/Certificate;
  */
 extern jmethodID CertificateBuilder_sign;
 

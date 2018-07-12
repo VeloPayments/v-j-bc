@@ -7,29 +7,29 @@
  */
 
 #include <cbmc/model_assert.h>
+#include <com/velopayments/blockchain/cert/Certificate.h>
+#include <com/velopayments/blockchain/cert/CertificateBuilder.h>
+#include <com/velopayments/blockchain/init/init.h>
+#include <java/lang/IllegalStateException.h>
+#include <java/lang/IllegalArgumentException.h>
+#include <java/lang/Integer.h>
+#include <java/util/AbstractMap_SimpleEntry.h>
+#include <java/util/LinkedList.h>
 #include <string.h>
 #include <vccrypt/suite.h>
 #include <vjblockchain.h>
 #include <vpr/parameters.h>
 
-#include "CertificateBuilder.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/IllegalArgumentException.h"
-#include "../../../../java/lang/Integer.h"
-#include "../../../../java/util/AbstractMap_SimpleEntry.h"
-#include "../../../../java/util/LinkedList.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-
 /*
  * Class:     com_velopayments_blockchain_cert_CertificateBuilder
  * Method:    signNative
- * Signature: ([B[B)[B
+ * Signature: ([B[B)Lcom/velopayments/blockchain/cert/Certificate;
  */
-JNIEXPORT jbyteArray JNICALL
+JNIEXPORT jobject JNICALL
 Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     JNIEnv *env, jobject that, jbyteArray signer_id, jbyteArray private_key)
 {
-    jbyteArray retval = NULL;
+    jobject retval = NULL;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
@@ -183,7 +183,9 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     (*env)->ReleaseByteArrayElements(env, out, outData, JNI_COMMIT);
 
     /* set retval to the byte array */
-    retval = out;
+    retval = 
+        (*env)->CallStaticObjectMethod(
+            env, Certificate, Certificate_fromByteArray, out);
 
     /* clean up */
 release_signer_id:

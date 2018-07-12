@@ -68,7 +68,7 @@ public class Producer implements Runnable {
             System.out.println(
                 "Submitting transaction " + Integer.valueOf(i + 1));
 
-            conn.submit(Certificate.fromByteArray(builder.emit()));
+            conn.submit(builder.emit());
 
             try {
                 Thread.sleep(100);

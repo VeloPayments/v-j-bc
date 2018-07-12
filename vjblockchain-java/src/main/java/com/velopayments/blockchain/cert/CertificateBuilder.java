@@ -172,7 +172,7 @@ public class CertificateBuilder {
      *
      * @return a raw unsigned certificate.
      */
-    public native byte[] emit();
+    public native Certificate emit();
 
     /**
      * Sign and emit the completed certificate.
@@ -181,7 +181,7 @@ public class CertificateBuilder {
      * @param privateKey The private key of the signer.
      * @return the certificate as a byte array.
      */
-    public byte[] sign(UUID signerId, SigningPrivateKey privateKey) {
+    public Certificate sign(UUID signerId, SigningPrivateKey privateKey) {
         return signNative(serializeUUID(signerId), privateKey.getRawBytes());
     }
 
@@ -281,5 +281,5 @@ public class CertificateBuilder {
      * @param privateKey The private key of the signer.
      * @return the certificate as a byte array.
      */
-    private native byte[] signNative(byte[] signerId, byte[] privateKey);
+    private native Certificate signNative(byte[] signerId, byte[] privateKey);
 }

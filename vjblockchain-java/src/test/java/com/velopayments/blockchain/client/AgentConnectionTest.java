@@ -124,9 +124,8 @@ public class AgentConnectionTest {
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat =
-                conn.submit(Certificate.fromByteArray(dummyTxn));
+            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
         } finally {
             if (null != conn) conn.close();
@@ -148,9 +147,8 @@ public class AgentConnectionTest {
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat =
-                conn.submit(Certificate.fromByteArray(dummyTxn));
+            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
             /* cancel transactions. */
@@ -187,9 +185,8 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getTransactionById(dummyTxnId).isPresent(), is(false));
 
-            byte[] dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
-            Future<TransactionStatus> stat =
-                conn.submit(Certificate.fromByteArray(dummyTxn));
+            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
             /* commit transactions. */
@@ -266,7 +263,7 @@ public class AgentConnectionTest {
     /**
      * Helper method to make a dummy transaction with a given UUID.
      */
-    private byte[] makeDummyTxn(UUID txnType, UUID txnId) {
+    private Certificate makeDummyTxn(UUID txnType, UUID txnId) {
         CertificateBuilder builder =
             CertificateBuilder.createCertificateBuilder(
                 CertificateType.TRANSACTION);

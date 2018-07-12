@@ -150,7 +150,8 @@ int CertificateBuilder_register(JNIEnv* env)
         (*env)->GetMethodID(
             env, CertificateBuilder, "sign",
             "(Ljava/util/UUID;"
-             "Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)[B");
+            "Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)"
+            "Lcom/velopayments/blockchain/cert/Certificate;");
     if (NULL == CertificateBuilder_sign)
         return 1;
 

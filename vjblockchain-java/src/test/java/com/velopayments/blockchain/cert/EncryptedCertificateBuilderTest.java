@@ -31,7 +31,7 @@ public class EncryptedCertificateBuilderTest {
         builder.addEncryptedString(8, "Foo Bar");
         builder.addEncryptedInt(9, 22);
 
-        byte[] bytes = builder.emit();
+        byte[] bytes = builder.emit().toByteArray();
 
         EncryptedCertificateReader reader =
             new EncryptedCertificateReader(

@@ -176,7 +176,7 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
         //add this fragment to the builder.
         addByteArray(
             Field.VELO_ENCRYPTED_SHARED_SECRET_FRAGMENT,
-            fragmentBuilder.emit());
+            fragmentBuilder.emit().toByteArray());
 
         return this;
     }
