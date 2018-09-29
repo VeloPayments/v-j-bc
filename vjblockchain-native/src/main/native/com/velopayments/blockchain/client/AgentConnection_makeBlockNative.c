@@ -345,7 +345,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_makeBlockNative(
     /* populate block record. */
     memset(blockrec, 0, sizeof(block_record_t));
     memcpy(blockrec->block_uuid, block_id_bytes, 16);
-    memcpy(blockrec->previous_block_id, prevblockrec->previous_block_id, 16);
+    memcpy(blockrec->previous_block_id, prevblockrec->block_uuid, 16);
     memset(blockrec->next_block_id, 0, sizeof(blockrec->next_block_id));
     blockrec->block_height = prevblockrec->block_height + 1;
     blockrec->block_size = block_cert_size;
