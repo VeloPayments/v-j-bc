@@ -2,7 +2,7 @@ package com.velopayments.blockchain.cert;
 
 import java.util.UUID;
 
-public class UnknownTransactionTypeException extends Exception {
+public class UnknownTransactionTypeException extends RuntimeException {
 
     static final long serialVersionUID = 1;
 

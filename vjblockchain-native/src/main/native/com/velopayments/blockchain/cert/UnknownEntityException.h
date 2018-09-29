@@ -32,7 +32,7 @@ extern "C" {
 int UnknownEntityException_register(JNIEnv* env);
 
 /* public class com.velopayments.blockchain.cert.UnknownEntityException
- *          extends java.lang.Exception {
+ *          extends java.lang.RuntimeException {
  */
 extern jclass UnknownEntityException;
 
