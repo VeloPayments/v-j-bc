@@ -101,7 +101,7 @@ int TransactionSubmissionRequest_register(JNIEnv* env)
     TransactionSubmissionRequest_getStatusFuture =
         (*env)->GetMethodID(
             env, TransactionSubmissionRequest, "getStatusFuture",
-            "()Ljava/util/concurrent/Future;");
+            "()Ljava/util/concurrent/CompletableFuture;");
     if (NULL == TransactionSubmissionRequest_getStatusFuture)
         return 1;
 

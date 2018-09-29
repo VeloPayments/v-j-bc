@@ -10,9 +10,7 @@ public class TransactionSubmissionRequest {
 
     public TransactionSubmissionRequest(Certificate txnData) {
         this.txnData = txnData;
-        this.statusFuture = new FutureTask<TransactionStatus>(() -> {
-                return this.getStatus();
-            });
+        this.statusFuture = new CompletableFuture<TransactionStatus>();
         this.status = TransactionStatus.PENDING;
     }
 
@@ -22,10 +20,10 @@ public class TransactionSubmissionRequest {
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
-        this.statusFuture.run();
+        this.statusFuture.complete(status);
     }
 
-    public Future<TransactionStatus> getStatusFuture() {
+    public CompletableFuture<TransactionStatus> getStatusFuture() {
         return statusFuture;
     }
 
@@ -34,6 +32,6 @@ public class TransactionSubmissionRequest {
     }
 
     private Certificate txnData;
-    private FutureTask<TransactionStatus> statusFuture;
+    private CompletableFuture<TransactionStatus> statusFuture;
     private TransactionStatus status;
 }

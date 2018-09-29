@@ -52,10 +52,10 @@ extern jmethodID TransactionSubmissionRequest_getStatus;
  */
 extern jmethodID TransactionSubmissionRequest_setStatus;
 
-/* public java.util.concurrent.Future<
+/* public java.util.concurrent.CompletableFuture<
  *              com.velopayments.blockchain.client.TransactionStatus>
  * getStatusFuture();
- * descriptor: ()Ljava/util/concurrent/Future;
+ * descriptor: ()Ljava/util/concurrent/CompletableFuture;
  */
 extern jmethodID TransactionSubmissionRequest_getStatusFuture;
 
