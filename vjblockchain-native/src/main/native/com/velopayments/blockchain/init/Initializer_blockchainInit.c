@@ -32,6 +32,8 @@
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningKeyPair.h"
+#include "../../../../com/velopayments/blockchain/crypt/SigningPrivateKey.h"
+#include "../../../../com/velopayments/blockchain/crypt/SigningPublicKey.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/Integer.h"
@@ -135,6 +137,10 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  SimpleEntry_register(env));
     INIT_OR_FAIL("SigningKeyPair",
                  SigningKeyPair_register(env));
+    INIT_OR_FAIL("SigningPrivateKey",
+                 SigningPrivateKey_register(env));
+    INIT_OR_FAIL("SigningPublicKey",
+                 SigningPublicKey_register(env));
     INIT_OR_FAIL("TransactionStatus",
                  TransactionStatus_register(env));
     INIT_OR_FAIL("TransactionSubmissionRequest",
