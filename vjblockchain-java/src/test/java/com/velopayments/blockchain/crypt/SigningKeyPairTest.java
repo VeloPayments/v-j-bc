@@ -15,7 +15,7 @@ public class SigningKeyPairTest {
     public void generateSigningKeyPairTest() throws Exception {
         SigningKeyPair key = SigningKeyPair.generate();
 
-        assertThat(key.getPublicKey(), is(notNullValue()));
-        assertThat(key.getPrivateKey(), is(notNullValue()));
+        assertThat(key.getPublicKey().getRawBytes(), is(notNullValue()));
+        assertThat(key.getPrivateKey().getRawBytes(), is(notNullValue()));
     }
 }
