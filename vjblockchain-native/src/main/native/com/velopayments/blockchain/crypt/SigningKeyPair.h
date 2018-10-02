@@ -35,8 +35,10 @@ int SigningKeyPair_register(JNIEnv* env);
 extern jclass SigningKeyPair;
 
 /* private com.velopayments.blockchain.crypt.SigningKeyPair(
- *      byte[], byte[]);
- * descriptor: ([B[B)V
+ *      SigningPublicKey, SigningPrivateKey)
+ * descriptor:
+ *      (Lcom/velopayments/blockchain/crypt/SigningPublicKey;
+ *       Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)V
  */
 extern jmethodID SigningKeyPair_init;
 

@@ -12,6 +12,8 @@
 #include <vpr/parameters.h>
 
 #include "SigningKeyPair.h"
+#include "SigningPublicKey.h"
+#include "SigningPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalStateException.h"
 
@@ -139,10 +141,35 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     /* commit data to the byte array. */
     (*env)->ReleaseByteArrayElements(env, pubArray, pubArrayData, 0);
 
+    /* create the SigningPrivateKey object. */
+    jobject signingPrivateKey =
+        (*env)->NewObject(
+            env, SigningPrivateKey, SigningPrivateKey_init, privArray);
+    if (NULL == signingPrivateKey)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "signingPrivateKey could not be instantiated.");
+
+        goto pub_array_dispose;
+    }
+
+    /* create the SigningPublicKey object. */
+    jobject signingPublicKey =
+        (*env)->NewObject(
+            env, SigningPublicKey, SigningPublicKey_init, pubArray);
+    if (NULL == signingPublicKey)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "signingPublicKey could not be instantiated.");
+
+        goto pub_array_dispose;
+    }
+
     /* create the return object. */
     retval =
         (*env)->NewObject(
-            env, SigningKeyPair, SigningKeyPair_init, pubArray, privArray);
+            env, SigningKeyPair, SigningKeyPair_init, signingPublicKey,
+            signingPrivateKey);
 
     /* fall-through cleanup and return of allocated SigningKeyPair. */
 
