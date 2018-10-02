@@ -37,6 +37,7 @@
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/Integer.h"
+#include "../../../../java/lang/NullPointerException.h"
 #include "../../../../java/util/AbstractMap_SimpleEntry.h"
 #include "../../../../java/util/HashMap.h"
 #include "../../../../java/util/LinkedList.h"
@@ -129,6 +130,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  IllegalArgumentException_register(env));
     INIT_OR_FAIL("Integer",
                  Integer_register(env));
+    INIT_OR_FAIL("NullPointerException",
+                 NullPointerException_register(env));
     INIT_OR_FAIL("LinkedList",
                  LinkedList_register(env));
     INIT_OR_FAIL("Optional",
