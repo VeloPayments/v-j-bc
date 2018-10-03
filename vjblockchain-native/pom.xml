@@ -145,6 +145,8 @@
                                 <javahClassName>com.velopayments.blockchain.db.DatabaseRegistry</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.crypt.EncryptionKeyPair</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.crypt.SigningKeyPair</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.crypt.SigningPrivateKey</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.crypt.SigningPublicKey</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.init.Initializer</javahClassName>
                             </javahClassNames>
                         </configuration>

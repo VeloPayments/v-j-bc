@@ -31,6 +31,8 @@
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
+#include "../../../../com/velopayments/blockchain/crypt/Message.h"
+#include "../../../../com/velopayments/blockchain/crypt/Signature.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPublicKey.h"
@@ -122,6 +124,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  EncryptionPrivateKey_register(env));
     INIT_OR_FAIL("EncryptionPublicKey",
                  EncryptionPublicKey_register(env));
+    INIT_OR_FAIL("Message",
+                 Message_register(env));
     INIT_OR_FAIL("EntityReference",
                  EntityReference_register(env));
     INIT_OR_FAIL("HashMap",
@@ -138,6 +142,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  Optional_register(env));
     INIT_OR_FAIL("SimpleEntry",
                  SimpleEntry_register(env));
+    INIT_OR_FAIL("Signature",
+                 Signature_register(env));
     INIT_OR_FAIL("SigningKeyPair",
                  SigningKeyPair_register(env));
     INIT_OR_FAIL("SigningPrivateKey",
