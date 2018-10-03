@@ -90,7 +90,7 @@ public class AgentConnection {
      *
      * @return a Future which evaluates into the status of the transaction.
      */
-    public Future<TransactionStatus> submit(Certificate transaction)
+    public CompletableFuture<TransactionStatus> submit(Certificate transaction)
             throws IOException {
 
         /* drain the list by creating a block if it has 100 requests. */

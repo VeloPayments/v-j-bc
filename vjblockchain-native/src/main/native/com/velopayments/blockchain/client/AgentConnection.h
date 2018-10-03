@@ -49,12 +49,12 @@ extern jmethodID AgentConnection_init;
  */
 extern jmethodID AgentConnection_close;
 
-/* public java.util.concurrent.Future<
+/* public java.util.concurrent.CompletableFuture<
  *      com.velopayments.blockchain.client.TransactionStatus>
  * submit(com.velopayments.blockchain.cert.Certificate)
  * throws java.io.IOException;
  * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)
- *             Ljava/util/concurrent/Future;
+ *             Ljava/util/concurrent/CompletableFuture;
  */
 extern jmethodID AgentConnection_submit;
 

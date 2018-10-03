@@ -1,6 +1,6 @@
 package com.velopayments.blockchain.cert;
 
-public class FieldConversionException extends Exception {
+public class FieldConversionException extends RuntimeException {
 
     static final long serialVersionUID = 1;
 

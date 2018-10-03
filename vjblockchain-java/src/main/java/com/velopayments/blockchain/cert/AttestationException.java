@@ -1,6 +1,6 @@
 package com.velopayments.blockchain.cert;
 
-public class AttestationException extends Exception {
+public class AttestationException extends RuntimeException {
 
     static final long serialVersionUID = 1;
 

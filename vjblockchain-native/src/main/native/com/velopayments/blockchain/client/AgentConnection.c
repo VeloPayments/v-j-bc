@@ -98,7 +98,7 @@ int AgentConnection_register(JNIEnv* env)
         (*env)->GetMethodID(
             env, AgentConnection, "submit",
             "(Lcom/velopayments/blockchain/cert/Certificate;)"
-            "Ljava/util/concurrent/Future;");
+            "Ljava/util/concurrent/CompletableFuture;");
     if (NULL == AgentConnection_submit)
         return 1;
 

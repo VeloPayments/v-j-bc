@@ -31,12 +31,15 @@
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
+#include "../../../../com/velopayments/blockchain/crypt/Message.h"
+#include "../../../../com/velopayments/blockchain/crypt/Signature.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPublicKey.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/Integer.h"
+#include "../../../../java/lang/NullPointerException.h"
 #include "../../../../java/util/AbstractMap_SimpleEntry.h"
 #include "../../../../java/util/HashMap.h"
 #include "../../../../java/util/LinkedList.h"
@@ -121,6 +124,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  EncryptionPrivateKey_register(env));
     INIT_OR_FAIL("EncryptionPublicKey",
                  EncryptionPublicKey_register(env));
+    INIT_OR_FAIL("Message",
+                 Message_register(env));
     INIT_OR_FAIL("EntityReference",
                  EntityReference_register(env));
     INIT_OR_FAIL("HashMap",
@@ -129,12 +134,16 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  IllegalArgumentException_register(env));
     INIT_OR_FAIL("Integer",
                  Integer_register(env));
+    INIT_OR_FAIL("NullPointerException",
+                 NullPointerException_register(env));
     INIT_OR_FAIL("LinkedList",
                  LinkedList_register(env));
     INIT_OR_FAIL("Optional",
                  Optional_register(env));
     INIT_OR_FAIL("SimpleEntry",
                  SimpleEntry_register(env));
+    INIT_OR_FAIL("Signature",
+                 Signature_register(env));
     INIT_OR_FAIL("SigningKeyPair",
                  SigningKeyPair_register(env));
     INIT_OR_FAIL("SigningPrivateKey",

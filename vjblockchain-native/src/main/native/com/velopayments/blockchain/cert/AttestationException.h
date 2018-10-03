@@ -31,7 +31,7 @@ extern "C" {
 int AttestationException_register(JNIEnv* env);
 
 /* public class com.velopayments.blockchain.cert.AttestationException
- *          extends java.lang.Exception {
+ *          extends java.lang.RuntimeException {
  */
 extern jclass AttestationException;
 

@@ -33,7 +33,7 @@ extern "C" {
 int UnknownArtifactTypeException_register(JNIEnv* env);
 
 /* public class com.velopayments.blockchain.cert.UnknownArtifactTypeException
- *          extends java.lang.Exception {
+ *          extends java.lang.RuntimeException {
  */
 extern jclass UnknownArtifactTypeException;
 

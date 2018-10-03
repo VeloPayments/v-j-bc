@@ -1,6 +1,6 @@
 package com.velopayments.blockchain.cert;
 
-public class MissingFieldException extends Exception {
+public class MissingFieldException extends RuntimeException {
 
     static final long serialVersionUID = 1;
 
