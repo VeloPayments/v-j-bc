@@ -76,8 +76,8 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         goto free_environment;
     }
 
-    /* We need 4 database handles. */
-    if (0 != mdb_env_set_maxdbs(details->env, 4))
+    /* We need 5 database handles. */
+    if (0 != mdb_env_set_maxdbs(details->env, 5))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not update the maximum database handles.");
@@ -127,6 +127,16 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         goto rollback_txn;
     }
 
+    /* open the artifact database. */
+    if (0 !=
+            mdb_dbi_open(txn, "artifact.db", MDB_CREATE, &details->artifact_db))
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not open artifact database.");
+        retval = 0;
+        goto rollback_txn;
+    }
+
     /* open the block database. */
     if (0 != mdb_dbi_open(txn, "block.db", MDB_CREATE, &details->block_db))
     {
@@ -141,6 +151,17 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not open transaction database.");
+        retval = 0;
+        goto rollback_txn;
+    }
+
+    /* open the block height database. */
+    if (0 !=
+            mdb_dbi_open(
+                txn, "bheight.db", MDB_CREATE, &details->block_height_db))
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not open block height database.");
         retval = 0;
         goto rollback_txn;
     }

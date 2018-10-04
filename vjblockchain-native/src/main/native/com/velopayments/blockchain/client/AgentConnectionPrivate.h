@@ -22,8 +22,10 @@ typedef struct agent_connection_details
 {
     MDB_env* env;
     MDB_dbi master_db;
+    MDB_dbi artifact_db;
     MDB_dbi block_db;
     MDB_dbi txn_db;
+    MDB_dbi block_height_db;
 } agent_connection_details_t;
 
 /**

@@ -48,8 +48,10 @@ Java_com_velopayments_blockchain_client_AgentConnection_closeNative(
 
     /* close dbi handles. */
     mdb_dbi_close(details->env, details->master_db);
+    mdb_dbi_close(details->env, details->artifact_db);
     mdb_dbi_close(details->env, details->txn_db);
     mdb_dbi_close(details->env, details->block_db);
+    mdb_dbi_close(details->env, details->block_height_db);
 
     /* close database environment. */
     mdb_env_close(details->env);
