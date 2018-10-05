@@ -46,6 +46,10 @@ static bool dummy_entity_key_resolver(
 static vccert_contract_fn_t dummy_contract_resolver(
     void* options, void* parser, const uint8_t* type_id,
     const uint8_t* artifact_id);
+static int update_or_create_artifact_entry_for_transaction(
+    agent_connection_details_t* details, MDB_txn* txn, JNIEnv* env,
+    const uint8_t* artifact_id, const uint8_t* block_id,
+    const uint8_t* txn_id_bytes);
 
 /*
  * Class:     com_velopayments_blockchain_client_AgentConnection
@@ -511,6 +515,7 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not allocate memory for txnrec.");
+        retval = -2;
         goto cleanup_array_bytes;
     }
 
@@ -522,6 +527,7 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not create transaction parser.");
+        retval = -3;
         goto cleanup_txnrec;
     }
 
@@ -532,10 +538,26 @@ static int write_transaction_to_block(
             vccert_parser_find_short(
                 &parser, VCCERT_FIELD_TYPE_CERTIFICATE_ID,
                 &txn_id_bytes, &txn_id_bytes_size)
-     && txn_id_bytes_size == 16)
+        || txn_id_bytes_size != 16)
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not find a valid transaction id.");
+        retval = -4;
+        goto cleanup_parser;
+    }
+
+    /* Get the artifact id for transaction. */
+    const uint8_t* artifact_id_bytes;
+    size_t artifact_id_bytes_size = 16;
+    if (VCCERT_STATUS_SUCCESS !=
+            vccert_parser_find_short(
+                &parser, VCCERT_FIELD_TYPE_ARTIFACT_ID,
+                &artifact_id_bytes, &artifact_id_bytes_size)
+        || artifact_id_bytes_size != 16)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not find a valid artifact id.");
+        retval = -5;
         goto cleanup_parser;
     }
 
@@ -546,6 +568,7 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Duplicate transaction id.");
+        retval = -6;
         goto cleanup_parser;
     }
 
@@ -563,6 +586,15 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Could not insert transaction.");
+        retval = -7;
+        goto cleanup_parser;
+    }
+
+    /* update or create the artifact entry for this block. */
+    if (0 != update_or_create_artifact_entry_for_transaction(
+                details, txn, env, artifact_id_bytes, block_id, txn_id_bytes))
+    {
+        retval = -8;
         goto cleanup_parser;
     }
 
@@ -723,4 +755,55 @@ static vccert_contract_fn_t dummy_contract_resolver(
                 const uint8_t* UNUSED(artifact_id))
 {
     return NULL;
+}
+
+/**
+ * Update or create the artifact entry for this transaction.
+ */
+static int update_or_create_artifact_entry_for_transaction(
+    agent_connection_details_t* details, MDB_txn* txn, JNIEnv* env,
+    const uint8_t* artifact_id, const uint8_t* block_id,
+    const uint8_t* txn_id_bytes)
+{
+    int retval = 0;
+
+    /* query the artifact database for this artifact ID. */
+    MDB_val key; key.mv_size = 16; key.mv_data = (void*)artifact_id;
+    MDB_val val; memset(&val, 0, sizeof(val));
+    retval = mdb_get(txn, details->artifact_db, &key, &val);
+    if (MDB_NOTFOUND == retval)
+    {
+        /* if not found, create the entry and insert it. */
+        artifact_record_t artifact_rec;
+        memset(&artifact_rec, 0, sizeof(artifact_rec));
+        memcpy(artifact_rec.artifact_uuid, artifact_id, 16);
+        memcpy(artifact_rec.first_block_uuid, block_id, 16);
+        memcpy(artifact_rec.first_transaction_uuid, txn_id_bytes, 16);
+        memcpy(artifact_rec.last_block_uuid, block_id, 16);
+        memcpy(artifact_rec.last_transaction_uuid, txn_id_bytes, 16);
+
+        /* insert this record. */
+        key.mv_size = 16; key.mv_data = (void*)artifact_id;
+        val.mv_size = sizeof(artifact_record_t); val.mv_data = &artifact_rec;
+        retval = mdb_put(txn, details->artifact_db, &key, &val, 0);
+    }
+    else if (0 == retval)
+    {
+        /* if found, update it with this transaction id and block id. */
+        artifact_record_t* artifact_rec = (artifact_record_t*)val.mv_data;
+        memcpy(artifact_rec->last_block_uuid, block_id, 16);
+        memcpy(artifact_rec->last_transaction_uuid, txn_id_bytes, 16);
+    }
+
+    /* if the get / insert failed, bubble up an error to the caller. */
+    if (0 != retval)
+    {
+        (*env)->ThrowNew(
+            env, IllegalStateException, "Could not update artifact data.");
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }

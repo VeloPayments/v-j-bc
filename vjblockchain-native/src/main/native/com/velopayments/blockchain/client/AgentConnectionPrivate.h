@@ -39,6 +39,18 @@ typedef struct transaction_record
 } transaction_record_t;
 
 /**
+ * \brief Internal structure holding the artifact record for an artifact.
+ */
+typedef struct artifact_record
+{
+    uint8_t artifact_uuid[16];
+    uint8_t first_block_uuid[16];
+    uint8_t first_transaction_uuid[16];
+    uint8_t last_block_uuid[16];
+    uint8_t last_transaction_uuid[16];
+} artifact_record_t;
+
+/**
  * \brief Internal structure holding the block record for a block.
  */
 typedef struct block_record

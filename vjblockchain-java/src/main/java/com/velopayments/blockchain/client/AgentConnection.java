@@ -192,6 +192,34 @@ public class AgentConnection {
     }
 
     /**
+     * Get the last transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last transaction id for a given artifact id.
+     */
+    public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getLastTransactionIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
+     * Get the last block UUID containing a transaction for a given artifact
+     * UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last block id containing a transaction for a given artifact
+     * id.
+     */
+    public Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getLastBlockIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
      * Connect to the agent using the given connection string.
      *
      * @param connect       The connection string to use to connect to the
@@ -282,6 +310,29 @@ public class AgentConnection {
      */
     private native Optional<UUID>
     getTransactionBlockIdNative(UUID txnId) throws IOException;
+
+    /**
+     * Get the last transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last transaction id for a given artifact id.
+     */
+    public native Optional<UUID>
+    getLastTransactionIdForArtifactByIdNative(UUID artifactId)
+    throws IOException;
+
+    /**
+     * Get the last block UUID containing a transaction for a given artifact
+     * UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last block id containing a transaction for a given artifact
+     * id.
+     */
+    public native Optional<UUID>
+    getLastBlockIdForArtifactByIdNative(UUID artifactId) throws IOException;
 
     static {
         Initializer.init();

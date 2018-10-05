@@ -62,6 +62,8 @@ public class Producer implements Runnable {
 
             builder.addUUID(
                 Field.CERTIFICATE_ID, UUID.randomUUID());
+            builder.addUUID(
+                Field.ARTIFACT_ID, UUID.randomUUID());
             builder.addString(
                 0x0401, "Example transaction " + Integer.valueOf(i + 1));
 

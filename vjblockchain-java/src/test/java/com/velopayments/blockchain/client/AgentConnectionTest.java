@@ -118,13 +118,16 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("c8ff8b66-7238-45ef-8abb-4259940a0327");
 
         AgentConnection conn = null;
 
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
         } finally {
@@ -141,13 +144,16 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("a726da7b-addf-4bff-abb9-54573e65c538");
 
         AgentConnection conn = null;
 
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
@@ -174,6 +180,8 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("abc2aaca-8f46-4ee9-917c-1ec9205bfb90");
 
         AgentConnection conn = null;
 
@@ -185,7 +193,8 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getTransactionById(dummyTxnId).isPresent(), is(false));
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
@@ -252,6 +261,79 @@ public class AgentConnectionTest {
         }
     }
 
+    /**
+     * Test that, by default, getLastTransactionIdForArtifactById() returns
+     * Empty when a an artifact with the given ID does not exist.
+     */
+    @Test
+    public void getLastTransactionIdForArtifactByIdReturnsEmpty()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID missingArtifactId =
+            UUID.fromString("a7b7ec6f-dc9b-4fce-b44d-f35f6572af32");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(missingArtifactId)
+                    .isPresent(),
+                is(false));
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, if we insert a transaction and commit, we can query it by
+     * artifact ID.
+     */
+    @Test
+    public void getLastTransactionIdForArtifactById()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID dummyTxnId =
+            UUID.fromString("aab2bf7d-e6c2-45d9-83a6-137f9fd3e9f1");
+        UUID dummyArtifactId =
+            UUID.fromString("ca3fb085-f0b4-416a-a9ef-dd75a979b0a1");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            /* Precondition: querying by this artifact id returns nothing. */
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(false));
+
+            Certificate dummyTxn =
+                makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId, dummyArtifactId);
+            Future<TransactionStatus> stat = conn.submit(dummyTxn);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* the status future is now complete. */
+            assertThat(stat.isDone(), is(true));
+            /* the transaction succeeded. */
+            assertThat(stat.get(), is(TransactionStatus.SUCCEEDED));
+
+            /* we should be able to get this transaction ID using the artifact
+             * ID. */
+            Optional<UUID> lastUUID =
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId);
+            assertThat(lastUUID.isPresent(), is(true));
+            assertThat(lastUUID.get(), is(dummyTxnId));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
     static {
         PRIVATE_KEY =
             new EncryptionPrivateKey(convShorts(PRIVATE_KEY_SHORTS).array());
@@ -263,11 +345,12 @@ public class AgentConnectionTest {
     /**
      * Helper method to make a dummy transaction with a given UUID.
      */
-    private Certificate makeDummyTxn(UUID txnType, UUID txnId) {
+    private Certificate makeDummyTxn(UUID txnType, UUID txnId, UUID artifactId) {
         CertificateBuilder builder =
             CertificateBuilder.createCertificateBuilder(
                 CertificateType.TRANSACTION);
         builder.addUUID(Field.TRANSACTION_TYPE, txnType);
+        builder.addUUID(Field.ARTIFACT_ID, artifactId);
         builder.addUUID(Field.CERTIFICATE_ID, txnId);
         return builder.sign(entityId, PRIVATE_SIGNING_KEY);
     }
