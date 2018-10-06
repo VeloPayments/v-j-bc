@@ -50,7 +50,15 @@ static int update_or_create_artifact_entry_for_transaction(
     agent_connection_details_t* details, MDB_txn* txn, JNIEnv* env,
     const uint8_t* artifact_id, const uint8_t* block_id,
     const uint8_t* txn_id_bytes);
+static int update_previous_transaction_record(
+    agent_connection_details_t* details, MDB_txn* txn, JNIEnv* env,
+    const uint8_t* previous_txn_id_bytes, const uint8_t* next_txn_id_bytes);
 
+/**
+ * The zero UUID.
+ */
+const uint8_t zero_id[16] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0 };
 /*
  * Class:     com_velopayments_blockchain_client_AgentConnection
  * Method:    makeBlockNative
@@ -561,6 +569,22 @@ static int write_transaction_to_block(
         goto cleanup_parser;
     }
 
+    /* Get the previous transaction UUID. */
+    const uint8_t* previous_txn_id_bytes;
+    size_t previous_txn_id_bytes_size = 16;
+    if (VCCERT_STATUS_SUCCESS !=
+            vccert_parser_find_short(
+                &parser, VCCERT_FIELD_TYPE_PREVIOUS_CERTIFICATE_ID,
+                &previous_txn_id_bytes, &previous_txn_id_bytes_size)
+        || previous_txn_id_bytes_size != 16)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not find a valid previous txn id.");
+        retval = -6;
+        goto cleanup_parser;
+    }
+                
+
     /* Verify that transaction id does not already exist. */
     MDB_val key; key.mv_size = 16; key.mv_data = (uint8_t*)txn_id_bytes;
     MDB_val val;
@@ -568,13 +592,15 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Duplicate transaction id.");
-        retval = -6;
+        retval = -7;
         goto cleanup_parser;
     }
 
     /* populate transaction record. */
+    memset(txnrec, 0, sizeof(transaction_record_t));
     memcpy(txnrec->transaction_uuid, txn_id_bytes, 16);
     memcpy(txnrec->block_uuid, block_id, 16);
+    memcpy(txnrec->prev_transaction_uuid, previous_txn_id_bytes, 16);
     txnrec->transaction_size = array_len;
     memcpy(((uint8_t*)txnrec) + sizeof(transaction_record_t), array_bytes,
            array_len);
@@ -586,7 +612,7 @@ static int write_transaction_to_block(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Could not insert transaction.");
-        retval = -7;
+        retval = -8;
         goto cleanup_parser;
     }
 
@@ -594,7 +620,15 @@ static int write_transaction_to_block(
     if (0 != update_or_create_artifact_entry_for_transaction(
                 details, txn, env, artifact_id_bytes, block_id, txn_id_bytes))
     {
-        retval = -8;
+        retval = -9;
+        goto cleanup_parser;
+    }
+
+    /* update the previous transaction id's next value with this txn id. */
+    if (0 != update_previous_transaction_record(
+                details, txn, env, previous_txn_id_bytes, txn_id_bytes))
+    {
+        retval = -10;
         goto cleanup_parser;
     }
 
@@ -806,4 +840,40 @@ static int update_or_create_artifact_entry_for_transaction(
     {
         return 0;
     }
+}
+
+/**
+ * Update the previous transaction record with the next transaction uuid.
+ */
+static int update_previous_transaction_record(
+    agent_connection_details_t* details, MDB_txn* txn, JNIEnv* env,
+    const uint8_t* previous_txn_id_bytes, const uint8_t* next_txn_id_bytes)
+{
+    int retval = 0;
+
+    /* if this transaction value is all zeroes, then there is no previous
+     * transaction ID. */
+    if (!memcmp(zero_id, previous_txn_id_bytes, 16))
+    {
+        /* nothing to do, so success. */
+        return 0;
+    }
+
+    /* query the transaction database for the previous transaction ID. */
+    MDB_val key; key.mv_size = 16; key.mv_data = (void*)previous_txn_id_bytes;
+    MDB_val val; memset(&val, 0, sizeof(val));
+    retval = mdb_get(txn, details->txn_db, &key, &val);
+    if (0 != retval)
+    {
+        (*env)->ThrowNew(
+            env, IllegalStateException, "Could not update previous txn.");
+        return 1;
+    }
+
+    /* update the transaction record. */
+    transaction_record_t* txn_rec = (transaction_record_t*)val.mv_data;
+    memcpy(txn_rec->next_transaction_uuid, next_txn_id_bytes, 16);
+
+    /* success. */
+    return 0;
 }

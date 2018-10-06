@@ -35,6 +35,8 @@ typedef struct transaction_record
 {
     uint8_t transaction_uuid[16];
     uint8_t block_uuid[16];
+    uint8_t prev_transaction_uuid[16];
+    uint8_t next_transaction_uuid[16];
     size_t transaction_size;
 } transaction_record_t;
 

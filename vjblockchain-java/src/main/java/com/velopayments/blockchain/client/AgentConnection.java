@@ -220,6 +220,30 @@ public class AgentConnection {
     }
 
     /**
+     * Get the previous transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the previous transaction ID associated with this transaction ID.
+     */
+    public Optional<UUID>
+    getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException {
+        return getPreviousTransactionIdForTransactionByIdNative(txnId);
+    }
+
+    /**
+     * Get the next transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the next transaction ID associated with this transaction ID.
+     */
+    public Optional<UUID>
+    getNextTransactionIdForTransactionById(UUID txnId) throws IOException {
+        return getNextTransactionIdForTransactionByIdNative(txnId);
+    }
+
+    /**
      * Connect to the agent using the given connection string.
      *
      * @param connect       The connection string to use to connect to the
@@ -333,6 +357,27 @@ public class AgentConnection {
      */
     public native Optional<UUID>
     getLastBlockIdForArtifactByIdNative(UUID artifactId) throws IOException;
+
+    /**
+     * Get the previous transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the previous transaction ID associated with this transaction ID.
+     */
+    private native Optional<UUID>
+    getPreviousTransactionIdForTransactionByIdNative(UUID txnId)
+        throws IOException;
+
+    /**
+     * Get the next transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the next transaction ID associated with this transaction ID.
+     */
+    private native Optional<UUID>
+    getNextTransactionIdForTransactionByIdNative(UUID txnId) throws IOException;
 
     static {
         Initializer.init();
