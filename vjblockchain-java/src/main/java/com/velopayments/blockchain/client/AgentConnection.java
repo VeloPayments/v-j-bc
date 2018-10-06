@@ -342,7 +342,7 @@ public class AgentConnection {
      *
      * @return the last transaction id for a given artifact id.
      */
-    public native Optional<UUID>
+    private native Optional<UUID>
     getLastTransactionIdForArtifactByIdNative(UUID artifactId)
     throws IOException;
 
@@ -355,7 +355,7 @@ public class AgentConnection {
      * @return the last block id containing a transaction for a given artifact
      * id.
      */
-    public native Optional<UUID>
+    private native Optional<UUID>
     getLastBlockIdForArtifactByIdNative(UUID artifactId) throws IOException;
 
     /**
