@@ -4,6 +4,7 @@ import com.velopayments.blockchain.crypt.SigningPrivateKey;
 import com.velopayments.blockchain.init.Initializer;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.ZonedDateTime;
 import java.util.AbstractMap;
 import java.util.Date;
 import java.util.LinkedList;
@@ -147,6 +148,29 @@ public class CertificateBuilder {
     }
 
     /**
+     * Add a ZonedDateTime field to the certificate list.
+     *
+     * @param fieldId The short identifier for this field.  16-bit unsigned.
+     *                Note: this *must* be in the user range.
+     * @param value   The ZonedDateTime value for this field.  It is encoded as
+     *                a byte array of seconds since Epoch followed by a 32-bit
+     *                signed representation of the UTC offset in seconds.
+     * @return this builder for additional operations.
+     */
+    public CertificateBuilder
+    addZonedDateTime(int fieldId, ZonedDateTime value) {
+        if (fieldId < Field.LONG_ID_BEGIN || fieldId > Field.LONG_ID_END)
+        {
+            throw
+                new IllegalArgumentException(
+                        "ZonedDateTime can only be used in user fields.");
+        }
+
+        return
+            addByteArray(fieldId, serializeZonedDateTime(value));
+    }
+
+    /**
      * Add a byte array field to the certificate list.
      *
      * @param fieldId The short identifier for this field.  16-bit
@@ -257,6 +281,22 @@ public class CertificateBuilder {
         ByteBuffer buf = ByteBuffer.allocate(8);
         long epochSecond = value.toInstant().getEpochSecond();
         buf.putLong(epochSecond);
+
+        return buf.array();
+    }
+
+    /**
+     * Serialize a ZonedDateTime value.
+     *
+     * @param value   The ZonedDateTime value to serialize.
+     * @return a byte array representation of this Date value.
+     */
+    protected byte[] serializeZonedDateTime(ZonedDateTime value) {
+        ByteBuffer buf = ByteBuffer.allocate(12);
+        long epochSecond = value.toInstant().getEpochSecond();
+        buf.putLong(epochSecond);
+        int offsetSeconds = value.getOffset().getTotalSeconds();
+        buf.putInt(offsetSeconds);
 
         return buf.array();
     }
