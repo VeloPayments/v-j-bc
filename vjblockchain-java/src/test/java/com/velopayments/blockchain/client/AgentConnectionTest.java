@@ -294,7 +294,7 @@ public class AgentConnectionTest {
      * artifact ID.
      */
     @Test
-    public void getLastTransactionIdForArtifactById()
+    public void getTransactionIdForArtifactById()
             throws Exception {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
@@ -308,6 +308,10 @@ public class AgentConnectionTest {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
             /* Precondition: querying by this artifact id returns nothing. */
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(false));
             assertThat(
                 conn.getLastTransactionIdForArtifactById(dummyArtifactId)
                     .isPresent(),
@@ -328,6 +332,10 @@ public class AgentConnectionTest {
 
             /* we should be able to get this transaction ID using the artifact
              * ID. */
+            Optional<UUID> firstUUID =
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId);
+            assertThat(firstUUID.isPresent(), is(true));
+            assertThat(firstUUID.get(), is(dummyTxnId));
             Optional<UUID> lastUUID =
                 conn.getLastTransactionIdForArtifactById(dummyArtifactId);
             assertThat(lastUUID.isPresent(), is(true));
@@ -452,6 +460,23 @@ public class AgentConnectionTest {
                 conn.getPreviousTransactionIdForTransactionById(dummyTxnId3)
                     .get(),
                 is(dummyTxnId2));
+
+            /* we should be able to query the first and last transaction IDs for
+             * this artifact. */
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId).get(),
+                is(dummyTxnId1));
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId).get(),
+                is(dummyTxnId3));
 
         } finally {
             if (null != conn) conn.close();

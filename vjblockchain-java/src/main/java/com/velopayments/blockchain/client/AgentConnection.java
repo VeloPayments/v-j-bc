@@ -192,6 +192,19 @@ public class AgentConnection {
     }
 
     /**
+     * Get the first transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the first transaction id for a given artifact id.
+     */
+    public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getFirstTransactionIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
      * Get the last transaction UUID for a given artifact UUID.
      *
      * @param artifactId The artifact ID to look up.
@@ -334,6 +347,17 @@ public class AgentConnection {
      */
     private native Optional<UUID>
     getTransactionBlockIdNative(UUID txnId) throws IOException;
+
+    /**
+     * Get the first transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the first transaction id for a given artifact id.
+     */
+    private native Optional<UUID>
+    getFirstTransactionIdForArtifactByIdNative(UUID artifactId)
+    throws IOException;
 
     /**
      * Get the last transaction UUID for a given artifact UUID.
