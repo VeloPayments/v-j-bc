@@ -411,6 +411,17 @@ Java_com_velopayments_blockchain_client_AgentConnection_makeBlockNative(
         goto cleanup_prev;
     }
 
+    /* update the block height index with the block height for this block. */
+    key.mv_size = sizeof(uint64_t); key.mv_data = &blockrec->block_height;
+    val.mv_size = sizeof(blockrec->block_uuid);
+    val.mv_data = blockrec->block_uuid;
+    if (0 != mdb_put(txn, details->block_height_db, &key, &val, 0))
+    {
+        (*env)->ThrowNew(
+            env, IllegalStateException, "Could not update block height idx.");
+        goto cleanup_prev;
+    }
+
     /* get the success status code field. */
     jobject status_success =
         (*env)->GetStaticObjectField(
@@ -695,6 +706,8 @@ static int get_or_create_previous_block(
     }
 
     memset(blockrec, 0, sizeof(block_record_t) + 256);
+    memcpy(blockrec->block_uuid, vccert_certificate_type_uuid_root_block,
+           sizeof(blockrec->block_uuid));
     blockrec->block_size = 256;
     key.mv_size = sizeof(AGENT_CONNECTION_MASTER_KEY_LATEST_BLOCK);
     key.mv_data = AGENT_CONNECTION_MASTER_KEY_LATEST_BLOCK;
@@ -825,8 +838,13 @@ static int update_or_create_artifact_entry_for_transaction(
     {
         /* if found, update it with this transaction id and block id. */
         artifact_record_t* artifact_rec = (artifact_record_t*)val.mv_data;
-        memcpy(artifact_rec->last_block_uuid, block_id, 16);
-        memcpy(artifact_rec->last_transaction_uuid, txn_id_bytes, 16);
+        artifact_record_t newrec;
+        memcpy(&newrec, artifact_rec, sizeof(artifact_record_t));
+        memcpy(newrec.last_block_uuid, block_id, 16);
+        memcpy(newrec.last_transaction_uuid, txn_id_bytes, 16);
+        key.mv_size = 16; key.mv_data = (void*)artifact_id;
+        val.mv_size = sizeof(artifact_record_t); val.mv_data = &newrec;
+        retval = mdb_put(txn, details->artifact_db, &key, &val, 0);
     }
 
     /* if the get / insert failed, bubble up an error to the caller. */
@@ -834,6 +852,7 @@ static int update_or_create_artifact_entry_for_transaction(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Could not update artifact data.");
+
         return 1;
     }
     else

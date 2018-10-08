@@ -177,6 +177,19 @@ public class AgentConnection {
     }
 
     /**
+     * Get the block id for a given block height.
+     *
+     * @param height    The block height of this block ID.
+     *
+     * @return the block UUID at the given height, or empty if not found.
+     */
+    public Optional<UUID>
+    getBlockIdByBlockHeight(long height) throws IOException {
+
+        return getBlockIdByBlockHeightNative(height);
+    }
+
+    /**
      * Get a transaction for a given UUID.
      *
      * Note - this method blocks until the given transaction is available.
@@ -298,6 +311,16 @@ public class AgentConnection {
      */
     private native Optional<Certificate>
     getBlockByIdNative(UUID blockId) throws IOException;
+
+    /**
+     * Get the block id for a given block height.
+     *
+     * @param height    The block height of this block ID.
+     *
+     * @return the block UUID at the given height, or empty if not found.
+     */
+    private native Optional<UUID>
+    getBlockIdByBlockHeightNative(long height) throws IOException;
 
     /**
      * Get a transaction for a given UUID.

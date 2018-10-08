@@ -230,13 +230,13 @@ public class AgentConnectionTest {
 
             /* given the zero UUID, the next UUID should be the newBlockId. */
             assertThat(
-                conn.getNextBlockId(zeroUUID).orElseThrow(
+                conn.getNextBlockId(CertificateType.ROOT_BLOCK).orElseThrow(
                     () -> new IOException()),
                 is(newBlockId));
 
             /* given the zero UUID, the previous UUID should be empty. */
             assertThat(
-                conn.getPrevBlockId(zeroUUID).isPresent(),
+                conn.getPrevBlockId(CertificateType.ROOT_BLOCK).isPresent(),
                 is(false));
 
             /* given the new block UUID, the previous UUID should be the zero
@@ -244,7 +244,7 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getPrevBlockId(newBlockId).orElseThrow(
                     () -> new IOException()),
-                is(zeroUUID));
+                is(CertificateType.ROOT_BLOCK));
 
             /* given the new block UUID, the next UUID should be empty. */
             assertThat(
@@ -477,6 +477,111 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getLastTransactionIdForArtifactById(dummyArtifactId).get(),
                 is(dummyTxnId3));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * The block id at height zero is always the root block.
+     */
+    @Test
+    public void getBlockHeightZero() throws Exception {
+        File dbLoc = tempDir.newFolder();
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            assertThat(
+                conn.getBlockIdByBlockHeight(0).get(),
+                is(CertificateType.ROOT_BLOCK));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, if we create blocks, we can query them by their block heights.
+     */
+    @Test
+    public void getBlockHeight()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID dummyTxnId1 =
+            UUID.fromString("aab2bf7d-e6c2-45d9-83a6-137f9fd3e9f1");
+        UUID dummyTxnId2 =
+            UUID.fromString("3b670c71-4ad6-46d6-8c1d-23832bf372e8");
+        UUID dummyTxnId3 =
+            UUID.fromString("869be711-f7a3-47b0-aafc-7a4a0a6aac8a");
+        UUID dummyArtifactId =
+            UUID.fromString("ca3fb085-f0b4-416a-a9ef-dd75a979b0a1");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            Certificate dummyTxn1 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId1, zeroUUID, dummyArtifactId);
+            Future<TransactionStatus> stat1 = conn.submit(dummyTxn1);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            Certificate dummyTxn2 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId2, dummyTxnId1, dummyArtifactId);
+            Future<TransactionStatus> stat2 = conn.submit(dummyTxn2);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            Certificate dummyTxn3 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId3, dummyTxnId2, dummyArtifactId);
+            Future<TransactionStatus> stat3 = conn.submit(dummyTxn3);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* the status futures are now complete. */
+            assertThat(stat1.isDone(), is(true));
+            assertThat(stat2.isDone(), is(true));
+            assertThat(stat3.isDone(), is(true));
+            /* the transactions succeeded. */
+            assertThat(stat1.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat2.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat3.get(), is(TransactionStatus.SUCCEEDED));
+
+            /* get the block IDs by the transaction ID. */
+            Optional<UUID> blockIdO1 = conn.getTransactionBlockId(dummyTxnId1);
+            Optional<UUID> blockIdO2 = conn.getTransactionBlockId(dummyTxnId2);
+            Optional<UUID> blockIdO3 = conn.getTransactionBlockId(dummyTxnId3);
+
+            /* these should be valid. */
+            assertThat(blockIdO1.isPresent(), is(true));
+            assertThat(blockIdO2.isPresent(), is(true));
+            assertThat(blockIdO3.isPresent(), is(true));
+
+            /* get these IDs. */
+            UUID blockId1 = blockIdO1.get();
+            UUID blockId2 = blockIdO2.get();
+            UUID blockId3 = blockIdO3.get();
+
+            /* the IDs we return by block height should be valid. */
+            assertThat(conn.getBlockIdByBlockHeight(1).isPresent(), is(true));
+            assertThat(conn.getBlockIdByBlockHeight(2).isPresent(), is(true));
+            assertThat(conn.getBlockIdByBlockHeight(3).isPresent(), is(true));
+
+            /* these IDs should match our block IDs. */
+            assertThat(conn.getBlockIdByBlockHeight(1).get(), is(blockId1));
+            assertThat(conn.getBlockIdByBlockHeight(2).get(), is(blockId2));
+            assertThat(conn.getBlockIdByBlockHeight(3).get(), is(blockId3));
 
         } finally {
             if (null != conn) conn.close();

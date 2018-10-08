@@ -125,7 +125,7 @@ public class Consumer implements Runnable {
     private static final UUID consumerEntityId =
         UUID.fromString("10150a08-94f9-4351-a32a-8075aa65ad3b");
     private static final UUID ROOT_UUID =
-        UUID.fromString("00000000-0000-0000-0000-000000000000");
+        CertificateType.ROOT_BLOCK;
     private static final EncryptionPrivateKey consumerPrivateKey =
         new EncryptionPrivateKey(new byte[] { 0,  1,  2,  3,  4,  5,  6,  7,
                                               8,  9, 10, 11, 12, 13, 14, 15,
