@@ -875,7 +875,8 @@ static int update_previous_transaction_record(
     if (!memcmp(zero_id, previous_txn_id_bytes, 16))
     {
         /* nothing to do, so success. */
-        return 0;
+        retval = 0;
+        goto exit_return;
     }
 
     /* query the transaction database for the previous transaction ID. */
@@ -885,14 +886,43 @@ static int update_previous_transaction_record(
     if (0 != retval)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "Could not update previous txn.");
-        return 1;
+            env, IllegalStateException, "Could not query previous txn.");
+        retval = 1;
+        goto exit_return;
     }
 
-    /* update the transaction record. */
+    /* get the transaction record. */
     transaction_record_t* txn_rec = (transaction_record_t*)val.mv_data;
-    memcpy(txn_rec->next_transaction_uuid, next_txn_id_bytes, 16);
+
+    /* allocate replacement buffer for this transaction. */
+    size_t new_rec_size =
+        sizeof(transaction_record_t) + txn_rec->transaction_size;
+    transaction_record_t* new_rec = (transaction_record_t*)
+        allocate(&alloc_opts, new_rec_size);
+
+    /* copy the original record. */
+    memcpy(new_rec, txn_rec, new_rec_size);
+
+    /* update this new record with the next transaction id. */
+    memcpy(new_rec->next_transaction_uuid, next_txn_id_bytes, 16);
+
+    /* write this new record to the database. */
+    key.mv_size = 16; key.mv_data = (void*)previous_txn_id_bytes;
+    val.mv_size = new_rec_size; val.mv_data = new_rec;
+    retval = mdb_put(txn, details->txn_db, &key, &val, 0);
+    if (0 != retval)
+    {
+        (*env)->ThrowNew(
+            env, IllegalStateException, "Could not update previous txn.");
+        goto cleanup_new_rec;
+    }
 
     /* success. */
+    retval = 0;
+
+cleanup_new_rec:
+    release(&alloc_opts, new_rec);
+
+exit_return:
     return 0;
 }
