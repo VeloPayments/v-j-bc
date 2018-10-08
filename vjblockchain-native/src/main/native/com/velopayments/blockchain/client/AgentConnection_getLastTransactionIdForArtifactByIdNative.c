@@ -12,6 +12,7 @@
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
 #include <java/lang/IllegalStateException.h>
+#include <java/lang/NullPointerException.h>
 #include <java/util/Optional.h>
 #include <string.h>
 #include <util/uuid_conv.h>
@@ -37,6 +38,13 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnectio
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vjblockchain not initialized.");
+        goto exit_return;
+    }
+
+    /* verify that the artifactId parameter is not null. */
+    if (NULL == artifactId)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "artifactId");
         goto exit_return;
     }
 

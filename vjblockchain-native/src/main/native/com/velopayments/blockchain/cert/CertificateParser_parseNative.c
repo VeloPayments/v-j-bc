@@ -14,6 +14,7 @@
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
+#include "../../../../java/lang/NullPointerException.h"
 #include "../../../../java/lang/Integer.h"
 #include "../../../../java/util/AbstractMap_SimpleEntry.h"
 #include "../../../../java/util/LinkedList.h"
@@ -54,6 +55,14 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
+        return NULL;
+    }
+
+    /* verify that the cert parameter is not null. */
+    if (NULL == cert)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "cert");
         return NULL;
     }
 

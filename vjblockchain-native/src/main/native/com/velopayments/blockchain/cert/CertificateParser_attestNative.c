@@ -21,6 +21,7 @@
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
+#include "../../../../java/lang/NullPointerException.h"
 #include "../../../../util/uuid_conv.h"
 
 //forward declarations for certificate delegate methods
@@ -75,6 +76,14 @@ Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
+        return JNI_FALSE;
+    }
+
+    /* verify that the delegate parameter is not null. */
+    if (NULL == delegate)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "delegate");
         return JNI_FALSE;
     }
 

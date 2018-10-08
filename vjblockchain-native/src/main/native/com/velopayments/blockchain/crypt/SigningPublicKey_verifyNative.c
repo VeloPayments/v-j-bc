@@ -42,13 +42,29 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
         goto done;
     }
  
+    /* verify that the signature parameter is not null. */
+    if (NULL == signature)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "signature");
+        goto done;
+    }
+
+    /* verify that the message parameter is not null. */
+    if (NULL == message)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "message");
+        goto done;
+    }
+
     /* get the raw bytes for this public key. */
     jobject public_key =
         (*env)->CallObjectMethod(env, that, SigningPublicKey_getRawBytes);
     if (NULL == public_key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "public_key");
+            env, NullPointerException, "this.getRawBytes()");
         goto done;
     }
 
@@ -102,7 +118,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == message_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message_array");
+            env, NullPointerException, "message.getRawBytes()");
         goto cleanup_sign;
     }
 
@@ -136,7 +152,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == signature_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "signature_array");
+            env, NullPointerException, "signature.getSignatureBytes()");
         goto cleanup_sign_buf;
     }
 

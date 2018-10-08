@@ -12,6 +12,7 @@
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
 #include <java/lang/IllegalStateException.h>
+#include <java/lang/NullPointerException.h>
 #include <java/util/Optional.h>
 #include <java/util/UUID.h>
 #include <string.h>
@@ -39,6 +40,13 @@ Java_com_velopayments_blockchain_client_AgentConnection_getTransactionBlockIdNat
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vjblockchain not initialized.");
+        goto exit_return;
+    }
+
+    /* verify that the txnId parameter is not null. */
+    if (NULL == txnId)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "txnId");
         goto exit_return;
     }
 

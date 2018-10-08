@@ -13,6 +13,7 @@
 #include <java/lang/IllegalStateException.h>
 #include <java/lang/IllegalArgumentException.h>
 #include <java/lang/Integer.h>
+#include <java/lang/NullPointerException.h>
 #include <java/util/AbstractMap_SimpleEntry.h>
 #include <java/util/LinkedList.h>
 #include <string.h>
@@ -42,6 +43,22 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
+        return NULL;
+    }
+
+    /* verify that the signer_id parameter is not null. */
+    if (NULL == signer_id)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "signerId");
+        return NULL;
+    }
+
+    /* verify that the private_key parameter is not null. */
+    if (NULL == private_key)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "privateKey");
         return NULL;
     }
 

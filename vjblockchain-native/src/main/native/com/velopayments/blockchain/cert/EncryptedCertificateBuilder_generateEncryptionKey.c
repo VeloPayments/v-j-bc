@@ -14,6 +14,7 @@
 
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalStateException.h"
+#include "../../../../java/lang/NullPointerException.h"
 
 /*
  * Class:     com_velopayments_blockchain_cert_EncryptedCertificateBuilder
@@ -64,7 +65,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_generateEncryp
     jbyteArray keyArray = (*env)->NewByteArray(env, 32);
     if (NULL == keyArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException, "bad keyArray alloc.");
+        (*env)->ThrowNew(env, NullPointerException, "bad keyArray alloc.");
         goto dispose_prng;
     }
 
@@ -72,7 +73,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_generateEncryp
     jbyte* keyArrayData = (*env)->GetByteArrayElements(env, keyArray, NULL);
     if (NULL == keyArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "keyArray data could not be dereferenced.");
         goto dispose_prng;
     }
