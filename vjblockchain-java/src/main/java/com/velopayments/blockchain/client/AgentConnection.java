@@ -177,6 +177,19 @@ public class AgentConnection {
     }
 
     /**
+     * Get the block id for a given block height.
+     *
+     * @param height    The block height of this block ID.
+     *
+     * @return the block UUID at the given height, or empty if not found.
+     */
+    public Optional<UUID>
+    getBlockIdByBlockHeight(long height) throws IOException {
+
+        return getBlockIdByBlockHeightNative(height);
+    }
+
+    /**
      * Get a transaction for a given UUID.
      *
      * Note - this method blocks until the given transaction is available.
@@ -189,6 +202,71 @@ public class AgentConnection {
             throws IOException {
 
         return getTransactionByIdNative(txnId);
+    }
+
+    /**
+     * Get the first transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the first transaction id for a given artifact id.
+     */
+    public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getFirstTransactionIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
+     * Get the last transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last transaction id for a given artifact id.
+     */
+    public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getLastTransactionIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
+     * Get the last block UUID containing a transaction for a given artifact
+     * UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last block id containing a transaction for a given artifact
+     * id.
+     */
+    public Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
+            throws IOException {
+
+        return getLastBlockIdForArtifactByIdNative(artifactId);
+    }
+
+    /**
+     * Get the previous transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the previous transaction ID associated with this transaction ID.
+     */
+    public Optional<UUID>
+    getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException {
+        return getPreviousTransactionIdForTransactionByIdNative(txnId);
+    }
+
+    /**
+     * Get the next transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the next transaction ID associated with this transaction ID.
+     */
+    public Optional<UUID>
+    getNextTransactionIdForTransactionById(UUID txnId) throws IOException {
+        return getNextTransactionIdForTransactionByIdNative(txnId);
     }
 
     /**
@@ -233,6 +311,16 @@ public class AgentConnection {
      */
     private native Optional<Certificate>
     getBlockByIdNative(UUID blockId) throws IOException;
+
+    /**
+     * Get the block id for a given block height.
+     *
+     * @param height    The block height of this block ID.
+     *
+     * @return the block UUID at the given height, or empty if not found.
+     */
+    private native Optional<UUID>
+    getBlockIdByBlockHeightNative(long height) throws IOException;
 
     /**
      * Get a transaction for a given UUID.
@@ -282,6 +370,61 @@ public class AgentConnection {
      */
     private native Optional<UUID>
     getTransactionBlockIdNative(UUID txnId) throws IOException;
+
+    /**
+     * Get the first transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the first transaction id for a given artifact id.
+     */
+    private native Optional<UUID>
+    getFirstTransactionIdForArtifactByIdNative(UUID artifactId)
+    throws IOException;
+
+    /**
+     * Get the last transaction UUID for a given artifact UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last transaction id for a given artifact id.
+     */
+    private native Optional<UUID>
+    getLastTransactionIdForArtifactByIdNative(UUID artifactId)
+    throws IOException;
+
+    /**
+     * Get the last block UUID containing a transaction for a given artifact
+     * UUID.
+     *
+     * @param artifactId The artifact ID to look up.
+     *
+     * @return the last block id containing a transaction for a given artifact
+     * id.
+     */
+    private native Optional<UUID>
+    getLastBlockIdForArtifactByIdNative(UUID artifactId) throws IOException;
+
+    /**
+     * Get the previous transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the previous transaction ID associated with this transaction ID.
+     */
+    private native Optional<UUID>
+    getPreviousTransactionIdForTransactionByIdNative(UUID txnId)
+        throws IOException;
+
+    /**
+     * Get the next transaction ID associated with the given transaction ID.
+     *
+     * @param txnId The transaction ID to look up.
+     *
+     * @return the next transaction ID associated with this transaction ID.
+     */
+    private native Optional<UUID>
+    getNextTransactionIdForTransactionByIdNative(UUID txnId) throws IOException;
 
     static {
         Initializer.init();

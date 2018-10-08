@@ -118,13 +118,17 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("c8ff8b66-7238-45ef-8abb-4259940a0327");
 
         AgentConnection conn = null;
 
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId, zeroUUID, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
         } finally {
@@ -141,13 +145,17 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("a726da7b-addf-4bff-abb9-54573e65c538");
 
         AgentConnection conn = null;
 
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId, zeroUUID, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
@@ -174,6 +182,8 @@ public class AgentConnectionTest {
         File dbLoc = tempDir.newFolder();
         UUID dummyTxnId =
             UUID.fromString("59c1b17f-6d34-4f28-b227-dd9609468aed");
+        UUID dummyArtifactId =
+            UUID.fromString("abc2aaca-8f46-4ee9-917c-1ec9205bfb90");
 
         AgentConnection conn = null;
 
@@ -185,7 +195,9 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getTransactionById(dummyTxnId).isPresent(), is(false));
 
-            Certificate dummyTxn = makeDummyTxn(DUMMY_TXN_TYPE, dummyTxnId);
+            Certificate dummyTxn =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId, zeroUUID, dummyArtifactId);
             Future<TransactionStatus> stat = conn.submit(dummyTxn);
             assertThat(stat, is(notNullValue()));
 
@@ -218,13 +230,13 @@ public class AgentConnectionTest {
 
             /* given the zero UUID, the next UUID should be the newBlockId. */
             assertThat(
-                conn.getNextBlockId(zeroUUID).orElseThrow(
+                conn.getNextBlockId(CertificateType.ROOT_BLOCK).orElseThrow(
                     () -> new IOException()),
                 is(newBlockId));
 
             /* given the zero UUID, the previous UUID should be empty. */
             assertThat(
-                conn.getPrevBlockId(zeroUUID).isPresent(),
+                conn.getPrevBlockId(CertificateType.ROOT_BLOCK).isPresent(),
                 is(false));
 
             /* given the new block UUID, the previous UUID should be the zero
@@ -232,7 +244,7 @@ public class AgentConnectionTest {
             assertThat(
                 conn.getPrevBlockId(newBlockId).orElseThrow(
                     () -> new IOException()),
-                is(zeroUUID));
+                is(CertificateType.ROOT_BLOCK));
 
             /* given the new block UUID, the next UUID should be empty. */
             assertThat(
@@ -252,6 +264,330 @@ public class AgentConnectionTest {
         }
     }
 
+    /**
+     * Test that, by default, getLastTransactionIdForArtifactById() returns
+     * Empty when a an artifact with the given ID does not exist.
+     */
+    @Test
+    public void getLastTransactionIdForArtifactByIdReturnsEmpty()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID missingArtifactId =
+            UUID.fromString("a7b7ec6f-dc9b-4fce-b44d-f35f6572af32");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(missingArtifactId)
+                    .isPresent(),
+                is(false));
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, if we insert a transaction and commit, we can query it by
+     * artifact ID.
+     */
+    @Test
+    public void getTransactionIdForArtifactById()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID dummyTxnId =
+            UUID.fromString("aab2bf7d-e6c2-45d9-83a6-137f9fd3e9f1");
+        UUID dummyArtifactId =
+            UUID.fromString("ca3fb085-f0b4-416a-a9ef-dd75a979b0a1");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            /* Precondition: querying by this artifact id returns nothing. */
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(false));
+
+            Certificate dummyTxn =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId, zeroUUID, dummyArtifactId);
+            Future<TransactionStatus> stat = conn.submit(dummyTxn);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* the status future is now complete. */
+            assertThat(stat.isDone(), is(true));
+            /* the transaction succeeded. */
+            assertThat(stat.get(), is(TransactionStatus.SUCCEEDED));
+
+            /* we should be able to get this transaction ID using the artifact
+             * ID. */
+            Optional<UUID> firstUUID =
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId);
+            assertThat(firstUUID.isPresent(), is(true));
+            assertThat(firstUUID.get(), is(dummyTxnId));
+            Optional<UUID> lastUUID =
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId);
+            assertThat(lastUUID.isPresent(), is(true));
+            assertThat(lastUUID.get(), is(dummyTxnId));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, if we insert three transactions and commit, we can query the
+     * next and previous transaction IDs for each.
+     */
+    @Test
+    public void getPreviousNextTransactionIds()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID dummyTxnId1 =
+            UUID.fromString("02c00a97-f0f3-4923-8c91-5e8e52536320");
+        UUID dummyTxnId2 =
+            UUID.fromString("5904f374-16c5-493d-b069-2d4e7bac216e");
+        UUID dummyTxnId3 =
+            UUID.fromString("e942a15b-7058-430a-8d83-c4fb6eac1d67");
+        UUID dummyArtifactId =
+            UUID.fromString("53e13c8c-7ca4-4f99-9886-aa08035347ed");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            /* Precondition: querying the next UUIDs for each transaction ID
+             * returns nothing. */
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId1)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId2)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId3)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId1)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId2)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId3)
+                    .isPresent(),
+                is(false));
+
+            Certificate dummyTxn1 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId1, zeroUUID, dummyArtifactId);
+            Future<TransactionStatus> stat1 = conn.submit(dummyTxn1);
+            Certificate dummyTxn2 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId2, dummyTxnId1, dummyArtifactId);
+            Future<TransactionStatus> stat2 = conn.submit(dummyTxn2);
+            Certificate dummyTxn3 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId3, dummyTxnId2, dummyArtifactId);
+            Future<TransactionStatus> stat3 = conn.submit(dummyTxn3);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* the status futures are now complete. */
+            assertThat(stat1.isDone(), is(true));
+            assertThat(stat2.isDone(), is(true));
+            assertThat(stat3.isDone(), is(true));
+            /* the transactions succeeded. */
+            assertThat(stat1.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat2.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat3.get(), is(TransactionStatus.SUCCEEDED));
+
+            /* we should be able to query the next and previous IDs for these
+             * IDs. */
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId1)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId1).get(),
+                is(dummyTxnId2));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId2)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId2).get(),
+                is(dummyTxnId3));
+            assertThat(
+                conn.getNextTransactionIdForTransactionById(dummyTxnId3)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId1)
+                    .isPresent(),
+                is(false));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId2)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId2)
+                    .get(),
+                is(dummyTxnId1));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId3)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getPreviousTransactionIdForTransactionById(dummyTxnId3)
+                    .get(),
+                is(dummyTxnId2));
+
+            /* we should be able to query the first and last transaction IDs for
+             * this artifact. */
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getFirstTransactionIdForArtifactById(dummyArtifactId).get(),
+                is(dummyTxnId1));
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(true));
+            assertThat(
+                conn.getLastTransactionIdForArtifactById(dummyArtifactId).get(),
+                is(dummyTxnId3));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * The block id at height zero is always the root block.
+     */
+    @Test
+    public void getBlockHeightZero() throws Exception {
+        File dbLoc = tempDir.newFolder();
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            assertThat(
+                conn.getBlockIdByBlockHeight(0).get(),
+                is(CertificateType.ROOT_BLOCK));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, if we create blocks, we can query them by their block heights.
+     */
+    @Test
+    public void getBlockHeight()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID dummyTxnId1 =
+            UUID.fromString("aab2bf7d-e6c2-45d9-83a6-137f9fd3e9f1");
+        UUID dummyTxnId2 =
+            UUID.fromString("3b670c71-4ad6-46d6-8c1d-23832bf372e8");
+        UUID dummyTxnId3 =
+            UUID.fromString("869be711-f7a3-47b0-aafc-7a4a0a6aac8a");
+        UUID dummyArtifactId =
+            UUID.fromString("ca3fb085-f0b4-416a-a9ef-dd75a979b0a1");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            Certificate dummyTxn1 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId1, zeroUUID, dummyArtifactId);
+            Future<TransactionStatus> stat1 = conn.submit(dummyTxn1);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            Certificate dummyTxn2 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId2, dummyTxnId1, dummyArtifactId);
+            Future<TransactionStatus> stat2 = conn.submit(dummyTxn2);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            Certificate dummyTxn3 =
+                makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId3, dummyTxnId2, dummyArtifactId);
+            Future<TransactionStatus> stat3 = conn.submit(dummyTxn3);
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* the status futures are now complete. */
+            assertThat(stat1.isDone(), is(true));
+            assertThat(stat2.isDone(), is(true));
+            assertThat(stat3.isDone(), is(true));
+            /* the transactions succeeded. */
+            assertThat(stat1.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat2.get(), is(TransactionStatus.SUCCEEDED));
+            assertThat(stat3.get(), is(TransactionStatus.SUCCEEDED));
+
+            /* get the block IDs by the transaction ID. */
+            Optional<UUID> blockIdO1 = conn.getTransactionBlockId(dummyTxnId1);
+            Optional<UUID> blockIdO2 = conn.getTransactionBlockId(dummyTxnId2);
+            Optional<UUID> blockIdO3 = conn.getTransactionBlockId(dummyTxnId3);
+
+            /* these should be valid. */
+            assertThat(blockIdO1.isPresent(), is(true));
+            assertThat(blockIdO2.isPresent(), is(true));
+            assertThat(blockIdO3.isPresent(), is(true));
+
+            /* get these IDs. */
+            UUID blockId1 = blockIdO1.get();
+            UUID blockId2 = blockIdO2.get();
+            UUID blockId3 = blockIdO3.get();
+
+            /* the IDs we return by block height should be valid. */
+            assertThat(conn.getBlockIdByBlockHeight(1).isPresent(), is(true));
+            assertThat(conn.getBlockIdByBlockHeight(2).isPresent(), is(true));
+            assertThat(conn.getBlockIdByBlockHeight(3).isPresent(), is(true));
+
+            /* these IDs should match our block IDs. */
+            assertThat(conn.getBlockIdByBlockHeight(1).get(), is(blockId1));
+            assertThat(conn.getBlockIdByBlockHeight(2).get(), is(blockId2));
+            assertThat(conn.getBlockIdByBlockHeight(3).get(), is(blockId3));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
     static {
         PRIVATE_KEY =
             new EncryptionPrivateKey(convShorts(PRIVATE_KEY_SHORTS).array());
@@ -263,12 +599,15 @@ public class AgentConnectionTest {
     /**
      * Helper method to make a dummy transaction with a given UUID.
      */
-    private Certificate makeDummyTxn(UUID txnType, UUID txnId) {
+    private Certificate makeDummyTxn(
+            UUID txnType, UUID txnId, UUID prevTxnId, UUID artifactId) {
         CertificateBuilder builder =
             CertificateBuilder.createCertificateBuilder(
                 CertificateType.TRANSACTION);
         builder.addUUID(Field.TRANSACTION_TYPE, txnType);
+        builder.addUUID(Field.ARTIFACT_ID, artifactId);
         builder.addUUID(Field.CERTIFICATE_ID, txnId);
+        builder.addUUID(Field.PREVIOUS_CERTIFICATE_ID, prevTxnId);
         return builder.sign(entityId, PRIVATE_SIGNING_KEY);
     }
 

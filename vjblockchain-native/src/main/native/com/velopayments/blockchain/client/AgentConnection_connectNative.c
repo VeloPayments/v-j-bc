@@ -11,6 +11,7 @@
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
 #include <java/lang/IllegalStateException.h>
+#include <java/lang/NullPointerException.h>
 #include <string.h>
 #include <vpr/parameters.h>
 
@@ -40,12 +41,20 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         goto exit_return;
     }
 
+    /* verify that the connect parameter is not null. */
+    if (NULL == connect)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "connect");
+        retval = 0;
+        goto exit_return;
+    }
+
     /* create the agent connection details structure. */
     agent_connection_details_t* details = (agent_connection_details_t*)
         allocate(&alloc_opts, sizeof(agent_connection_details_t));
     if (NULL == details)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "Could not allocate memory for agent_connection.");
         retval = 0;
         goto exit_return;
@@ -76,8 +85,8 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         goto free_environment;
     }
 
-    /* We need 4 database handles. */
-    if (0 != mdb_env_set_maxdbs(details->env, 4))
+    /* We need 5 database handles. */
+    if (0 != mdb_env_set_maxdbs(details->env, 5))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not update the maximum database handles.");
@@ -90,7 +99,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         (*env)->GetStringUTFChars(env, connect, NULL);
     if (NULL == connectionStringBytes)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "Could not get the connection string bytes.");
         retval = 0;
         goto free_environment;
@@ -127,6 +136,16 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
         goto rollback_txn;
     }
 
+    /* open the artifact database. */
+    if (0 !=
+            mdb_dbi_open(txn, "artifact.db", MDB_CREATE, &details->artifact_db))
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not open artifact database.");
+        retval = 0;
+        goto rollback_txn;
+    }
+
     /* open the block database. */
     if (0 != mdb_dbi_open(txn, "block.db", MDB_CREATE, &details->block_db))
     {
@@ -141,6 +160,17 @@ Java_com_velopayments_blockchain_client_AgentConnection_connectNative(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Could not open transaction database.");
+        retval = 0;
+        goto rollback_txn;
+    }
+
+    /* open the block height database. */
+    if (0 !=
+            mdb_dbi_open(
+                txn, "bheight.db", MDB_CREATE, &details->block_height_db))
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not open block height database.");
         retval = 0;
         goto rollback_txn;
     }

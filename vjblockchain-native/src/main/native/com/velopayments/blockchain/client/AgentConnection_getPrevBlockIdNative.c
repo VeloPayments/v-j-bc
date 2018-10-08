@@ -11,11 +11,13 @@
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
 #include <java/lang/IllegalStateException.h>
+#include <java/lang/NullPointerException.h>
 #include <java/util/Optional.h>
 #include <java/util/UUID.h>
 #include <string.h>
 #include <util/uuid_conv.h>
 #include <vpr/parameters.h>
+#include <vccert/certificate_types.h>
 
 /*
  * Class:     com_velopayments_blockchain_client_AgentConnection
@@ -38,6 +40,13 @@ Java_com_velopayments_blockchain_client_AgentConnection_getPrevBlockIdNative(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vjblockchain not initialized.");
+        goto exit_return;
+    }
+
+    /* verify that the blockId parameter is not null. */
+    if (NULL == blockId)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "blockId");
         goto exit_return;
     }
 
@@ -89,6 +98,14 @@ Java_com_velopayments_blockchain_client_AgentConnection_getPrevBlockIdNative(
     block_record_t* rec = (block_record_t*)val.mv_data;
 
     /* is this the root block? */
+    if (!memcmp(rec->block_uuid, vccert_certificate_type_uuid_root_block, 16))
+    {
+        retval =
+            (*env)->CallStaticObjectMethod(env, Optional, Optional_empty);
+        goto cleanup_txn;
+    }
+
+    /* is this the zero block? */
     uint8_t zero_uuid[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     if (!memcmp(rec->block_uuid, zero_uuid, 16))
     {

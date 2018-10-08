@@ -5,6 +5,8 @@ import com.velopayments.blockchain.crypt.SigningPrivateKey;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -445,5 +447,123 @@ public class CertificateBuilderTest {
 
         //check field TEST_FIELD
         assertThat(r.getFirst(TEST_FIELD).asDate(), is(TEST_VALUE));
+    }
+
+    /**
+     * We do not support ZonedDateTime for non-custom fields.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void buildZonedDateTimeFailsOnReservedDates() throws Exception {
+        final UUID CERT_TYPE =
+            UUID.fromString("23b11e7f-4260-48b3-993e-6baf1df0e8dd");
+        final ZoneId TEST_ZONE = ZoneId.of("Europe/Paris");
+        ZonedDateTime TEST_VALUE =
+            ZonedDateTime.now(TEST_ZONE);
+
+        TEST_VALUE = TEST_VALUE.minusNanos(TEST_VALUE.getNano());
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(CERT_TYPE);
+        /* this blows up with an exception. */
+        builder.addZonedDateTime(Field.CERTIFICATE_VALID_FROM, TEST_VALUE);
+    }
+
+    /**
+     * Test that we cannot turn a Date into a ZonedDateTime.
+     */
+    @Test(expected = FieldConversionException.class)
+    public void buildDateAndParseZonedDateTimeFails() throws Exception {
+        final UUID CERT_TYPE =
+            UUID.fromString("23b11e7f-4260-48b3-993e-6baf1df0e8dd");
+        final UUID ARTIFACT_TYPE =
+            UUID.fromString("897d4d04-d5d8-4bf4-b1d1-6884bb362a44");
+        final int TEST_FIELD = 0x4307;
+        final long BLOCK_HEIGHT = 66;
+        final ZoneId TEST_ZONE = ZoneId.of("Europe/Paris");
+        final Date TEST_VALUE = new Date(
+            new Date().toInstant().getEpochSecond() * 1000);
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(CERT_TYPE);
+        builder.addDate(TEST_FIELD, TEST_VALUE);
+
+        Certificate outCert = builder.sign(PARENT_UUID, PRIVATE_KEY);
+        assertThat(outCert, is(notNullValue()));
+
+        CertificateParser p = new CertificateParser(outCert);
+
+        //create a mock certificate contract
+        CertificateContract mockContract = mock(CertificateContract.class);
+        when(
+            mockContract.verify(any(CertificateParser.class))).thenReturn(true);
+
+        //create a mock parser delegate
+        CertificateParserDelegate mockDelegate =
+            mock(CertificateParserDelegate.class);
+        //resolve the parent's UUID in the certificate chain
+        when(mockDelegate.resolveEntity(PARENT_UUID, BLOCK_HEIGHT)).thenReturn(
+            new EntityReference(
+                PARENT_ENCRYPTION_KEY, PARENT_SIGNING_KEY, ARTIFACT_TYPE));
+
+        //attestation should be successful
+        assertThat(p.attest(mockDelegate, BLOCK_HEIGHT, false), is(true));
+
+        //read the certificate
+        CertificateReader r = new CertificateReader(p);
+
+        //This fails with an exception.
+        ZonedDateTime boomVal = r.getFirst(TEST_FIELD).asZonedDateTime();
+    }
+
+    /**
+     * Test that we can add a ZonedDateTime field to a certificate and parse it.
+     */
+    @Test
+    public void buildAndParseZonedDateTime() throws Exception {
+        final UUID CERT_TYPE =
+            UUID.fromString("23b11e7f-4260-48b3-993e-6baf1df0e8dd");
+        final UUID ARTIFACT_TYPE =
+            UUID.fromString("897d4d04-d5d8-4bf4-b1d1-6884bb362a44");
+        final int TEST_FIELD = 0x4307;
+        final long BLOCK_HEIGHT = 66;
+        final ZoneId TEST_ZONE = ZoneId.of("Europe/Paris");
+        ZonedDateTime TEST_VALUE =
+            ZonedDateTime.now(TEST_ZONE);
+
+        TEST_VALUE = TEST_VALUE.minusNanos(TEST_VALUE.getNano());
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(CERT_TYPE);
+        builder.addZonedDateTime(TEST_FIELD, TEST_VALUE);
+
+        Certificate outCert = builder.sign(PARENT_UUID, PRIVATE_KEY);
+        assertThat(outCert, is(notNullValue()));
+
+        CertificateParser p = new CertificateParser(outCert);
+
+        //create a mock certificate contract
+        CertificateContract mockContract = mock(CertificateContract.class);
+        when(
+            mockContract.verify(any(CertificateParser.class))).thenReturn(true);
+
+        //create a mock parser delegate
+        CertificateParserDelegate mockDelegate =
+            mock(CertificateParserDelegate.class);
+        //resolve the parent's UUID in the certificate chain
+        when(mockDelegate.resolveEntity(PARENT_UUID, BLOCK_HEIGHT)).thenReturn(
+            new EntityReference(
+                PARENT_ENCRYPTION_KEY, PARENT_SIGNING_KEY, ARTIFACT_TYPE));
+
+        //attestation should be successful
+        assertThat(p.attest(mockDelegate, BLOCK_HEIGHT, false), is(true));
+
+        //read the certificate
+        CertificateReader r = new CertificateReader(p);
+
+        //check field TEST_FIELD
+        assertThat(r.getFirst(TEST_FIELD)
+                    .asZonedDateTime()
+                    .withZoneSameInstant(TEST_ZONE),
+                    is(TEST_VALUE));
     }
 }

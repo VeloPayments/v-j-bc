@@ -1,39 +1,49 @@
 /**
- * \file AgentConnection_getTransactionBlockIdNative.c
+ * \file AgentConnection_getBlockIdByBlockHeightNative.c
  *
- * Given a transaction UUID, return the block UUID associated with this
- * transaction.
+ * Get the Block ID associated with a given block height.
  *
  * \copyright 2018 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
+#include <com/velopayments/blockchain/cert/Certificate.h>
 #include <com/velopayments/blockchain/client/AgentConnection.h>
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
+#include <java/lang/IllegalArgumentException.h>
 #include <java/lang/IllegalStateException.h>
-#include <java/lang/NullPointerException.h>
 #include <java/util/Optional.h>
-#include <java/util/UUID.h>
 #include <string.h>
 #include <util/uuid_conv.h>
+#include <vccert/certificate_types.h>
 #include <vpr/parameters.h>
 
 /*
  * Class:     com_velopayments_blockchain_client_AgentConnection
- * Method:    getTransactionBlockIdNative
- * Signature: (Ljava/util/UUID;)Ljava/util/Optional;
+ * Method:    getBlockIdByBlockHeightNative
+ * Signature: (J)Ljava/util/Optional;
  */
-JNIEXPORT jobject JNICALL
-Java_com_velopayments_blockchain_client_AgentConnection_getTransactionBlockIdNative(
-    JNIEnv* env, jobject that, jobject txnId)
+JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnection_getBlockIdByBlockHeightNative(
+    JNIEnv* env, jobject that, jlong height)
 {
     jobject retval = NULL;
 
-    /* function contract enforcement */
+    /* function contract enforcement. */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
     MODEL_ASSERT(NULL != that);
-    MODEL_ASSERT(NULL != txnId);
+    MODEL_ASSERT(height >= 0);
+
+    /* verify the block height. */
+    if (height < 0)
+    {
+        (*env)->ThrowNew(env, IllegalArgumentException,
+                         "Height must be greater than or equal to zero.");
+        goto exit_return;
+    }
+
+    /* get the block height as a 64-bit unsigned value. */
+    uint64_t block_height = (uint64_t)height;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!vjblockchain_initialized)
@@ -43,10 +53,21 @@ Java_com_velopayments_blockchain_client_AgentConnection_getTransactionBlockIdNat
         goto exit_return;
     }
 
-    /* verify that the txnId parameter is not null. */
-    if (NULL == txnId)
+    /* if the block height is zero, then return the root block ID. */
+    if (0 == block_height)
     {
-        (*env)->ThrowNew(env, NullPointerException, "txnId");
+        jobject blockId =
+            uuidFromBytes(env, vccert_certificate_type_uuid_root_block);
+        if (NULL == blockId)
+        {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "Could not create block id.");
+            goto exit_return;
+        }
+
+        retval =
+            (*env)->CallStaticObjectMethod(env, Optional, Optional_of, blockId);
+
         goto exit_return;
     }
 
@@ -73,31 +94,34 @@ Java_com_velopayments_blockchain_client_AgentConnection_getTransactionBlockIdNat
         goto exit_return;
     }
 
-    /* convert the txnId into a C array. */
-    uint8_t txn_id_bytes[16];
-    uuidToBytes(env, txnId, txn_id_bytes);
-
     /* query the database. */
-    MDB_val key; key.mv_size = 16; key.mv_data = txn_id_bytes;
+    MDB_val key; key.mv_size = 8; key.mv_data = &block_height;
     MDB_val val; memset(&val, 0, sizeof(val));
-    int dbstat = mdb_get(txn, details->txn_db, &key, &val);
+    int dbstat = mdb_get(txn, details->block_height_db, &key, &val);
     if (MDB_NOTFOUND == dbstat)
     {
-        retval =
-            (*env)->CallStaticObjectMethod(env, Optional, Optional_empty);
+        retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_empty);
         goto cleanup_txn;
     }
     else if (0 != dbstat)
     {
         (*env)->ThrowNew(env, IllegalStateException,
-                         "Could not query block database.");
+                         "Could not query transaction database.");
         goto cleanup_txn;
     }
 
-    /* success */
-    transaction_record_t* rec = (transaction_record_t*)val.mv_data;
-    jobject uuid = uuidFromBytes(env, rec->block_uuid);
-    retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, uuid);
+    /* create a UUID from a given set of ID bytes. */
+    jobject blockId = uuidFromBytes(env, (const uint8_t*)val.mv_data);
+    if (NULL == blockId)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Could not create block id.");
+        goto cleanup_txn;
+    }
+
+    /* success. */
+    retval =
+        (*env)->CallStaticObjectMethod(env, Optional, Optional_of, blockId);
 
 cleanup_txn:
     mdb_txn_abort(txn);

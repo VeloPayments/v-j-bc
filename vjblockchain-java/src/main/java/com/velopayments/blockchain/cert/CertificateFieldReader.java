@@ -2,6 +2,9 @@ package com.velopayments.blockchain.cert;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.UUID;
 
@@ -129,6 +132,28 @@ public class CertificateFieldReader {
         }
 
         return new Date(buf.getLong() * 1000);
+    }
+
+    /**
+     * Attempt to convert a field to a ZonedDateTime value.
+     *
+     * @throws FieldConversionException if this field cannot be converted to a
+     *                                  ZonedDateTime value (e.g. it is too
+     *                                  small for a date value)
+     */
+    public ZonedDateTime asZonedDateTime() throws FieldConversionException {
+        if (buf.remaining() < 12 || buf.remaining() > 12) {
+            throw new FieldConversionException(
+                "Field cannot be converted to a ZonedDateTime.");
+        }
+
+        long timeEpochSeconds = buf.getLong(0);
+        int timeOffset = buf.getInt(8);
+
+        return
+            ZonedDateTime.ofInstant(
+                Instant.ofEpochSecond(timeEpochSeconds),
+                ZoneOffset.ofTotalSeconds(timeOffset));
     }
 
     /**

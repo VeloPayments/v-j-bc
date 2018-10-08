@@ -11,6 +11,7 @@
 #include <com/velopayments/blockchain/client/AgentConnectionPrivate.h>
 #include <com/velopayments/blockchain/init/init.h>
 #include <java/lang/IllegalStateException.h>
+#include <java/lang/NullPointerException.h>
 #include <string.h>
 #include <vpr/parameters.h>
 
@@ -39,7 +40,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_closeNative(
     agent_connection_details_t* details = (agent_connection_details_t*)handle;
     if (NULL == details)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "Attempt to close invalid handle.");
     }
 
@@ -48,8 +49,10 @@ Java_com_velopayments_blockchain_client_AgentConnection_closeNative(
 
     /* close dbi handles. */
     mdb_dbi_close(details->env, details->master_db);
+    mdb_dbi_close(details->env, details->artifact_db);
     mdb_dbi_close(details->env, details->txn_db);
     mdb_dbi_close(details->env, details->block_db);
+    mdb_dbi_close(details->env, details->block_height_db);
 
     /* close database environment. */
     mdb_env_close(details->env);

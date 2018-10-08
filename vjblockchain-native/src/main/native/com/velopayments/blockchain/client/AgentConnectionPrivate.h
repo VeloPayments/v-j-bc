@@ -22,8 +22,10 @@ typedef struct agent_connection_details
 {
     MDB_env* env;
     MDB_dbi master_db;
+    MDB_dbi artifact_db;
     MDB_dbi block_db;
     MDB_dbi txn_db;
+    MDB_dbi block_height_db;
 } agent_connection_details_t;
 
 /**
@@ -33,8 +35,22 @@ typedef struct transaction_record
 {
     uint8_t transaction_uuid[16];
     uint8_t block_uuid[16];
+    uint8_t prev_transaction_uuid[16];
+    uint8_t next_transaction_uuid[16];
     size_t transaction_size;
 } transaction_record_t;
+
+/**
+ * \brief Internal structure holding the artifact record for an artifact.
+ */
+typedef struct artifact_record
+{
+    uint8_t artifact_uuid[16];
+    uint8_t first_block_uuid[16];
+    uint8_t first_transaction_uuid[16];
+    uint8_t last_block_uuid[16];
+    uint8_t last_transaction_uuid[16];
+} artifact_record_t;
 
 /**
  * \brief Internal structure holding the block record for a block.

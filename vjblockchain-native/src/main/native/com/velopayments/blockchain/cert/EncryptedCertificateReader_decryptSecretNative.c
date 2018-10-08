@@ -17,6 +17,7 @@
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalStateException.h"
+#include "../../../../java/lang/NullPointerException.h"
 
 /*
  * Class:     com_velopayments_blockchain_cert_EncryptedCertificateReader
@@ -41,6 +42,9 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(NULL != localPrivateKey);
+    MODEL_ASSERT(NULL != peerPublicKey);
+    MODEL_ASSERT(NULL != encryptedKey);
 
     /* verify that the vjblockchain library has been initialized. */
     if (!vjblockchain_initialized)
@@ -50,11 +54,35 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
         return NULL;
     }
 
+    /* verify that the localPrivateKey parameter is not null. */
+    if (NULL == localPrivateKey)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "localPrivateKey");
+        return NULL;
+    }
+
+    /* verify that the peerPublicKey parameter is not null. */
+    if (NULL == peerPublicKey)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "peerPublicKey");
+        return NULL;
+    }
+
+    /* verify that the encryptedKey parameter is not null. */
+    if (NULL == encryptedKey)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "encryptedKey");
+        return NULL;
+    }
+
     /* get the buffer for the key array. */
     jbyte* keyArrayData = (*env)->GetByteArrayElements(env, encryptedKey, NULL);
     if (NULL == keyArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "key data read failure.");
         return NULL;
     }
@@ -64,7 +92,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
             env, localPrivateKey, EncryptionPrivateKey_getRawBytes);
     if (NULL == privateKeyArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "private key read failure.");
         goto keyArrayData_dispose ;
     }
@@ -74,7 +102,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
         (*env)->GetByteArrayElements(env, privateKeyArray, NULL);
     if (NULL == privateKeyArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "private key data read failure.");
         goto privateKeyArray_dispose;
     }
@@ -97,8 +125,8 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
             env, peerPublicKey, EncryptionPublicKey_getRawBytes);
     if (NULL == publicKeyArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "public key read failure.");
+        (*env)->ThrowNew(env, NullPointerException,
+                         "peerPublicKey.getRawBytes()");
         goto privateKeyBuffer_dispose;
     }
 
@@ -107,7 +135,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
         (*env)->GetByteArrayElements(env, publicKeyArray, NULL);
     if (NULL == publicKeyArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "public key data read failure.");
         goto publicKeyArray_dispose;
     }
@@ -159,7 +187,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
     jbyteArray outputArray = (*env)->NewByteArray(env, output_size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "outputArray creation failure.");
         goto ka_dispose;
     }
@@ -169,7 +197,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptSecretNa
         (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
+        (*env)->ThrowNew(env, NullPointerException,
                          "outputArray data read failure.");
         goto ka_dispose;
     }

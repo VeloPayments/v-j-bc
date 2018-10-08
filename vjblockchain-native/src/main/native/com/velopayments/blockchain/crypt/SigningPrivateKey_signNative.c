@@ -41,13 +41,21 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
         return NULL;
     }
     
+    /* verify that the message parameter is not null. */
+    if (NULL == message)
+    {
+        (*env)->ThrowNew(
+            env, NullPointerException, "message");
+        return NULL;
+    }
+
     /* get the raw bytes for this private key. */
     jobject private_key =
         (*env)->CallObjectMethod(env, that, SigningPrivateKey_getRawBytes);
     if (NULL == private_key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "private_key");
+            env, NullPointerException, "this.getRawBytes()");
         return NULL;
     }
 
@@ -101,7 +109,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == message_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message_array");
+            env, NullPointerException, "message.getRawBytes()");
         goto cleanup_sign;
     }
 
