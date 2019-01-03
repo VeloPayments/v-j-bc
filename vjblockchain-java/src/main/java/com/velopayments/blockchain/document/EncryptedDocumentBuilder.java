@@ -16,6 +16,9 @@ public class EncryptedDocumentBuilder {
     private byte[] secretKey;
     private InputStream encryptedDocStream;
 
+    /**
+     * Protected constructor.  The create*() static methods should be used.
+     */
     protected EncryptedDocumentBuilder(EncryptionKeyPair keyPair) {
         this.keyPair = keyPair;
         this.secretKey = generateEncryptionKey();
@@ -29,24 +32,41 @@ public class EncryptedDocumentBuilder {
     }
 
     /**
-     * Set the raw bytes of the document
+     * Set the document to be encrypted
      *
-     * @param docStream The document to be encrypted
-     * @return this builder for additional operations.
+     * @param docStream InputStream of the document to be encrypted
+     *
+     * @return this builder for additional operations
+     *
+     * @throws IOException if an I/O error occurs
      */
     public EncryptedDocumentBuilder withDocument(InputStream docStream) throws IOException {
 
-        // TODO: don't need IV
+        // TODO: used "chunked approach"
         encryptedDocStream = new ByteArrayInputStream(
                 encryptData(secretKey, ByteBuffer.allocate(8).array(), IOUtils.toByteArray(docStream)));
 
         return this;
     }
 
+    /**
+     * Create a shared secret
+     *
+     * @param publicKey public encryption key of the audience for this shared secret
+     *
+     * @return the shared secret
+     */
     public byte[] createEncryptedSharedSecret(EncryptionPublicKey publicKey) {
         return encryptKey(keyPair.getPrivateKey(), publicKey, secretKey);
     }
 
+    /**
+     * Emit an encrypted document
+     *
+     * @return an InputStream of the encrypted document
+     *
+     * @throws IllegalStateException if the document was not provided
+     */
     public InputStream emit() {
         if (encryptedDocStream==null) {
             throw new IllegalStateException("Document not provided");

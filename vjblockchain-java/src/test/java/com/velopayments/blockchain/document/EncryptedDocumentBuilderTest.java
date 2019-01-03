@@ -29,8 +29,7 @@ public class EncryptedDocumentBuilderTest {
 
         // create a reader
         EncryptedDocumentReader reader = new EncryptedDocumentReader(subscriberKey.getPrivateKey(),
-                creatorKey.getPublicKey(), encryptedDoc);
-        reader.loadSecretKey(sharedSecret);
+                creatorKey.getPublicKey(), sharedSecret, encryptedDoc);
 
         assertThat(IOUtils.toString(reader.getEncrypted(), StandardCharsets.UTF_8), is(plainTextDoc));
 

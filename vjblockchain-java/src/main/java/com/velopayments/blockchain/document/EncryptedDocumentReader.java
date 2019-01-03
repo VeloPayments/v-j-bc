@@ -11,34 +11,31 @@ import java.io.InputStream;
 
 public class EncryptedDocumentReader {
 
-    private EncryptionPrivateKey localPrivateKey;
-    private EncryptionPublicKey peerPublicKey;
     private byte[] secretKey;
     private InputStream encryptedDocStream;
 
+    /**
+     * Create an EncryptedDocumentReader from a private key, a public key, a shared secret
+     * and an InputStream.
+     *
+     * @param localPrivateKey     The private key of the entity reading this document.
+     * @param peerPublicKey       The public key of the peer that created this document.
+     * @param sharedSecret        The shared secret produced for the entity reading this document.
+     * @param encryptedDocStream  The document to be decrypted.
+     */
     public EncryptedDocumentReader(EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-                                   InputStream encryptedDocStream) {
-        this.localPrivateKey = localPrivateKey;
-        this.peerPublicKey = peerPublicKey;
+                                   byte[] sharedSecret, InputStream encryptedDocStream) {
+
+        this.secretKey = decryptSecretNative(localPrivateKey, peerPublicKey, sharedSecret);
         this.encryptedDocStream = encryptedDocStream;
     }
 
-    // TODO - maybe pass the audience public key in here ?
-    public void loadSecretKey(byte[] sharedSecret) {
-        secretKey = decryptSecretNative(localPrivateKey, peerPublicKey, sharedSecret);
-    }
-
     /**
-     * Get the encrypted document as an InputStream.
+     * Get the encrypted document as an InputStream.  Note the document is returned in decrypted form.
      *
      * @return an InputStream representing the encrypted document
-     * @throws IllegalStateException if the secret key has not been loaded
      */
     public InputStream getEncrypted() throws IOException {
-
-        if (null == secretKey) {
-            throw new IllegalStateException("Secret key must be loaded.");
-        }
 
         return new ByteArrayInputStream(decryptNative(secretKey, IOUtils.toByteArray(encryptedDocStream)));
     }
