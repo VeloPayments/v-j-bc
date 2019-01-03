@@ -1,6 +1,5 @@
 package com.velopayments.blockchain.cert;
 
-import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import java.util.List;

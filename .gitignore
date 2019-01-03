@@ -1,3 +1,9 @@
 target
 tags
 cscope*
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
