@@ -24,9 +24,10 @@
  * Method:    encryptData
  * Signature: ([B[B[B)[B
  */
-JNIEXPORT jbyteArray
-JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData
-  (JNIEnv *env, jclass UNUSED(clazz), jbyteArray key, jbyteArray iv, jbyteArray input)
+JNIEXPORT jbyteArray JNICALL
+Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
+    JNIEnv *env, jclass UNUSED(clazz), jbyteArray key, jbyteArray iv,
+    jbyteArray input)
 {
     jbyteArray retval = NULL;
 

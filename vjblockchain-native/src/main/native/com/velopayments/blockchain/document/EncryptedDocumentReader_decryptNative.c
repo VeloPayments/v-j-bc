@@ -24,8 +24,8 @@
  * Signature: ([B[B)[B
  */
 JNIEXPORT jbyteArray JNICALL
-Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptNative
-  (JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey, jbyteArray input)
+Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptNative(
+    JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey, jbyteArray input)
 {
     jbyteArray retval = NULL;
 

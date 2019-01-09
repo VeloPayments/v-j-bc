@@ -25,9 +25,9 @@
  * Signature: (Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;[B)[B
  */
  JNIEXPORT jbyteArray JNICALL
- Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptSecretNative
-   (JNIEnv *env, jclass UNUSED(clazz), jobject localPrivateKey,
-   jobject peerPublicKey, jbyteArray encryptedKey)
+ Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptSecretNative(
+    JNIEnv *env, jclass UNUSED(clazz), jobject localPrivateKey,
+    jobject peerPublicKey, jbyteArray encryptedKey)
 {
     jbyteArray retval = NULL;
 

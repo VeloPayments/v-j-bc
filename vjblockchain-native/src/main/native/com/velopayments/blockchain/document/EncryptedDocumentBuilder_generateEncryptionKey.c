@@ -22,8 +22,8 @@
  * Signature: ()[B
  */
 JNIEXPORT jbyteArray JNICALL
-Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_generateEncryptionKey
-  (JNIEnv * env, jclass UNUSED(clazz))
+Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_generateEncryptionKey(
+    JNIEnv * env, jclass UNUSED(clazz))
 {
     jbyteArray retval = NULL;
 

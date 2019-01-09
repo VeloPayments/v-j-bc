@@ -3,7 +3,6 @@ package com.velopayments.blockchain.document;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
-import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,9 +41,12 @@ public class EncryptedDocumentBuilder {
      */
     public EncryptedDocumentBuilder withDocument(InputStream docStream) throws IOException {
 
-        // TODO: used "chunked approach"
+        // TODO: used "chunked approach"  (BLOC-158)
+        byte[] docBytes = new byte[docStream.available()];
+        docStream.read(docBytes);
+
         encryptedDocStream = new ByteArrayInputStream(
-                encryptData(secretKey, ByteBuffer.allocate(8).array(), IOUtils.toByteArray(docStream)));
+            encryptData(secretKey, ByteBuffer.allocate(8).array(), docBytes));
 
         return this;
     }

@@ -3,7 +3,6 @@ package com.velopayments.blockchain.document;
 
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
-import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -37,7 +36,10 @@ public class EncryptedDocumentReader {
      */
     public InputStream getEncrypted() throws IOException {
 
-        return new ByteArrayInputStream(decryptNative(secretKey, IOUtils.toByteArray(encryptedDocStream)));
+        byte[] encryptedDocBytes = new byte[encryptedDocStream.available()];
+        encryptedDocStream.read(encryptedDocBytes);
+
+        return new ByteArrayInputStream(decryptNative(secretKey, encryptedDocBytes));
     }
 
 
