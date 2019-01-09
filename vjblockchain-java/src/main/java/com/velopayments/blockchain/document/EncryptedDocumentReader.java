@@ -5,6 +5,7 @@ import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -30,18 +31,39 @@ public class EncryptedDocumentReader {
     }
 
     /**
-     * Get the encrypted document as an InputStream.  Note the document is returned in decrypted form.
+     * Get the encrypted document as an InputStream.  Note the document is
+     * returned in decrypted form.
      *
      * @return an InputStream representing the encrypted document
      */
     public InputStream getEncrypted() throws IOException {
 
-        byte[] encryptedDocBytes = new byte[encryptedDocStream.available()];
-        encryptedDocStream.read(encryptedDocBytes);
-
-        return new ByteArrayInputStream(decryptNative(secretKey, encryptedDocBytes));
+        return new ByteArrayInputStream(
+                decryptNative(secretKey, inputStreamToByteArray(encryptedDocStream)));
     }
 
+    /**
+     * Convert an InputStream into a byte array
+     * Note - with Java9 this can be replaced with
+     *   byte[] array = is.readAllBytes();
+     *
+     * @param is InputStream to be read into the byte array
+     *
+     * @return byte array containing the contents of the InputStream
+     *
+     * @throws IOException
+     */
+    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        while (true) {
+            int r = is.read(buffer);
+            if (r == -1) break;
+            out.write(buffer, 0, r);
+        }
+
+        return out.toByteArray();
+    }
 
     /**
      * Recover the secret key from the given local private key, peer public key,

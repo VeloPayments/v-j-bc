@@ -5,6 +5,7 @@ import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -42,8 +43,7 @@ public class EncryptedDocumentBuilder {
     public EncryptedDocumentBuilder withDocument(InputStream docStream) throws IOException {
 
         // TODO: used "chunked approach"  (BLOC-158)
-        byte[] docBytes = new byte[docStream.available()];
-        docStream.read(docBytes);
+        byte[] docBytes = inputStreamToByteArray(docStream);
 
         encryptedDocStream = new ByteArrayInputStream(
             encryptData(secretKey, ByteBuffer.allocate(8).array(), docBytes));
@@ -76,6 +76,28 @@ public class EncryptedDocumentBuilder {
         return encryptedDocStream;
     }
 
+    /**
+     * Convert an InputStream into a byte array
+     * Note - with Java9 this can be replaced with
+     *   byte[] array = is.readAllBytes();
+     *
+     * @param is InputStream to be read into the byte array
+     *
+     * @return byte array containing the contents of the InputStream
+     *
+     * @throws IOException
+     */
+    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        while (true) {
+            int r = is.read(buffer);
+            if (r == -1) break;
+            out.write(buffer, 0, r);
+        }
+
+        return out.toByteArray();
+    }
 
     /**
      * Generate an encryption key suitable for this builder.
