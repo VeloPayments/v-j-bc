@@ -3,6 +3,12 @@ Changelog
 
 The following changelog catalogues changes between tagged releases.
 
+Release 0.1.3
+-------------
+
+* Added EncryptedDocumentBuilder and EncryptedDocumentReader. 
+
+
 Release 0.1.2
 -------------
 

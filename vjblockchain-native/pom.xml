@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.velopayments.blockchain</groupId>
         <artifactId>vjblockchain-parent</artifactId>
-        <version>0.1.2</version>
+        <version>0.1.3</version>
     </parent>
 
     <properties>
@@ -52,6 +52,9 @@
 
         <VJBLOCKCHAIN_CFLAGS>-I ${project.build.directory}/vjblockchain-javah</VJBLOCKCHAIN_CFLAGS>
 
+        <!-- include flags for javah, overridden by profile -->
+        <JAVAH_INCLUDE_CFLAGS></JAVAH_INCLUDE_CFLAGS>
+
         <TOOLCHAIN_DIR>/opt/vctoolchain</TOOLCHAIN_DIR>
     </properties>
 
@@ -67,13 +70,24 @@
                 <TOOLCHAIN_DIR>${env.TOOLCHAIN_DIR}</TOOLCHAIN_DIR>
             </properties>
         </profile>
+        <profile>
+            <id>osx</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <JAVAH_INCLUDE_CFLAGS> -I ${env.JAVA_HOME}/include -I ${env.JAVA_HOME}/include/darwin</JAVAH_INCLUDE_CFLAGS>
+            </properties>
+        </profile>
     </profiles>
 
     <dependencies>
         <dependency>
             <groupId>com.velopayments.blockchain</groupId>
             <artifactId>vjblockchain-java</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
@@ -98,16 +112,16 @@
                     <javahOS>linux</javahOS>
 
                     <compilerProvider>generic-classic</compilerProvider>
-		    <compilerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</compilerExecutable>
+		            <compilerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</compilerExecutable>
                     <compilerStartOptions>
                         <compilerStartOption>
                             ${VPR_CFLAGS} ${VCCRYPT_CFLAGS} ${VCCERT_CFLAGS}
                             ${VCMODEL_CFLAGS} ${VCDB_CFLAGS} ${LMDB_CFLAGS}
-                            ${VJBLOCKCHAIN_CFLAGS}
+                            ${VJBLOCKCHAIN_CFLAGS} ${JAVAH_INCLUDE_CFLAGS}
                             -fPIC -Wall -Werror -Wextra -O2
                         </compilerStartOption>
                     </compilerStartOptions>
-		    <linkerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</linkerExecutable>
+		            <linkerExecutable>${TOOLCHAIN_DIR}/host/bin/gcc</linkerExecutable>
                     <linkerStartOptions>
                         <linkerStartOption>
                             -shared
@@ -141,6 +155,8 @@
                                 <javahClassName>com.velopayments.blockchain.cert.CertificateParser</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateBuilder</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateReader</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.document.EncryptedDocumentBuilder</javahClassName>
+                                <javahClassName>com.velopayments.blockchain.document.EncryptedDocumentReader</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.client.AgentConnection</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.db.DatabaseRegistry</javahClassName>
                                 <javahClassName>com.velopayments.blockchain.crypt.EncryptionKeyPair</javahClassName>
