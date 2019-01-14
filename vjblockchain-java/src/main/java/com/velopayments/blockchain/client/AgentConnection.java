@@ -32,7 +32,7 @@ public class AgentConnection {
         this.connect = connect;
         this.entityId = entityId;
         this.privateEncKey = privateEncKey;
-        this.submissionList = new LinkedList<TransactionSubmissionRequest>();
+        this.submissionList = new LinkedList<>();
         this.handle = connectNative(connect);
     }
 
