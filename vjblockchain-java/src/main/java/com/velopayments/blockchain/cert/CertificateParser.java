@@ -86,6 +86,15 @@ public class CertificateParser {
     }
 
     /**
+     * Get the underlying certificate being parsed.
+     *
+     * @return the underlying certificate being parsed.
+     */
+    public Certificate getCertificate() {
+        return Certificate.fromByteArray(certificate);
+    }
+
+    /**
      * Internal parse method for parsing a certificate.
      *
      * @param cert     The raw certificate to parse.
