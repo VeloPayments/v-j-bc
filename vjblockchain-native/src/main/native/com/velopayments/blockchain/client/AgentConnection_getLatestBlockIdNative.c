@@ -15,6 +15,7 @@
 #include <java/util/UUID.h>
 #include <string.h>
 #include <util/uuid_conv.h>
+#include <vccert/certificate_types.h>
 #include <vpr/parameters.h>
 
 /*
@@ -70,9 +71,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_getLatestBlockIdNative(
     int dbstat = mdb_get(txn, details->master_db, &key, &val);
     if (MDB_NOTFOUND == dbstat)
     {
-        retval =
-            (*env)->NewObject(
-                env, UUID, UUID_init, 0, 0);
+        retval = uuidFromBytes(env, vccert_certificate_type_uuid_root_block);
         goto cleanup_txn;
     }
     else if (0 != dbstat)

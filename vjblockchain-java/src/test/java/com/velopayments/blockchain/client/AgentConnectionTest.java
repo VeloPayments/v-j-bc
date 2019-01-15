@@ -13,7 +13,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
 
 public class AgentConnectionTest {
 
@@ -60,7 +59,7 @@ public class AgentConnectionTest {
         try {
             conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
 
-            assertThat(conn.getLatestBlockId(), is(zeroUUID));
+            assertThat(conn.getLatestBlockId(), is(CertificateType.ROOT_BLOCK));
         } finally {
             if (null != conn) conn.close();
         }
@@ -220,7 +219,7 @@ public class AgentConnectionTest {
             /* the latest block in the blockchain should not be the root block.
              */
             assertThat(
-                newBlockId, not(zeroUUID));
+                newBlockId, not(CertificateType.ROOT_BLOCK));
 
             /* we should be able to get the latest block from the agent
              * connection. */
@@ -228,19 +227,19 @@ public class AgentConnectionTest {
                 conn.getBlockById(newBlockId).isPresent(),
                 is(true));
 
-            /* given the zero UUID, the next UUID should be the newBlockId. */
+            /* given the root block UUID, the next UUID should be the newBlockId. */
             assertThat(
                 conn.getNextBlockId(CertificateType.ROOT_BLOCK).orElseThrow(
                     () -> new IOException()),
                 is(newBlockId));
 
-            /* given the zero UUID, the previous UUID should be empty. */
+            /* given the root block UUID, the previous UUID should be empty. */
             assertThat(
                 conn.getPrevBlockId(CertificateType.ROOT_BLOCK).isPresent(),
                 is(false));
 
-            /* given the new block UUID, the previous UUID should be the zero
-             * UUID. */
+            /* given the new block UUID, the previous UUID should be the root
+             * block UUID. */
             assertThat(
                 conn.getPrevBlockId(newBlockId).orElseThrow(
                     () -> new IOException()),
