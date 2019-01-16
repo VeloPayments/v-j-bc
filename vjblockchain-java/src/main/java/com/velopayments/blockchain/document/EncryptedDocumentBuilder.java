@@ -9,8 +9,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class EncryptedDocumentBuilder {
+
+    public static final int BUFFER_SIZE = 4096;
 
     private EncryptionKeyPair keyPair;
     private byte[] secretKey;
@@ -42,11 +45,24 @@ public class EncryptedDocumentBuilder {
      */
     public EncryptedDocumentBuilder withDocument(InputStream docStream) throws IOException {
 
-        // TODO: used "chunked approach"  (BLOC-158)
-        byte[] docBytes = inputStreamToByteArray(docStream);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        encryptedDocStream = new ByteArrayInputStream(
-            encryptData(secretKey, ByteBuffer.allocate(8).array(), docBytes));
+        int r,offset = 0;
+        byte[] buffer = new byte[BUFFER_SIZE];
+        byte[] iv = ByteBuffer.allocate(8).array(); // filled with 0
+        while ((r = docStream.read(buffer, 0, buffer.length)) != -1) {
+
+            byte[] chunk = Arrays.copyOf(buffer, r);
+
+            // encrypt chunk
+            byte[] encryptedChunk = encryptData(secretKey, iv, chunk, offset++);
+
+            // write encrypted bytes to outputstream
+            bos.write(encryptedChunk);
+        }
+
+        // convert (encrypted) outputstream to inputstream
+        encryptedDocStream = new ByteArrayInputStream(bos.toByteArray());
 
         return this;
     }
@@ -77,29 +93,6 @@ public class EncryptedDocumentBuilder {
     }
 
     /**
-     * Convert an InputStream into a byte array
-     * Note - with Java9 this can be replaced with
-     *   byte[] array = is.readAllBytes();
-     *
-     * @param is InputStream to be read into the byte array
-     *
-     * @return byte array containing the contents of the InputStream
-     *
-     * @throws IOException
-     */
-    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        while (true) {
-            int r = is.read(buffer);
-            if (r == -1) break;
-            out.write(buffer, 0, r);
-        }
-
-        return out.toByteArray();
-    }
-
-    /**
      * Generate an encryption key suitable for this builder.
      */
     private static native byte[] generateEncryptionKey();
@@ -110,10 +103,11 @@ public class EncryptedDocumentBuilder {
      * @param key   The key to use to encrypt this data.
      * @param iv    The initialization vector to use.
      * @param input The input to encrypt.
+     * @param offset
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
      */
-    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] input);
+    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] input, int offset);
 
     /**
      * Encrypt the key with a long-term key between two entities.

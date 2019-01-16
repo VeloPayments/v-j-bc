@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class EncryptedDocumentReader {
 
@@ -38,31 +39,32 @@ public class EncryptedDocumentReader {
      */
     public InputStream getEncrypted() throws IOException {
 
-        return new ByteArrayInputStream(
-                decryptNative(secretKey, inputStreamToByteArray(encryptedDocStream)));
-    }
 
-    /**
-     * Convert an InputStream into a byte array
-     * Note - with Java9 this can be replaced with
-     *   byte[] array = is.readAllBytes();
-     *
-     * @param is InputStream to be read into the byte array
-     *
-     * @return byte array containing the contents of the InputStream
-     *
-     * @throws IOException
-     */
-    private byte[] inputStreamToByteArray(InputStream is) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        while (true) {
-            int r = is.read(buffer);
-            if (r == -1) break;
-            out.write(buffer, 0, r);
+        // unpack this in the same way it was packed up
+        int r,offset = 0;
+        byte[] buffer = new byte[EncryptedDocumentBuilder.BUFFER_SIZE];
+
+        // the first 8 bytes are the IV
+        byte[] iv = new byte[8];
+        encryptedDocStream.read(iv, 0, iv.length);
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while ((r = encryptedDocStream.read(buffer, 0, buffer.length)) != -1) {
+            byte[] chunk;
+            if (0 == offset) {
+                chunk = Arrays.copyOf(iv, iv.length + r);
+                System.arraycopy(buffer, 0, chunk, iv.length, r);
+            } else {
+                chunk = Arrays.copyOf(buffer, r);
+            }
+            byte[] decrypted = decryptNative(secretKey, chunk, offset);
+            ++offset;
+
+            bos.write(decrypted);
         }
 
-        return out.toByteArray();
+        // TODO
+        return new ByteArrayInputStream(bos.toByteArray());
     }
 
     /**
@@ -84,9 +86,10 @@ public class EncryptedDocumentReader {
      *
      * @param secretKey     The secret key to use to decrypt this value.
      * @param input         The input value to decrypt.
+     * @param offset
      *
      * @return the decrypted value.
      */
-    private static native byte[] decryptNative(byte[] secretKey, byte[] input);
+    private static native byte[] decryptNative(byte[] secretKey, byte[] input, int offset);
 
 }

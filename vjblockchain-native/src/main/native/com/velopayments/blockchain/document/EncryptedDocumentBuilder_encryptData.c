@@ -22,12 +22,12 @@
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentBuilder
  * Method:    encryptData
- * Signature: ([B[B[B)[B
+ * Signature: ([B[B[BI)[B
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
     JNIEnv *env, jclass UNUSED(clazz), jbyteArray key, jbyteArray iv,
-    jbyteArray input)
+    jbyteArray input, jint offset)
 {
     jbyteArray retval = NULL;
 
@@ -134,7 +134,7 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
     /* the total size of the output array */
     size_t input_size = (*env)->GetArrayLength(env, input);
     size_t output_size =
-        IV_SIZE +
+        (0 == offset ? IV_SIZE : 0) +
         input_size;
 
     /* create the output byte array. */
@@ -160,11 +160,12 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
         memset(outputArrayData, 0, output_size));
 
     uint8_t* out = (uint8_t*)outputArrayData;
-    size_t offset = 0;
+    size_t sz_offset = 0;
 
-    /* start an encryption stream with the given output array. */
-    if (0 != vccrypt_stream_start_encryption(
-                &stream, ivArrayData, 8, out, &offset))
+    /* if offset is 0, start an encryption stream with the given output
+       array. */
+    if (0 == offset && 0 != vccrypt_stream_start_encryption(
+                &stream, ivArrayData, 8, out, &sz_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not start encryption stream.");
@@ -173,7 +174,7 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
 
     /* encrypt the data */
     if (0 != vccrypt_stream_encrypt(
-                &stream, inputArrayData, input_size, out, &offset))
+                &stream, inputArrayData, input_size, out, &sz_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not encrypt input data.");
