@@ -160,21 +160,28 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
         memset(outputArrayData, 0, output_size));
 
     uint8_t* out = (uint8_t*)outputArrayData;
-    size_t sz_offset = 0;
+    size_t input_offset = offset;
 
-    /* if offset is 0, start an encryption stream with the given output
-       array. */
-    if (0 == offset && 0 != vccrypt_stream_start_encryption(
-                &stream, ivArrayData, 8, out, &sz_offset))
-    {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not start encryption stream.");
-        goto stream_cipher_dispose;
+    if (0 == offset) { /* start encryption */
+        if (0 != vccrypt_stream_start_encryption(
+                &stream, ivArrayData, 8, out, &input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not start encryption stream.");
+            goto stream_cipher_dispose;
+        }
+    } else { /* continue encryption */
+        input_offset = 0; // TEMP
+        /*if (0 != vccrypt_stream_continue_encryption(
+                &stream, ivArrayData, 8, input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not continue encryption stream.");
+            goto stream_cipher_dispose;
+        }*/
     }
 
     /* encrypt the data */
     if (0 != vccrypt_stream_encrypt(
-                &stream, inputArrayData, input_size, out, &sz_offset))
+                &stream, inputArrayData, input_size, out, &input_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not encrypt input data.");
