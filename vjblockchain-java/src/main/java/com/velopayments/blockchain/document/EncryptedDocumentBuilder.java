@@ -4,10 +4,7 @@ import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -17,7 +14,10 @@ public class EncryptedDocumentBuilder {
 
     private EncryptionKeyPair keyPair;
     private byte[] secretKey;
-    private InputStream encryptedDocStream;
+
+    private InputStream source;
+    private OutputStream destination;
+
 
     /**
      * Protected constructor.  The create*() static methods should be used.
@@ -37,35 +37,29 @@ public class EncryptedDocumentBuilder {
     /**
      * Set the document to be encrypted
      *
-     * @param docStream InputStream of the document to be encrypted
+     * @param source InputStream of the document to be encrypted
      *
      * @return this builder for additional operations
      *
-     * @throws IOException if an I/O error occurs
      */
-    public EncryptedDocumentBuilder withDocument(InputStream docStream) throws IOException {
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-        int r,offset = 0;
-        byte[] buffer = new byte[BUFFER_SIZE];
-        byte[] iv = ByteBuffer.allocate(8).array(); // filled with 0
-        while ((r = docStream.read(buffer, 0, buffer.length)) != -1) {
-
-            byte[] chunk = Arrays.copyOf(buffer, r);
-
-            // encrypt chunk
-            byte[] encryptedChunk = encryptData(secretKey, iv, chunk, offset++);
-
-            // write encrypted bytes to outputstream
-            bos.write(encryptedChunk);
-        }
-
-        // convert (encrypted) outputstream to inputstream
-        encryptedDocStream = new ByteArrayInputStream(bos.toByteArray());
-
+    public EncryptedDocumentBuilder withSource(InputStream source) {
+        this.source = source;
         return this;
     }
+
+    /**
+     * Set the destination the encrypted document should be written to
+     *
+     * @param destination OutputStream the encrypted document should be written to
+     *
+     * @return this builder for additional operations
+     *
+     */
+    public EncryptedDocumentBuilder withDestination(OutputStream destination) {
+        this.destination = destination;
+        return this;
+    }
+
 
     /**
      * Create a shared secret
@@ -79,17 +73,36 @@ public class EncryptedDocumentBuilder {
     }
 
     /**
-     * Emit an encrypted document
+     * Emit the encrypted document to the destination stream
      *
-     * @return an InputStream of the encrypted document
-     *
-     * @throws IllegalStateException if the document was not provided
+     * @throws IllegalStateException if the source or destination
+     *  streams were not provided
      */
-    public InputStream emit() {
-        if (encryptedDocStream==null) {
-            throw new IllegalStateException("Document not provided");
+    public void emit() throws IOException {
+        if (source==null) {
+            throw new IllegalStateException("source not provided");
         }
-        return encryptedDocStream;
+        if (destination==null) {
+            throw new IllegalStateException("destination not provided");
+        }
+
+        int r,offset = 0;
+        byte[] buffer = new byte[BUFFER_SIZE];
+        byte[] iv = ByteBuffer.allocate(8).array(); // filled with 0
+
+        while ((r = source.read(buffer, 0, buffer.length)) != -1) {
+
+            byte[] chunk = Arrays.copyOf(buffer, r);
+
+            // encrypt chunk
+            byte[] encryptedChunk = encryptData(secretKey, iv, chunk, offset);
+
+            // increment offset by bytes written
+            offset += r;
+
+            // write encrypted bytes to outputstream
+            destination.write(encryptedChunk);
+        }
     }
 
     /**

@@ -4,16 +4,16 @@ package com.velopayments.blockchain.document;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Arrays;
 
 public class EncryptedDocumentReader {
 
     private byte[] secretKey;
-    private InputStream encryptedDocStream;
+
+    private InputStream source;
+    private OutputStream destination;
+
 
     /**
      * Create an EncryptedDocumentReader from a private key, a public key, a shared secret
@@ -22,22 +22,53 @@ public class EncryptedDocumentReader {
      * @param localPrivateKey     The private key of the entity reading this document.
      * @param peerPublicKey       The public key of the peer that created this document.
      * @param sharedSecret        The shared secret produced for the entity reading this document.
-     * @param encryptedDocStream  The document to be decrypted.
      */
     public EncryptedDocumentReader(EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-                                   byte[] sharedSecret, InputStream encryptedDocStream) {
+                                   byte[] sharedSecret) {
 
         this.secretKey = decryptSecretNative(localPrivateKey, peerPublicKey, sharedSecret);
-        this.encryptedDocStream = encryptedDocStream;
     }
 
     /**
-     * Get the encrypted document as an InputStream.  Note the document is
-     * returned in decrypted form.
+     * Set the document to be decrypted
      *
-     * @return an InputStream representing the encrypted document
+     * @param source InputStream of the document to be decrypted
+     *
+     * @return this builder for additional operations
+     *
      */
-    public InputStream getEncrypted() throws IOException {
+    public EncryptedDocumentReader withSource(InputStream source) {
+        this.source = source;
+        return this;
+    }
+
+    /**
+     * Set the destination the decrypted document should be written to
+     *
+     * @param destination OutputStream the decrypted document should be written to
+     *
+     * @return this builder for additional operations
+     *
+     */
+    public EncryptedDocumentReader withDestination(OutputStream destination) {
+        this.destination = destination;
+        return this;
+    }
+
+
+    /**
+     * Emit the decrypted document to the destination stream
+     *
+     * @throws IllegalStateException if the source or destination
+     *  streams were not provided
+     */
+    public void emit() throws IOException {
+        if (source==null) {
+            throw new IllegalStateException("source not provided");
+        }
+        if (destination==null) {
+            throw new IllegalStateException("destination not provided");
+        }
 
 
         // unpack this in the same way it was packed up
@@ -46,10 +77,9 @@ public class EncryptedDocumentReader {
 
         // the first 8 bytes are the IV
         byte[] iv = new byte[8];
-        encryptedDocStream.read(iv, 0, iv.length);
+        source.read(iv, 0, iv.length);
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while ((r = encryptedDocStream.read(buffer, 0, buffer.length)) != -1) {
+        while ((r = source.read(buffer, 0, buffer.length)) != -1) {
             byte[] chunk;
             if (0 == offset) {
                 chunk = Arrays.copyOf(iv, iv.length + r);
@@ -58,13 +88,10 @@ public class EncryptedDocumentReader {
                 chunk = Arrays.copyOf(buffer, r);
             }
             byte[] decrypted = decryptNative(secretKey, chunk, offset);
-            ++offset;
+            offset += r;
 
-            bos.write(decrypted);
+            destination.write(decrypted);
         }
-
-        // TODO
-        return new ByteArrayInputStream(bos.toByteArray());
     }
 
     /**

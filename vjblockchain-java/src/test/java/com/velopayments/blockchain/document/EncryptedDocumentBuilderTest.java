@@ -5,8 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayOutputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -47,19 +46,24 @@ public class EncryptedDocumentBuilderTest {
         EncryptionKeyPair creatorKey = EncryptionKeyPair.generate();
         EncryptionKeyPair subscriberKey = EncryptionKeyPair.generate();
 
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         EncryptedDocumentBuilder builder = EncryptedDocumentBuilder.createDocumentBuilder(creatorKey)
-                .withDocument(new ByteArrayInputStream(plainTextDoc.getBytes()));
+                .withSource(new ByteArrayInputStream(plainTextDoc.getBytes()))
+                .withDestination(bos);
 
-        InputStream encryptedDoc = builder.emit();
         byte[] sharedSecret = builder.createEncryptedSharedSecret(subscriberKey.getPublicKey());
+        builder.emit();
 
         // create a reader
-        EncryptedDocumentReader reader = new EncryptedDocumentReader(subscriberKey.getPrivateKey(),
-                creatorKey.getPublicKey(), sharedSecret, encryptedDoc);
+        ByteArrayOutputStream decrypted = new ByteArrayOutputStream();
+        new EncryptedDocumentReader(subscriberKey.getPrivateKey(),
+                creatorKey.getPublicKey(), sharedSecret)
+                .withSource(new ByteArrayInputStream(bos.toByteArray()))
+                .withDestination(decrypted)
+                .emit();
 
         // verify the decrypted document matches what we started with
-        assertThat(IOUtils.toString(reader.getEncrypted(), StandardCharsets.UTF_8), is(plainTextDoc));
-
+        assertThat(new String(decrypted.toByteArray()), is(plainTextDoc));
     }
 
 }
