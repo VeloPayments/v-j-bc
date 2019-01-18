@@ -18,11 +18,6 @@ public class SimpleStreamCipherTest {
         /* input message. */
         byte INPUT[] = { 1, 2, 3, 4, 5 };
 
-        for (byte b : INPUT) {
-            System.out.print(String.format("%02x", b));
-        }
-        System.out.println();
-
         /* create a cipher with a random key. */
         SimpleStreamCipher cipher = SimpleStreamCipher.createRandom();        
 
@@ -34,11 +29,6 @@ public class SimpleStreamCipherTest {
 
         /* get the plaintext of the ciphertext. */
         byte plainText[] = cipher.decrypt(cipherText);
-
-        for (byte b : plainText) {
-            System.out.print(String.format("%02x", b));
-        }
-        System.out.println();
 
         /* the plaintext and INPUT should match. */
         assertThat(Arrays.equals(INPUT, plainText), is(true));
