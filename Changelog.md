@@ -7,7 +7,11 @@ Release 0.1.3
 -------------
 
 * Added EncryptedDocumentBuilder and EncryptedDocumentReader. 
-
+* Fixed issue with wrong root block UUID being returned in some cases.
+* Exposed a getCertificate method on CertificateReader.
+* Added SimpleStreamCipher, which provides a safe way to encrypt data.
+* Added Key.createFromPassword for creating a symmetric encryption key from a
+  password using PBKDF2.
 
 Release 0.1.2
 -------------
