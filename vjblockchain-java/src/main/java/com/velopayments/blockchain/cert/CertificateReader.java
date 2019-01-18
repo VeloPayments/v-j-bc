@@ -6,6 +6,7 @@ import java.util.Set;
 
 public class CertificateReader {
 
+    private CertificateParser parser;
     protected Map<Integer, List<byte[]>> certFields;
 
     /**
@@ -14,6 +15,7 @@ public class CertificateReader {
      * @param parser The parser to read with this reader.
      */
     public CertificateReader(CertificateParser parser) {
+        this.parser = parser;
         this.certFields = parser.parse();
     }
 
@@ -31,6 +33,15 @@ public class CertificateReader {
         } else {
             return fields.size();
         }
+    }
+
+    /**
+     * Get the underlying certificate that was parsed to construct this reader.
+     *
+     * @return the underlying certificate that was parsed to construct this reader.
+     */
+    public Certificate getCertificate() {
+        return parser.getCertificate();
     }
 
     /**

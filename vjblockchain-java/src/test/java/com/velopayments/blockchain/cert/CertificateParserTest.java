@@ -117,6 +117,10 @@ public class CertificateParserTest {
         CertificateReader r = new CertificateReader(p);
         Map<Integer, List<byte[]>> certMap = p.parse();
 
+        // check that we can get the same certificate back from the parser and reader
+        assertThat(p.getCertificate().toByteArray(), is(cert.array()));
+        assertThat(r.getCertificate().toByteArray(), is(cert.array()));
+
         //check that we parsed each field value
         assertThat(certMap, is(notNullValue()));
         assertThat(certMap.isEmpty(), is(false));
