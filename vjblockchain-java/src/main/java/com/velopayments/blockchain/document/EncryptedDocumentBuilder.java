@@ -117,14 +117,14 @@ public class EncryptedDocumentBuilder {
     /**
      * Encrypt data in the input buffer, returning an encrypted buffer.
      *
-     * @param key   The key to use to encrypt this data.
-     * @param iv    The initialization vector to use.
-     * @param input The input to encrypt.
-     * @param offset
+     * @param key    The key to use to encrypt this data.
+     * @param iv     The initialization vector to use.
+     * @param chunk  The input to encrypt.
+     * @param offset The number of bytes of input previously encrypted.
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
      */
-    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] input, int offset);
+    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] chunk, int offset);
 
     /**
      * Encrypt the key with a long-term key between two entities.

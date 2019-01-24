@@ -99,12 +99,12 @@ public class EncryptedDocumentReader {
      *
      * @param secretKey     The secret key to use to decrypt this value.
      * @param iv            The initialization vector to use
-     * @param input         The input value to decrypt.
-     * @param offset
+     * @param chunk         The input value to decrypt.
+     * @param offset        The number of bytes previously decrypted.
      *
      * @return the decrypted value.
      */
-    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] input, int offset);
+    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] chunk, int offset);
 
     /**
      * Recover the secret key from the given local private key, peer public key,
