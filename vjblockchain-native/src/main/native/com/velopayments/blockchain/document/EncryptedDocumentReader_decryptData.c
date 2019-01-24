@@ -1,5 +1,5 @@
 /**
- * \file EncryptedDocumentReader_decryptNative.c
+ * \file EncryptedDocumentReader_decryptData.c
  *
  * Decrypt and verify data using a stream cipher and an HMAC.
  *
@@ -20,11 +20,13 @@
 
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentReader
- * Method:    decryptNative
- * Signature: ([B[BI)[B
+ * Method:    decryptData
+ * Signature: ([B[B[BI)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptNative
-  (JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey, jbyteArray input, jint offset)
+JNIEXPORT jbyteArray
+JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptData
+  (JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey,
+   jbyteArray iv, jbyteArray input, jint offset)
 {
     jbyteArray retval = NULL;
 
@@ -52,6 +54,14 @@ JNIEXPORT jbyteArray JNICALL Java_com_velopayments_blockchain_document_Encrypted
     {
         (*env)->ThrowNew(
             env, NullPointerException, "secretKey");
+        return NULL;
+    }
+
+    /* verify that the iv parameter is not null. */
+    if (NULL == iv)
+    {
+        (*env)->ThrowNew(
+                env, NullPointerException, "iv");
         return NULL;
     }
 
@@ -85,13 +95,23 @@ JNIEXPORT jbyteArray JNICALL Java_com_velopayments_blockchain_document_Encrypted
     MODEL_EXEMPT(
         memcpy(keyBuffer.data, secretKeyArrayData, 32));
 
+
+    /* get the buffer for the iv array. */
+    jbyte* ivArrayData = (*env)->GetByteArrayElements(env, iv, NULL);
+    if (NULL == ivArrayData)
+    {
+        (*env)->ThrowNew(env, NullPointerException,
+                         "iv data read failure.");
+        goto secretKeyArrayData_dispose;
+    }
+
     /* get the buffer for the input array. */
     jbyte* inputArrayData = (*env)->GetByteArrayElements(env, input, NULL);
     if (NULL == inputArrayData)
     {
         (*env)->ThrowNew(env, NullPointerException,
                          "input data read failure.");
-        goto secretKeyArrayData_dispose;
+        goto ivArrayData_dispose;
     }
 
     /* TODO - use the suite to initialize the stream cipher. */
@@ -135,21 +155,30 @@ JNIEXPORT jbyteArray JNICALL Java_com_velopayments_blockchain_document_Encrypted
 
     const uint8_t* in = (const uint8_t*)inputArrayData;
     uint8_t* out = (uint8_t*)outputArrayData;
-    size_t sz_offset = 0;
-    size_t input_offset = 0;
+    size_t input_offset = offset;
 
     /* start a decryption stream with the given output array. */
-    if (0 == offset && 0 != vccrypt_stream_start_decryption(&stream, in, &input_offset))
-    {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not start decryption stream.");
-        goto stream_cipher_dispose;
+    if (0 == offset) {
+        if (0 != vccrypt_stream_start_decryption(&stream, in, &input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not start decryption stream.");
+            goto stream_cipher_dispose;
+        }
+    } else { /* continue decryption */
+        if (0 != vccrypt_stream_continue_decryption(
+                &stream, ivArrayData, 8, input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not continue decryption stream.");
+            goto stream_cipher_dispose;
+        }
     }
 
     /* decrypt the data */
+    size_t input_buffer_offset = (0 == offset ? IV_SIZE : 0);
+    size_t output_buffer_offset = 0;
     if (0 != vccrypt_stream_decrypt(
-                &stream, in + input_offset, output_size,
-                out, &sz_offset))
+                &stream, in + input_buffer_offset, output_size,
+                out, &output_buffer_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not decrypt input data.");
@@ -170,6 +199,9 @@ stream_cipher_options_dispose:
 
 inputArrayData_dispose:
     (*env)->ReleaseByteArrayElements(env, input, inputArrayData, JNI_ABORT);
+
+ivArrayData_dispose:
+    (*env)->ReleaseByteArrayElements(env, iv, ivArrayData, JNI_ABORT);
 
 secretKeyArrayData_dispose:
     (*env)->ReleaseByteArrayElements(

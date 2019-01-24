@@ -133,9 +133,8 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
 
     /* the total size of the output array */
     size_t input_size = (*env)->GetArrayLength(env, input);
-    size_t output_size =
-        (0 == offset ? IV_SIZE : 0) +
-        input_size;
+    size_t output_buffer_offset = (0 == offset ? IV_SIZE : 0);
+    size_t output_size = output_buffer_offset + input_size;
 
     /* create the output byte array. */
     jbyteArray outputArray = (*env)->NewByteArray(env, output_size);
@@ -170,18 +169,17 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
             goto stream_cipher_dispose;
         }
     } else { /* continue encryption */
-        input_offset = 0; // TEMP
-        /*if (0 != vccrypt_stream_continue_encryption(
+        if (0 != vccrypt_stream_continue_encryption(
                 &stream, ivArrayData, 8, input_offset)) {
             (*env)->ThrowNew(env, IllegalStateException,
                              "could not continue encryption stream.");
             goto stream_cipher_dispose;
-        }*/
+        }
     }
 
     /* encrypt the data */
     if (0 != vccrypt_stream_encrypt(
-                &stream, inputArrayData, input_size, out, &input_offset))
+                &stream, inputArrayData, input_size, out, &output_buffer_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not encrypt input data.");

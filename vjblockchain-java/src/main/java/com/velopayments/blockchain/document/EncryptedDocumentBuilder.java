@@ -5,7 +5,7 @@ import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
 import java.io.*;
-import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class EncryptedDocumentBuilder {
@@ -88,7 +88,11 @@ public class EncryptedDocumentBuilder {
 
         int r,offset = 0;
         byte[] buffer = new byte[BUFFER_SIZE];
-        byte[] iv = ByteBuffer.allocate(8).array(); // filled with 0
+
+        // generate a random initialization vector
+        SecureRandom sr = new SecureRandom();
+        byte[] iv = new byte[8];
+        sr.nextBytes(iv);
 
         while ((r = source.read(buffer, 0, buffer.length)) != -1) {
 

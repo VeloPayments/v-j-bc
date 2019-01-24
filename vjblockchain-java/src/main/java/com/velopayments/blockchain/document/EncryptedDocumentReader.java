@@ -26,7 +26,7 @@ public class EncryptedDocumentReader {
     public EncryptedDocumentReader(EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
                                    byte[] sharedSecret) {
 
-        this.secretKey = decryptSecretNative(localPrivateKey, peerPublicKey, sharedSecret);
+        this.secretKey = decryptKey(localPrivateKey, peerPublicKey, sharedSecret);
     }
 
     /**
@@ -87,12 +87,24 @@ public class EncryptedDocumentReader {
             } else {
                 chunk = Arrays.copyOf(buffer, r);
             }
-            byte[] decrypted = decryptNative(secretKey, chunk, offset);
+            byte[] decrypted = decryptData(secretKey, iv, chunk, offset);
             offset += r;
 
             destination.write(decrypted);
         }
     }
+
+    /**
+     * Decrypt the input value using the provided secret key.
+     *
+     * @param secretKey     The secret key to use to decrypt this value.
+     * @param iv            The initialization vector to use
+     * @param input         The input value to decrypt.
+     * @param offset
+     *
+     * @return the decrypted value.
+     */
+    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] input, int offset);
 
     /**
      * Recover the secret key from the given local private key, peer public key,
@@ -104,19 +116,8 @@ public class EncryptedDocumentReader {
      *
      * @return the decrypted key.
      */
-    private static native byte[] decryptSecretNative(
+    private static native byte[] decryptKey(
             EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
             byte[] encryptedKey);
-
-    /**
-     * Decrypt the input value using the provided secret key.
-     *
-     * @param secretKey     The secret key to use to decrypt this value.
-     * @param input         The input value to decrypt.
-     * @param offset
-     *
-     * @return the decrypted value.
-     */
-    private static native byte[] decryptNative(byte[] secretKey, byte[] input, int offset);
 
 }
