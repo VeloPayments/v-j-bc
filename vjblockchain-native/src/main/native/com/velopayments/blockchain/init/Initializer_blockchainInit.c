@@ -3,7 +3,7 @@
  *
  * Initialize the vcblockchain subsystem.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2019 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -31,11 +31,15 @@
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
+#include "../../../../com/velopayments/blockchain/crypt/InvalidKeySizeException.h"
+#include "../../../../com/velopayments/blockchain/crypt/Key.h"
 #include "../../../../com/velopayments/blockchain/crypt/Message.h"
+#include "../../../../com/velopayments/blockchain/crypt/MessageAuthenticationException.h"
 #include "../../../../com/velopayments/blockchain/crypt/Signature.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningKeyPair.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPrivateKey.h"
 #include "../../../../com/velopayments/blockchain/crypt/SigningPublicKey.h"
+#include "../../../../com/velopayments/blockchain/crypt/SimpleStreamCipher.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/Integer.h"
@@ -49,6 +53,8 @@
 volatile bool vjblockchain_initialized = false;
 allocator_options_t alloc_opts;
 vccrypt_suite_options_t crypto_suite;
+vccrypt_block_options_t block_opts;
+vccrypt_stream_options_t stream_opts;
 vccert_builder_options_t builder_opts;
 
 #define INIT_OR_FAIL(text, invocation) \
@@ -97,6 +103,20 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                         &crypto_suite, &alloc_opts, VCCRYPT_SUITE_VELO_V1)));
     MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_CRYPTO_SUITE(&crypto_suite));
 
+    /* create block cipher options used by Velo crypt. */
+    INIT_OR_FAIL("block cipher options",
+                 (vccrypt_block_options_init(
+                        &block_opts, &alloc_opts,
+                        VCCRYPT_BLOCK_ALGORITHM_AES_256_2X_CBC)));
+    MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_BLOCK_OPTIONS(&block_opts));
+
+    /* create stream cipher options used by Velo crypt. */
+    INIT_OR_FAIL("stream cipher options",
+                 (vccrypt_stream_options_init(
+                        &stream_opts, &alloc_opts,
+                        VCCRYPT_STREAM_ALGORITHM_AES_256_2X_CTR)));
+    MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_STREAM_OPTIONS(&stream_opts));
+
     /* create a builder options instance. */
     INIT_OR_FAIL("vccert builder options",
                  (vccert_builder_options_init(
@@ -124,6 +144,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  EncryptionPrivateKey_register(env));
     INIT_OR_FAIL("EncryptionPublicKey",
                  EncryptionPublicKey_register(env));
+    INIT_OR_FAIL("InvalidKeySizeException",
+                 InvalidKeySizeException_register(env));
     INIT_OR_FAIL("Message",
                  Message_register(env));
     INIT_OR_FAIL("EntityReference",
@@ -134,10 +156,14 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  IllegalArgumentException_register(env));
     INIT_OR_FAIL("Integer",
                  Integer_register(env));
+    INIT_OR_FAIL("Key",
+                 Key_register(env));
     INIT_OR_FAIL("NullPointerException",
                  NullPointerException_register(env));
     INIT_OR_FAIL("LinkedList",
                  LinkedList_register(env));
+    INIT_OR_FAIL("MessageAuthenticationException",
+                 MessageAuthenticationException_register(env));
     INIT_OR_FAIL("Optional",
                  Optional_register(env));
     INIT_OR_FAIL("SimpleEntry",
@@ -150,6 +176,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  SigningPrivateKey_register(env));
     INIT_OR_FAIL("SigningPublicKey",
                  SigningPublicKey_register(env));
+    INIT_OR_FAIL("SimpleStreamCipher",
+                 SimpleStreamCipher_register(env));
     INIT_OR_FAIL("TransactionStatus",
                  TransactionStatus_register(env));
     INIT_OR_FAIL("TransactionSubmissionRequest",
