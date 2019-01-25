@@ -86,7 +86,8 @@ public class EncryptedDocumentBuilder {
             throw new IllegalStateException("destination not provided");
         }
 
-        int r,offset = 0;
+        int r;
+        long offset = 0;
         byte[] buffer = new byte[BUFFER_SIZE];
 
         // generate a random initialization vector
@@ -124,7 +125,7 @@ public class EncryptedDocumentBuilder {
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
      */
-    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] chunk, int offset);
+    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] chunk, long offset);
 
     /**
      * Encrypt the key with a long-term key between two entities.

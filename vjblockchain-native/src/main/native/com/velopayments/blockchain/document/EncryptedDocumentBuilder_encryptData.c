@@ -22,12 +22,12 @@
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentBuilder
  * Method:    encryptData
- * Signature: ([B[B[BI)[B
+ * Signature: ([B[B[BJ)[B
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
     JNIEnv *env, jclass UNUSED(clazz), jbyteArray key, jbyteArray iv,
-    jbyteArray input, jint offset)
+    jbyteArray input, jlong offset)
 {
     jbyteArray retval = NULL;
 

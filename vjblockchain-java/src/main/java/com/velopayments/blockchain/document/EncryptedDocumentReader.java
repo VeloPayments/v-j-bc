@@ -72,7 +72,8 @@ public class EncryptedDocumentReader {
 
 
         // unpack this in the same way it was packed up
-        int r,offset = 0;
+        int r;
+        long offset = 0;
         byte[] buffer = new byte[EncryptedDocumentBuilder.BUFFER_SIZE];
 
         // the first 8 bytes are the IV
@@ -104,7 +105,7 @@ public class EncryptedDocumentReader {
      *
      * @return the decrypted value.
      */
-    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] chunk, int offset);
+    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] chunk, long offset);
 
     /**
      * Recover the secret key from the given local private key, peer public key,

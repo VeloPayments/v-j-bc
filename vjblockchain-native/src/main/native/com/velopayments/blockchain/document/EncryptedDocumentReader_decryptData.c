@@ -21,12 +21,12 @@
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentReader
  * Method:    decryptData
- * Signature: ([B[B[BI)[B
+ * Signature: ([B[B[BJ)[B
  */
 JNIEXPORT jbyteArray
 JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptData
   (JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey,
-   jbyteArray iv, jbyteArray input, jint offset)
+   jbyteArray iv, jbyteArray input, jlong offset)
 {
     jbyteArray retval = NULL;
 
