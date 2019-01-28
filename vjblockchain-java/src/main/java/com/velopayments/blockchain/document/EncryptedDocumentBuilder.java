@@ -73,12 +73,13 @@ public class EncryptedDocumentBuilder {
     }
 
     /**
-     * Emit the encrypted document to the destination stream
+     * Read from the source stream, encrypting the data and writing to the 
+     * destination stream
      *
      * @throws IllegalStateException if the source or destination
      *  streams were not provided
      */
-    public void emit() throws IOException {
+    public void encrypt() throws IOException {
         if (source==null) {
             throw new IllegalStateException("source not provided");
         }

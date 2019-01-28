@@ -52,7 +52,7 @@ public class EncryptedDocumentBuilderTest {
                 .withDestination(bos);
 
         byte[] sharedSecret = builder.createEncryptedSharedSecret(subscriberKey.getPublicKey());
-        builder.emit();
+        builder.encrypt();
 
         // create a reader
         ByteArrayOutputStream decrypted = new ByteArrayOutputStream();
@@ -60,7 +60,7 @@ public class EncryptedDocumentBuilderTest {
                 creatorKey.getPublicKey(), sharedSecret)
                 .withSource(new ByteArrayInputStream(bos.toByteArray()))
                 .withDestination(decrypted)
-                .emit();
+                .decrypt();
 
         // verify the decrypted document matches what we started with
         assertThat(new String(decrypted.toByteArray()), is(plainTextDoc));
