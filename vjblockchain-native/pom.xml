@@ -70,6 +70,19 @@
                 <TOOLCHAIN_DIR>${env.TOOLCHAIN_DIR}</TOOLCHAIN_DIR>
             </properties>
         </profile>
+
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <family>linux</family>
+                </os>
+            </activation>
+            <properties>
+                <JAVAH_INCLUDE_CFLAGS> -I ${env.JAVA_HOME}/include -I ${env.JAVA_HOME}/include/linux</JAVAH_INCLUDE_CFLAGS>
+            </properties>
+        </profile>
+
         <profile>
             <id>osx</id>
             <activation>
