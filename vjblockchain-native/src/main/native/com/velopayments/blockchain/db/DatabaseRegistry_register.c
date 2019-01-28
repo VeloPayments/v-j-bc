@@ -8,8 +8,8 @@
 
 #include <cbmc/model_assert.h>
 #include <vcdb/engine.h>
-#include <vjblockchain.h>
 #include <vpr/parameters.h>
+#include <com_velopayments_blockchain_db_DatabaseRegistry.h>
 
 /*
  * Class:     com_velopayments_blockchain_db_DatabaseRegistry

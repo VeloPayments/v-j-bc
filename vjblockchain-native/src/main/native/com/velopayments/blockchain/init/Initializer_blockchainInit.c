@@ -10,9 +10,9 @@
 #include <vccrypt/block_cipher.h>
 #include <vccrypt/stream_cipher.h>
 #include <vccrypt/suite.h>
-#include <vjblockchain.h>
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
+#include <com_velopayments_blockchain_init_Initializer.h>
 
 #include "init.h"
 #include "../../../../com/velopayments/blockchain/cert/AttestationException.h"

@@ -50,7 +50,7 @@
         <VCBLOCKCHAIN_HOST_CHECKED_LINK>-L ${VCBLOCKCHAIN_HOST_CHECKED_LIB_DIR} -lvcblockchain</VCBLOCKCHAIN_HOST_CHECKED_LINK>
         <VCBLOCKCHAIN_HOST_RELEASE_LINK>-L ${VCBLOCKCHAIN_HOST_RELEASE_LIB_DIR} -lvcblockchain</VCBLOCKCHAIN_HOST_RELEASE_LINK>
 
-        <VJBLOCKCHAIN_CFLAGS>-I ${project.build.directory}/vjblockchain-javah</VJBLOCKCHAIN_CFLAGS>
+        <VJBLOCKCHAIN_CFLAGS>-I ${project.build.directory}/jni-headers</VJBLOCKCHAIN_CFLAGS>
 
         <!-- include flags for javah, overridden by profile -->
         <JAVAH_INCLUDE_CFLAGS></JAVAH_INCLUDE_CFLAGS>
@@ -96,17 +96,53 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/../vjblockchain-java/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.7.0</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration> 
+                <executions>
+                    <execution>
+                        <id>jni</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            <compilerArgs>
+                                <arg>-h</arg>
+                                <arg>${project.build.directory}/jni-headers</arg>
+                            </compilerArgs>
+                        </configuration>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>native-maven-plugin</artifactId>
-                <version>1.0-alpha-8</version>
+                <version>1.0-alpha-9</version>
                 <extensions>true</extensions>
                 <configuration>
                     <javahOS>linux</javahOS>
@@ -140,39 +176,6 @@
                         </source>
                     </sources>
                 </configuration>
-
-                <executions>
-                    <execution>
-                        <id>javah</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <javahOS>linux</javahOS>
-                            <javahProvider>default</javahProvider>
-                            <javahOutputDirectory>${project.build.directory}/vjblockchain-javah</javahOutputDirectory>
-                            <javahOutputFileName>vjblockchain.h</javahOutputFileName>
-                            <javahClassNames>
-                                <javahClassName>com.velopayments.blockchain.cert.CertificateBuilder</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.cert.CertificateParser</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateBuilder</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.cert.EncryptedCertificateReader</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.document.EncryptedDocumentBuilder</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.document.EncryptedDocumentReader</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.client.AgentConnection</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.db.DatabaseRegistry</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.EncryptionKeyPair</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.Key</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.SigningKeyPair</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.SigningPrivateKey</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.SigningPublicKey</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.crypt.SimpleStreamCipher</javahClassName>
-                                <javahClassName>com.velopayments.blockchain.init.Initializer</javahClassName>
-                            </javahClassNames>
-                        </configuration>
-                        <goals>
-                            <goal>javah</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
