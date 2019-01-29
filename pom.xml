@@ -18,7 +18,7 @@
     </modules>
 
     <properties>
-        <vjblockchain.version>0.1.4-SNAPSHOT</vjblockchain.version>
+        <vjblockchain.version>0.1.4</vjblockchain.version>
     </properties>
 
 </project>
