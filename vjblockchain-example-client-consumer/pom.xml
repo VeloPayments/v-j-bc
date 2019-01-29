@@ -10,14 +10,15 @@
     <parent>
         <groupId>com.velopayments.blockchain</groupId>
         <artifactId>vjblockchain-parent</artifactId>
-        <version>0.1.4</version>
+        <version>${vjblockchain.version}</version>
+        <relativePath>..</relativePath>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.velopayments.blockchain</groupId>
             <artifactId>vjblockchain-java</artifactId>
-            <version>0.1.4</version>
+            <version>${vjblockchain.version}</version>
         </dependency>
     </dependencies>
 

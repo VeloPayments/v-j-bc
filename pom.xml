@@ -8,7 +8,7 @@
     <groupId>com.velopayments.blockchain</groupId>
     <artifactId>vjblockchain-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.4</version>
+    <version>${vjblockchain.version}</version>
 
     <modules>
         <module>vjblockchain-java</module>
@@ -16,5 +16,9 @@
         <module>vjblockchain-example-client-producer</module>
         <module>vjblockchain-example-client-consumer</module>
     </modules>
+
+    <properties>
+        <vjblockchain.version>0.1.4-SNAPSHOT</vjblockchain.version>
+    </properties>
 
 </project>
