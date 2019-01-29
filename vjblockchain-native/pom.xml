@@ -96,16 +96,6 @@
         </profile>
     </profiles>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.velopayments.blockchain</groupId>
-            <artifactId>vjblockchain-java</artifactId>
-            <version>0.1.4</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
