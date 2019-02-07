@@ -22,12 +22,12 @@
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentBuilder
  * Method:    encryptData
- * Signature: ([B[B[B)[B
+ * Signature: ([B[B[BJ)[B
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
     JNIEnv *env, jclass UNUSED(clazz), jbyteArray key, jbyteArray iv,
-    jbyteArray input)
+    jbyteArray input, jlong offset)
 {
     jbyteArray retval = NULL;
 
@@ -133,9 +133,8 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
 
     /* the total size of the output array */
     size_t input_size = (*env)->GetArrayLength(env, input);
-    size_t output_size =
-        IV_SIZE +
-        input_size;
+    size_t output_buffer_offset = (0 == offset ? IV_SIZE : 0);
+    size_t output_size = output_buffer_offset + input_size;
 
     /* create the output byte array. */
     jbyteArray outputArray = (*env)->NewByteArray(env, output_size);
@@ -160,20 +159,27 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
         memset(outputArrayData, 0, output_size));
 
     uint8_t* out = (uint8_t*)outputArrayData;
-    size_t offset = 0;
+    size_t input_offset = offset;
 
-    /* start an encryption stream with the given output array. */
-    if (0 != vccrypt_stream_start_encryption(
-                &stream, ivArrayData, 8, out, &offset))
-    {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not start encryption stream.");
-        goto stream_cipher_dispose;
+    if (0 == offset) { /* start encryption */
+        if (0 != vccrypt_stream_start_encryption(
+                &stream, ivArrayData, 8, out, &input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not start encryption stream.");
+            goto stream_cipher_dispose;
+        }
+    } else { /* continue encryption */
+        if (0 != vccrypt_stream_continue_encryption(
+                &stream, ivArrayData, 8, input_offset)) {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not continue encryption stream.");
+            goto stream_cipher_dispose;
+        }
     }
 
     /* encrypt the data */
     if (0 != vccrypt_stream_encrypt(
-                &stream, inputArrayData, input_size, out, &offset))
+                &stream, inputArrayData, input_size, out, &output_buffer_offset))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not encrypt input data.");

@@ -7,3 +7,9 @@ cscope*
 *.iws
 *.iml
 *.ipr
+
+### vscode ####
+.project
+.classpath
+.settings
+.vscode
