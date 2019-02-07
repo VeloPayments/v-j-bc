@@ -18,8 +18,8 @@
 #include <java/util/LinkedList.h>
 #include <string.h>
 #include <vccrypt/suite.h>
-#include <vjblockchain.h>
 #include <vpr/parameters.h>
+#include <com_velopayments_blockchain_cert_CertificateBuilder.h>
 
 /*
  * Class:     com_velopayments_blockchain_cert_CertificateBuilder

@@ -10,7 +10,8 @@
     <parent>
         <groupId>com.velopayments.blockchain</groupId>
         <artifactId>vjblockchain-parent</artifactId>
-        <version>0.1.4</version>
+        <version>${vjblockchain.version}</version>
+        <relativePath>..</relativePath>
     </parent>
 
     <dependencies>
@@ -58,9 +59,6 @@
                     <argLine>-Djava.library.path=${project.basedir}/../vjblockchain-native/target</argLine>
                     <useSystemClassLoader>false</useSystemClassLoader>
                     <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>${project.basedir}/target/vjblockchain-java-0.1.4.jar</additionalClasspathElement>
-                    </additionalClasspathElements>
                     <workingDirectory>${java.io.tmpdir}</workingDirectory>
                 </configuration>
             </plugin>

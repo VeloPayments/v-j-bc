@@ -10,8 +10,8 @@
 #include <string.h>
 #include <vccert/fields.h>
 #include <vccrypt/suite.h>
-#include <vjblockchain.h>
 #include <vpr/parameters.h>
+#include <com_velopayments_blockchain_cert_CertificateParser.h>
 
 #include "AttestationException.h"
 #include "CertificateParser.h"

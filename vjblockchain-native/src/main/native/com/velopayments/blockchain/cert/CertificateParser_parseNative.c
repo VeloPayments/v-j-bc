@@ -8,8 +8,8 @@
 
 #include <cbmc/model_assert.h>
 #include <vccrypt/suite.h>
-#include <vjblockchain.h>
 #include <vpr/parameters.h>
+#include <com_velopayments_blockchain_cert_CertificateParser.h>
 
 #include "../../../../com/velopayments/blockchain/init/init.h"
 #include "../../../../java/lang/IllegalArgumentException.h"
