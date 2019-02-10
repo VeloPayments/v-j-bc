@@ -1,5 +1,5 @@
 /**
- * \file EncryptedCertificateReader_encryptData.c
+ * \file EncryptedCertificateBuilder_encryptData.c
  *
  * Encrypt and MAC data using a stream cipher and an HMAC.
  *
