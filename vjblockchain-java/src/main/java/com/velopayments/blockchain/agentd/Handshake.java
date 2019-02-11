@@ -9,7 +9,6 @@ public class Handshake {
     private RemoteAgentConfiguration remoteAgentConfiguration;
     private RemoteAgent remoteAgent;
     private SecureRandom random;
-    private HMAC hmac;
 
     private byte[] serverChallengeNonce;
 
@@ -18,7 +17,6 @@ public class Handshake {
         this.remoteAgent = remoteAgent;
 
         this.random = new SecureRandom();
-        this.hmac = new HMAC();
 
         this.serverChallengeNonce = new byte[32];
     }

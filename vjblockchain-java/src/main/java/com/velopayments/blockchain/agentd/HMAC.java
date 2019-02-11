@@ -1,15 +1,24 @@
 package com.velopayments.blockchain.agentd;
 
-import java.nio.ByteBuffer;
+import com.velopayments.blockchain.init.Initializer;
 
 public class HMAC {
 
+    static {
+        Initializer.init();
+    }
 
+    private byte[] key;
 
-    public static void digest(byte[] key, ByteBuffer message) {
-
+    public HMAC(byte[] key) {
+        this.key = key;
     }
 
 
+    public byte[] digest(byte[] message) {
+        return digestNative(key, message);
+    }
+
+    private native byte[] digestNative(byte[] key, byte[]  message);
 
 }
