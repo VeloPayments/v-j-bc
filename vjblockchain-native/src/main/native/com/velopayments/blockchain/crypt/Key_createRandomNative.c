@@ -16,8 +16,6 @@
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/NullPointerException.h"
 
-/* TODO - use crypto suite for stream cipher.  See BLOC-163. */
-
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
  * Method:    createRandomNative
@@ -46,7 +44,7 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     /* initialize key buffer. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &keyBuffer, &alloc_opts, stream_opts.key_size))
+                &keyBuffer, &alloc_opts, crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(
             env, IllegalStateException,

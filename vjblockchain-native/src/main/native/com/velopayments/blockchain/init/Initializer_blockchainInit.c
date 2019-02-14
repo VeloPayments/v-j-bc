@@ -7,8 +7,6 @@
  */
 
 #include <cbmc/model_assert.h>
-#include <vccrypt/block_cipher.h>
-#include <vccrypt/stream_cipher.h>
 #include <vccrypt/suite.h>
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
@@ -53,8 +51,6 @@
 volatile bool vjblockchain_initialized = false;
 allocator_options_t alloc_opts;
 vccrypt_suite_options_t crypto_suite;
-vccrypt_block_options_t block_opts;
-vccrypt_stream_options_t stream_opts;
 vccert_builder_options_t builder_opts;
 
 #define INIT_OR_FAIL(text, invocation) \
@@ -89,10 +85,6 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     /* register crypto suite */
     vccrypt_suite_register_velo_v1();
 
-    /* register stream and block ciphers. */
-    vccrypt_stream_register_AES_256_2X_CTR();
-    vccrypt_block_register_AES_256_2X_CBC();
-
     /* create allocator used by vjblockchain C methods. */
     malloc_allocator_options_init(&alloc_opts);
     MODEL_ASSERT(MODEL_PROP_VALID_VPR_ALLOCATOR(&alloc_opts));
@@ -102,20 +94,6 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  (vccrypt_suite_options_init(
                         &crypto_suite, &alloc_opts, VCCRYPT_SUITE_VELO_V1)));
     MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_CRYPTO_SUITE(&crypto_suite));
-
-    /* create block cipher options used by Velo crypt. */
-    INIT_OR_FAIL("block cipher options",
-                 (vccrypt_block_options_init(
-                        &block_opts, &alloc_opts,
-                        VCCRYPT_BLOCK_ALGORITHM_AES_256_2X_CBC)));
-    MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_BLOCK_OPTIONS(&block_opts));
-
-    /* create stream cipher options used by Velo crypt. */
-    INIT_OR_FAIL("stream cipher options",
-                 (vccrypt_stream_options_init(
-                        &stream_opts, &alloc_opts,
-                        VCCRYPT_STREAM_ALGORITHM_AES_256_2X_CTR)));
-    MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_STREAM_OPTIONS(&stream_opts));
 
     /* create a builder options instance. */
     INIT_OR_FAIL("vccert builder options",

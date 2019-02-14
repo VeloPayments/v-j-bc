@@ -78,7 +78,7 @@ public class Handshake {
 
         /*
          * request:
-         *    HMAC: server challenge / session key
+         *    HMAC: server challenge nonce / session key
          */
         byte[] request = new byte[32];
         // TODO: construct request

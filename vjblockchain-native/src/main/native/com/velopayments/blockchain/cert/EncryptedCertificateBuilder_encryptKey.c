@@ -37,7 +37,6 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     vccrypt_buffer_t privateKeyBuffer;
     vccrypt_buffer_t publicKeyBuffer;
     vccrypt_buffer_t ivBuffer;
-    vccrypt_block_options_t block_opts;
     vccrypt_block_context_t block;
     vccrypt_key_agreement_context_t ka;
     vccrypt_prng_context_t prng;
@@ -230,22 +229,13 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
         goto ivBuffer_dispose;
     }
 
-    /* create the block cipher options. */
-    if (0 != vccrypt_block_options_init(
-                &block_opts, &alloc_opts,
-                VCCRYPT_BLOCK_ALGORITHM_AES_256_2X_CBC))
-    {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher options creation failure.");
-        goto outputArrayData_dispose;
-    }
-
     /* create the block cipher instance. */
-    if (0 != vccrypt_block_init(&block_opts, &block, &keyBuffer, true))
+    if (0 != vccrypt_suite_block_init(&crypto_suite, &block, &keyBuffer,
+            true))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "block cipher creation failure.");
-        goto block_opts_dispose;
+        goto outputArrayData_dispose;
     }
 
     const uint8_t* keyData = (const uint8_t*)keyArrayData;
@@ -276,9 +266,6 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
 
 block_dispose:
     dispose((disposable_t*)&block);
-
-block_opts_dispose:
-    dispose((disposable_t*)&block_opts);
 
 outputArrayData_dispose:
     (*env)->ReleaseByteArrayElements(

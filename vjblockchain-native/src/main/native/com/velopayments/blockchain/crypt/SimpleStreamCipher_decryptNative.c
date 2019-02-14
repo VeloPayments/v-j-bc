@@ -19,8 +19,6 @@
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/NullPointerException.h"
 
-/* TODO - use crypto suite for stream cipher.  See BLOC-163. */
-
 /*
  * Class:     com_velopayments_blockchain_crypt_SimpleStreamCipher
  * Method:    decryptNative
@@ -108,7 +106,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     /* create a vccrypt_buffer for managing these key bytes. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &keyBuffer, &alloc_opts, stream_opts.key_size))
+                &keyBuffer, &alloc_opts,
+                crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer creation failure.");
@@ -116,7 +115,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     }
 
     /* copy the key data to the key buffer. */
-    memcpy(keyBuffer.data, keyBytesData, stream_opts.key_size);
+    memcpy(keyBuffer.data, keyBytesData,
+            crypto_suite.stream_cipher_opts.key_size);
 
     /* Compute the envelope size. */
     size_t envelope_size = KEY_IV_SIZE + KEY_SIZE + IV_SIZE + MAC_SIZE;
@@ -156,16 +156,17 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     /* create a buffer for the session key. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &sessionKeyBuffer, &alloc_opts, stream_opts.key_size))
+                &sessionKeyBuffer, &alloc_opts,
+                crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "session key buffer create failure.");
         goto outputArrayData_dispose;
     }
 
-    /* create block cipher instance for this. */
+    /* create block cipher instance from the crypto suite. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_block_init(&block_opts, &block, &keyBuffer, false))
+            vccrypt_suite_block_init(&crypto_suite, &block, &keyBuffer, false))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "block cipher init failure.");
@@ -236,7 +237,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
 
     /* create the stream cipher. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_stream_init(&stream_opts, &stream, &sessionKeyBuffer))
+            vccrypt_suite_stream_init(&crypto_suite, &stream,
+                    &sessionKeyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "stream cipher init failure.");

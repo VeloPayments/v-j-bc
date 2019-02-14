@@ -17,8 +17,6 @@
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/NullPointerException.h"
 
-/* TODO - use crypto suite for stream cipher.  See BLOC-163. */
-
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
  * Method:    verifyKeySizeNative
@@ -44,7 +42,7 @@ Java_com_velopayments_blockchain_crypt_Key_verifyKeySizeNative(
     jbyteArray key = (*env)->GetObjectField(env, that, Key_key);
     jint keyLen = (*env)->GetArrayLength(env, key);
 
-    if ((size_t)keyLen != stream_opts.key_size)
+    if ((size_t)keyLen != crypto_suite.stream_cipher_opts.key_size)
     {
         (*env)->ThrowNew(
             env, InvalidKeySizeException, "Invalid Key Size.");

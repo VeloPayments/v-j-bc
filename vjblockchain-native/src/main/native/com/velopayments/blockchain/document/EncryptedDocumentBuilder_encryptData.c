@@ -34,7 +34,6 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
     const size_t IV_SIZE = 8;
 
     vccrypt_buffer_t keyBuffer;
-    vccrypt_stream_options_t stream_opts;
     vccrypt_stream_context_t stream;
 
     /* function contract enforcement */
@@ -114,21 +113,11 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
         goto ivArrayData_dispose;
     }
 
-    /* TODO - use the suite to initialize the stream cipher. */
-    /* create the stream cipher options structure. */
-    if (0 != vccrypt_stream_options_init(
-                &stream_opts, &alloc_opts,
-                VCCRYPT_STREAM_ALGORITHM_AES_256_2X_CTR))
-    {
-        (*env)->ThrowNew(env, IllegalStateException, "stream options failure.");
-        goto inputArrayData_dispose;
-    }
-
     /* create the stream cipher instance. */
-    if (0 != vccrypt_stream_init(&stream_opts, &stream, &keyBuffer))
+    if (0 != vccrypt_suite_stream_init(&crypto_suite, &stream, &keyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
-        goto stream_cipher_options_dispose;
+        goto inputArrayData_dispose;
     }
 
     /* the total size of the output array */
@@ -194,9 +183,6 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_encryptData(
 
 stream_cipher_dispose:
     dispose((disposable_t*)&stream);
-
-stream_cipher_options_dispose:
-    dispose((disposable_t*)&stream_opts);
 
 inputArrayData_dispose:
     (*env)->ReleaseByteArrayElements(env, input, inputArrayData, JNI_ABORT);
