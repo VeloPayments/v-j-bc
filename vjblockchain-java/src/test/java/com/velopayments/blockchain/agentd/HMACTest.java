@@ -1,35 +1,40 @@
 package com.velopayments.blockchain.agentd;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.security.SecureRandom;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 public class HMACTest {
 
-    SecureRandom secureRandom = new SecureRandom();
+    SecureRandom secureRandom;
+    HMAC hmac;
+
+    @Before
+    public void setup() {
+        byte[] key = new byte[64];
+        secureRandom = new SecureRandom();
+        secureRandom.nextBytes(key);
+        hmac = new HMAC(key);
+    }
 
     @Test
-    public void digest() {
+    public void createHMACLong() {
 
+        // generate a random message
+        byte[] message1 = new byte[32];
+        secureRandom.nextBytes(message1);
 
-        byte[] key = new byte[32];
-        secureRandom.nextBytes(key);
+        // HMAC the message
+        byte[] digest1 = hmac.createHMACLong(message1);
 
-        HMAC hmac = new HMAC(key);
+        // the digest value should be 64 bytes long
+        assertThat(digest1.length, is(64));
 
-        byte[] message = "some message".getBytes();
-
-        byte[] digest = hmac.digest(message);
-
-        assertThat(digest, notNullValue());
-        assertThat(digest.length, not(0));
-
-        // TODO
+        // the digest value should be reproducible
+        assertThat(hmac.createHMACLong(message1),is(digest1));
     }
 }

@@ -15,7 +15,7 @@ public class HMAC {
     }
 
 
-    public byte[] digest(byte[] message) {
+    public byte[] createHMACLong(byte[] message) {
         return digestNative(key, message);
     }
 
