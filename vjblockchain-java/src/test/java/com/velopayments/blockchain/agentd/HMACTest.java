@@ -15,7 +15,7 @@ public class HMACTest {
 
     @Before
     public void setup() {
-        byte[] key = new byte[64];
+        byte[] key = new byte[32];
         secureRandom = new SecureRandom();
         secureRandom.nextBytes(key);
         hmac = new HMAC(key);
@@ -25,7 +25,7 @@ public class HMACTest {
     public void createHMACLong() {
 
         // generate a random message
-        byte[] message1 = new byte[32];
+        byte[] message1 = new byte[secureRandom.nextInt(100) + 1];
         secureRandom.nextBytes(message1);
 
         // HMAC the message

@@ -75,9 +75,10 @@ Java_com_velopayments_blockchain_agentd_HMAC_digestNative
     }
 
     /* create a vccrypt_buffer for managing these key bytes. */
+    size_t key_size = (*env)->GetArrayLength(env, key);
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &key_buffer, &alloc_opts, 64))
+                &key_buffer, &alloc_opts, key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer creation failure.");
@@ -85,7 +86,7 @@ Java_com_velopayments_blockchain_agentd_HMAC_digestNative
     }
 
     /* copy the key data to the key buffer. */
-    memcpy(key_buffer.data, key_bytes, 64);
+    memcpy(key_buffer.data, key_bytes, key_size);
 
     /* initialize HMAC */
     if (VCCRYPT_STATUS_SUCCESS !=
@@ -106,9 +107,9 @@ Java_com_velopayments_blockchain_agentd_HMAC_digestNative
     }
 
     /* digest */
-    /* TODO: don't assume length */
+    size_t message_size = (*env)->GetArrayLength(env, message);
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_mac_digest(&mac, (uint8_t*)message_bytes, 32))
+            vccrypt_mac_digest(&mac, (uint8_t*)message_bytes, message_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not digest.");
