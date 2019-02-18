@@ -1,9 +1,12 @@
 package com.velopayments.blockchain.agentd;
 
+import java.io.IOException;
+
 public interface RemoteAgent {
 
 
-    byte[] send(byte[] request);
+    void send(byte[] request);
 
+    byte[] recv(int n);
 
 }

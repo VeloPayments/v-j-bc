@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public class Handshake {
 
+    public static final int INITIATE_RESPONSE_SIZE = 112;
+
     private RemoteAgentConfiguration remoteAgentConfiguration;
     private RemoteAgent remoteAgent;
     private SecureRandom random;
@@ -43,8 +45,11 @@ public class Handshake {
         System.arraycopy(clientChallengeNonce, 0, request, 48, 32);
 
 
-        // send request to remote agent (agentd)
-        byte[] response = remoteAgent.send(request);
+        // send handshake request
+        remoteAgent.send(request);
+
+        // receive response
+        byte[] response = remoteAgent.recv(INITIATE_RESPONSE_SIZE);
 
         /*
          * response:
@@ -56,19 +61,19 @@ public class Handshake {
 
         // verify agent UUID
         // TODO - use timing resistant equality check
-        UUID agentUUID = UuidUtil.getUUIDFromBytes(Arrays.copyOfRange(response, 0, 15));
+        UUID agentUUID = UuidUtil.getUUIDFromBytes(Arrays.copyOfRange(response, 0, 16));
         if (! remoteAgentConfiguration.getAgentId().equals(agentUUID)) {
             throw new AgentVerificationException("Expected agent ID " + remoteAgentConfiguration.getAgentId()
                     + " but received " + agentUUID);
         }
 
         byte[] serverKeyNonce = new byte[32];
-        serverKeyNonce = Arrays.copyOfRange(response, 16,31);
+        serverKeyNonce = Arrays.copyOfRange(response, 16,48);
 
         byte[] serverChallengeNonce = new byte[32];
-        serverChallengeNonce = Arrays.copyOfRange(response, 32, 63);
+        serverChallengeNonce = Arrays.copyOfRange(response, 48, 80);
 
-        byte[] serverChallengeResponse = Arrays.copyOfRange(response, 64, 95);
+        byte[] serverChallengeResponse = Arrays.copyOfRange(response, 80, 112);
 
         // TODO - verify challenge / response
     }
@@ -84,7 +89,7 @@ public class Handshake {
         // TODO: construct request
 
 
-        byte[] response = remoteAgent.send(request);
+        // TODO: send and receive
 
         /*
          * response:
