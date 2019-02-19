@@ -36,7 +36,7 @@ public class RemoteAgentImpl implements RemoteAgent {
     }
 
     /**
-     * Read <n> bytes from the socket.  This is a blocking call.
+     * Synchronously read <n> bytes from the socket.
      *
      * @param n   the number of bytes to read
      * @return    bytes read
@@ -56,5 +56,6 @@ public class RemoteAgentImpl implements RemoteAgent {
 
         return response;
     }
+
 
 }
