@@ -2,6 +2,7 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.util.UuidUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

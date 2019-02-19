@@ -1,4 +1,4 @@
-package com.velopayments.blockchain.agentd;
+package com.velopayments.blockchain.util;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;

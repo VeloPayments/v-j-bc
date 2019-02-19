@@ -1,4 +1,4 @@
-package com.velopayments.blockchain.agentd;
+package com.velopayments.blockchain.util;
 
 import org.junit.Test;
 

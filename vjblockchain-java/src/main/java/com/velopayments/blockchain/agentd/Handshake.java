@@ -1,5 +1,7 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.util.UuidUtil;
+
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.UUID;

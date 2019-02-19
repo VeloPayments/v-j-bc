@@ -1,5 +1,9 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.util.ByteUtil;
+
+import java.util.Arrays;
+
 public class RemoteAgentUtil {
 
     /**
@@ -9,7 +13,7 @@ public class RemoteAgentUtil {
      * @param inner
      * @return
      */
-    public byte[] wrapOuter(MessageType messageType, byte[] inner, byte[] key) {
+    public static byte[] wrapOuter(MessageType messageType, byte[] inner, byte[] key) {
 
         return null;
     }
@@ -21,7 +25,7 @@ public class RemoteAgentUtil {
      * @param outer
      * @return
      */
-    public byte[] unwrapOuter(byte[] outer) {
+    public static byte[] unwrapOuter(byte[] outer) {
 
         return null;
     }
@@ -39,28 +43,51 @@ public class RemoteAgentUtil {
      * @param payload        payload to wrap
      * @return
      */
-    public byte[] wrapInner(final long requestId, final long requestOffset, byte[] payload) {
+    public static byte[] wrapInner(final long requestId, final long requestOffset, byte[] payload) {
 
         byte[] wrapped = new byte[8 + payload.length];
 
         // the first four bytes are the request ID
-        long r = requestId;
-        for (int i=0; i<4 ;i++) {
-            wrapped[i] = (byte)(r & 0xFF);
-            r >>= 8;
-        }
+        System.arraycopy(ByteUtil.longToBytes(requestId, 4),
+            0, wrapped, 0, 4);
 
         // the next four bytes are the request offset
-        long ro = requestOffset;
-        for (int i=0; i<4; i++) {
-            wrapped[i+4] = (byte)(ro & 0xFF);
-            ro >>= 8;
-        }
+        System.arraycopy(ByteUtil.longToBytes(requestOffset, 4),
+                0, wrapped, 4, 4);
 
         // the remaining bytes are the payload
         System.arraycopy(payload, 0, wrapped, 8, payload.length);
 
         return wrapped;
+    }
+
+    /**
+     * Unwrap the inner envelope.  The wrapped envelope should be structured as:
+     *
+     *   bits  0 - 31 - request ID in big endian
+     *   bits 32 - 63 - request offset in big endian
+     *   bits 64 - 95 - status
+     *   bits 96+     - payload
+     *
+     * @param wrapped     The inner envelope to be unwrapped
+     *
+     * @return            The unwrapped envelope
+     */
+    public static UnwrappedInnerEnvelope unwrapInner(byte[] wrapped) {
+
+        long requestId = ByteUtil.bytesToLong(
+                Arrays.copyOfRange(wrapped, 0, 4));
+
+        long requestOffset = ByteUtil.bytesToLong(
+                Arrays.copyOfRange(wrapped, 4, 8));
+
+        long status = ByteUtil.bytesToLong(
+                Arrays.copyOfRange(wrapped, 8, 12));
+
+        byte[] payload = Arrays.copyOfRange(wrapped, 12, wrapped.length);
+
+
+        return new UnwrappedInnerEnvelope(requestId, requestOffset, status, payload);
     }
 
     /**
