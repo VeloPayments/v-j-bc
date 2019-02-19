@@ -15,8 +15,8 @@ public class RemoteAgentUtilTest {
 
         // given a request ID, request offset, and a payload
 
-        long requestId = 924059689;
-        long requestOffset = 0xFFFFFFFF; // max
+        long requestId = 0x01L;
+        long requestOffset = 0xFFL;
         byte[] payload = "this is my payload".getBytes();
 
         // when the payload is wrapped
@@ -27,17 +27,16 @@ public class RemoteAgentUtilTest {
         assertThat(wrapped, notNullValue());
         assertThat(wrapped.length, is(4 + 4 + payload.length));
 
-        // and the first 4 bytes should be the request ID
-        // 00110111 00010100 00001000 00101001
-        assertThat(wrapped[0], is((byte)41));
-        assertThat(wrapped[1], is((byte)8));
-        assertThat(wrapped[2], is((byte)20));
-        assertThat(wrapped[3], is((byte)55));
+        // and the first 4 bytes should be the request ID in big endian
+        assertThat(wrapped[0], is((byte)0));
+        assertThat(wrapped[1], is((byte)0));
+        assertThat(wrapped[2], is((byte)0));
+        assertThat(wrapped[3], is((byte)1));
 
-        // and the next 4 bytes should be the request offset
-        assertThat(wrapped[4], is((byte)0xFF));
-        assertThat(wrapped[5], is((byte)0xFF));
-        assertThat(wrapped[6], is((byte)0xFF));
+        // and the next 4 bytes should be the request offset in big endian
+        assertThat(wrapped[4], is((byte)0x00));
+        assertThat(wrapped[5], is((byte)0x00));
+        assertThat(wrapped[6], is((byte)0x00));
         assertThat(wrapped[7], is((byte)0xFF));
 
 
@@ -51,8 +50,8 @@ public class RemoteAgentUtilTest {
         // given an inner envelope
 
         byte[] inner = new byte[] {
-            (byte)0x01,(byte)0x02,(byte)0x00,(byte)0x00,  // request ID
-            (byte)0x02,(byte)0x03,(byte)0x00,(byte)0x00,  // request offset
+            (byte)0xFF,(byte)0x00,(byte)0x00,(byte)0x01,  // request ID
+            (byte)0xEE,(byte)0x00,(byte)0x00,(byte)0x02,  // request offset
             (byte)0x01,(byte)0x02,(byte)0x03,(byte)0x04,  // status
             (byte)0x87, (byte)0xa0 // payload
         };
@@ -61,13 +60,13 @@ public class RemoteAgentUtilTest {
         UnwrappedInnerEnvelope unwrapped = RemoteAgentUtil.unwrapInner(inner);
 
         // then the request Id should be correct
-        assertThat(unwrapped.getRequestId(), is(0x201L));
+        assertThat(unwrapped.getRequestId(), is(0xFF000001L));
 
         // and the request offset should be correct
-        assertThat(unwrapped.getRequestOffset(), is(0x302L));
+        assertThat(unwrapped.getRequestOffset(), is(0xEE000002L));
 
         // and the status should be correct
-        assertThat(unwrapped.getStatus(), is(0x4030201L));
+        assertThat(unwrapped.getStatus(), is(0x1020304L));
 
         // and the payload should be correct
         assertThat(unwrapped.getPayload(), is(new byte[] {(byte)0x87, (byte)0xa0}));

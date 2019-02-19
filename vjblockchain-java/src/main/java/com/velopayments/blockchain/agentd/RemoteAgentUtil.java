@@ -48,11 +48,11 @@ public class RemoteAgentUtil {
         byte[] wrapped = new byte[8 + payload.length];
 
         // the first four bytes are the request ID
-        System.arraycopy(ByteUtil.longToBytes(requestId, 4),
+        System.arraycopy(ByteUtil.longToBytes(requestId, 4,true),
             0, wrapped, 0, 4);
 
         // the next four bytes are the request offset
-        System.arraycopy(ByteUtil.longToBytes(requestOffset, 4),
+        System.arraycopy(ByteUtil.longToBytes(requestOffset, 4, true),
                 0, wrapped, 4, 4);
 
         // the remaining bytes are the payload
@@ -76,13 +76,13 @@ public class RemoteAgentUtil {
     public static UnwrappedInnerEnvelope unwrapInner(byte[] wrapped) {
 
         long requestId = ByteUtil.bytesToLong(
-                Arrays.copyOfRange(wrapped, 0, 4));
+                Arrays.copyOfRange(wrapped, 0, 4),true);
 
         long requestOffset = ByteUtil.bytesToLong(
-                Arrays.copyOfRange(wrapped, 4, 8));
+                Arrays.copyOfRange(wrapped, 4, 8),true);
 
         long status = ByteUtil.bytesToLong(
-                Arrays.copyOfRange(wrapped, 8, 12));
+                Arrays.copyOfRange(wrapped, 8, 12),true);
 
         byte[] payload = Arrays.copyOfRange(wrapped, 12, wrapped.length);
 
