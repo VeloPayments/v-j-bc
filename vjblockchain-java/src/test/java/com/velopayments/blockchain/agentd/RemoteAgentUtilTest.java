@@ -1,6 +1,8 @@
 package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
+import com.velopayments.blockchain.crypt.GenericStreamCipher;
+import com.velopayments.blockchain.util.ByteUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -85,16 +87,39 @@ public class RemoteAgentUtilTest {
         byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, inner, key);
 
         // then the first byte should be the message type
+        assertThat(wrapped[0], is((byte)MessageType.HANDSHAKE.getValue()));
 
+        // ... and the next 4 bytes should be the size of the encrypted payload
+        byte[] iv = ByteUtil.longToBytes(RemoteAgentUtil.getCurrentIV(), 4, false);
+        byte[] expectedPayload = GenericStreamCipher.encryptData(key, iv, inner);
 
-        // ... and the second 4 bytes should be the size of the inner payload
-        // TODO: - minus 8 bytes?
+        long payloadSize = ByteUtil.bytesToLong(Arrays.copyOfRange(wrapped, 1, 5), true);
+        assertThat(payloadSize, is(Long.valueOf(expectedPayload.length)));
 
-        // ... and the next N-32 bytes should be the encrypted payload
+        // ... and the next N bytes should be the encrypted payload
+        assertThat(Arrays.copyOfRange(wrapped, 5, (int)payloadSize+5), is(expectedPayload));
 
-
-        // ... and the last 32 bytes should be the encrypted payload HMAC'd
+        // ... and the last 32 bytes should be the HMAC of the previous bytes
+        // TODO
     }
 
+    @Test
+    public void unwrapOuter() {
+
+        // given an outer envelope
+
+        byte[] inner = "this is my inner envelope.".getBytes();
+        byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
+        byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, inner, key);
+
+
+        // when the envelope is unwrapped
+
+        byte[] unwrapped = RemoteAgentUtil.unwrapOuter(wrapped, key);
+
+        // the decrypted message is correct
+
+        assertThat(unwrapped, is(inner));
+    }
 
 }

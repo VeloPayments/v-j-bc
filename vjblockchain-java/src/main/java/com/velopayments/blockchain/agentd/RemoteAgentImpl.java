@@ -8,6 +8,8 @@ import java.net.Socket;
 
 public class RemoteAgentImpl implements RemoteAgent {
 
+    // TODO: provide methods to open/close socket.  socket should be open when sending/receiving.
+
     private RemoteAgentConfiguration config;
     private SocketFactory socketFactory;
 
