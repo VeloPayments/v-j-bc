@@ -62,7 +62,8 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_decryptNative(
     }
 
     /* create buffer to hold the key. */
-    if (0 != vccrypt_buffer_init(&keyBuffer, &alloc_opts, 32))
+    size_t key_size = (*env)->GetArrayLength(env, secretKey);
+    if (0 != vccrypt_buffer_init(&keyBuffer, &alloc_opts, key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer create failure.");
@@ -81,7 +82,7 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_decryptNative(
 
     /* copy the key data to the vccrypt key buffer. */
     MODEL_EXEMPT(
-            memcpy(keyBuffer.data, secretKeyArrayData, 32));
+            memcpy(keyBuffer.data, secretKeyArrayData, key_size));
 
     /* get the buffer for the input array. */
     jbyte* inputArrayData = (*env)->GetByteArrayElements(env, input, NULL);
