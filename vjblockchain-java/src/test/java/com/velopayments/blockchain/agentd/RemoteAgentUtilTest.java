@@ -77,27 +77,22 @@ public class RemoteAgentUtilTest {
     @Test
     public void wrapOuter() {
 
-        // given an inner envelope and an encryption key
-
+        // given an inner envelope, an encryption key, and an IV
         byte[] inner = "this is my inner envelope.".getBytes();
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
 
         // when the envelope is wrapped
-
-        byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, inner, key);
+        byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, key, inner);
 
         // then the first byte should be the message type
         assertThat(wrapped[0], is((byte)MessageType.HANDSHAKE.getValue()));
 
         // ... and the next 4 bytes should be the size of the encrypted payload
-        byte[] iv = ByteUtil.longToBytes(RemoteAgentUtil.getCurrentIV(), 4, false);
-        byte[] expectedPayload = GenericStreamCipher.encryptData(key, iv, inner);
-
         long payloadSize = ByteUtil.bytesToLong(Arrays.copyOfRange(wrapped, 1, 5), true);
-        assertThat(payloadSize, is(Long.valueOf(expectedPayload.length)));
 
         // ... and the next N bytes should be the encrypted payload
-        assertThat(Arrays.copyOfRange(wrapped, 5, (int)payloadSize+5), is(expectedPayload));
+        byte[] encrypted = Arrays.copyOfRange(wrapped, 5, (int)payloadSize+5);
+        assertThat(GenericStreamCipher.decrypt(key, encrypted), is(inner));
 
         // ... and the last 32 bytes should be the HMAC of the previous bytes
         // TODO
@@ -110,12 +105,12 @@ public class RemoteAgentUtilTest {
 
         byte[] inner = "this is my inner envelope.".getBytes();
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
-        byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, inner, key);
+        byte[] wrapped = RemoteAgentUtil.wrapOuter(MessageType.HANDSHAKE, key, inner);
 
 
         // when the envelope is unwrapped
 
-        byte[] unwrapped = RemoteAgentUtil.unwrapOuter(wrapped, key);
+        byte[] unwrapped = RemoteAgentUtil.unwrapOuter(key, wrapped);
 
         // the decrypted message is correct
 

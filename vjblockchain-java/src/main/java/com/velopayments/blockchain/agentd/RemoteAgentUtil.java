@@ -18,53 +18,40 @@ public class RemoteAgentUtil {
      * bytes 1 - 4       size of payload big endian format
      * bytes 5 - N+5     encrypted payload
      * bytes N+6 - N+38  HMAC of envelope (all previous bytes)
-
+     *
+     * The IV is incremented after this call.
+     *
      * @param messageType    message type
-     * @param inner          unencrypted payload (inner envelope)
      * @param key            key to use to encrypt the payload
+     * @param input          unencrypted payload (inner envelope)
      * @return
      */
-    public static byte[] wrapOuter(MessageType messageType, byte[] inner,
-                                   byte[] key) {
+    public static byte[] wrapOuter(MessageType messageType, byte[] key,
+                                   byte[] input) {
 
-        byte outer[] = new byte[1 + 4 + inner.length + 4];
+        // encrypt the payload
+        byte[] ivBytes = ByteUtil.longToBytes(iv.getAndIncrement(),false);
+        byte[] encryptedPayload = GenericStreamCipher.encrypt(key, ivBytes, input);
+
+        // create a buffer to hold the output
+        byte outer[] = new byte[1 + 4 + encryptedPayload.length + 32];
 
         // the first byte is the message type
-
         outer[0] = (byte)messageType.getValue();
 
         // bytes 1 - 4 are the size of the encrypted payload
-
-        byte[] encryptedPayload = GenericStreamCipher.encryptData(key,
-                ByteUtil.longToBytes(iv.getAndIncrement(),false), inner);
-
-        System.arraycopy(
-                ByteUtil.longToBytes(encryptedPayload.length,4, true),
-                0,
-                outer,
-                1,
-                4);
+        byte[] payloadSize = ByteUtil.longToBytes(encryptedPayload.length,4, true);
+        System.arraycopy(payloadSize, 0, outer, 1, 4);
 
         // bytes 5 - N+5 are the encrypted payload
-
         System.arraycopy(encryptedPayload, 0, outer, 5, encryptedPayload.length);
 
         // bytes N+6 - N+38 are the HMAC'd value
-
         HMAC hmac = new HMAC(key);
         //hmac.createHMACLong()   // TODO: - should be short HMAC of the entire outer envelope
 
 
         return outer;
-    }
-
-    /**
-     * Get the current value of the IV
-     *
-     * @return
-     */
-    public static long getCurrentIV() {
-        return iv.get();
     }
 
     /**
@@ -74,7 +61,7 @@ public class RemoteAgentUtil {
      * @param outer
      * @return
      */
-    public static byte[] unwrapOuter(byte[] outer, byte[] key) {
+    public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
         // the last 32 bytes are the HMAC of the previous bytes
         byte[] hmac = Arrays.copyOfRange(outer, outer.length - 32, outer.length);
@@ -90,7 +77,7 @@ public class RemoteAgentUtil {
         // bytes 5 - payloadSize+5 are the payload
         byte[] encryptedPayload = Arrays.copyOfRange(outer, 5, payloadSize+5);
 
-        return GenericStreamCipher.decryptData(key, encryptedPayload);
+        return GenericStreamCipher.decrypt(key, encryptedPayload);
     }
 
 

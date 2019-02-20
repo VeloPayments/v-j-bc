@@ -10,13 +10,14 @@ public class GenericStreamCipher {
      * @param input The input to encrypt.
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
+     * FIXME: not currently appending HMAC
      */
-    public static byte[] encryptData(byte[] key, byte[] iv, byte[] input) {
-        return input;  // TODO
+    public static byte[] encrypt(byte[] key, byte[] iv, byte[] input) {
+        return encryptNative(key, iv, input);
     }
 
-    //private static native byte[] encryptData(
-    //        byte[] key, byte[] iv, byte[] input);
+    private static native byte[] encryptNative(
+            byte[] key, byte[] iv, byte[] input);
 
 
     /**
@@ -27,11 +28,11 @@ public class GenericStreamCipher {
      *
      * @return the decrypted value.
      */
-    public static byte[] decryptData(byte[] secretKey, byte[] input) {
-        return input; // TODO
+    public static byte[] decrypt(byte[] secretKey, byte[] input) {
+        return decryptNative(secretKey, input);
     }
 
-    //private static native byte[] decryptNative(byte[] secretKey, byte[] input);
+    private static native byte[] decryptNative(byte[] secretKey, byte[] input);
 
 
 }
