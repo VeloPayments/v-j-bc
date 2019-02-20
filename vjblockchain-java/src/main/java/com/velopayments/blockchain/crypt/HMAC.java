@@ -1,4 +1,4 @@
-package com.velopayments.blockchain.agentd;
+package com.velopayments.blockchain.crypt;
 
 import com.velopayments.blockchain.init.Initializer;
 

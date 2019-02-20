@@ -1,6 +1,7 @@
 package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.crypt.GenericStreamCipher;
+import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 
 import java.util.Arrays;

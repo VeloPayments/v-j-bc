@@ -15,17 +15,17 @@
 
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/NullPointerException.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
+#include "../init/init.h"
 
 #include <stdio.h>
 
 /*
- * Class:     com_velopayments_blockchain_agentd_HMAC
+ * Class:     com_velopayments_blockchain_crypt_HMAC_digestNative
  * Method:    digestNative
  * Signature: ([B[B)[B
  */
 JNIEXPORT jbyteArray JNICALL
-Java_com_velopayments_blockchain_agentd_HMAC_digestNative
+Java_com_velopayments_blockchain_crypt_HMAC_digestNative
         (JNIEnv *env, jobject UNUSED(hmac), jbyteArray key, jbyteArray message)
 {
     jbyteArray retval = NULL;
