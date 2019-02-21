@@ -59,7 +59,8 @@ public class GenericStreamCipherTest {
         assertThat(decrypted, not(input));
     }
 
-    @Ignore // TODO: this seems like a bug - check with Justin
+    @Ignore // TODO: need to do bounds checking to ensure key doesn't exceed
+            // size specified in stream_cipher_options.key_size
     @Test
     public void decryptionKeyTooLong() {
 
