@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Connect to an agent and perform basic client functions.
  */
-public class AgentConnection {
+public class AgentConnection implements VelochainConnection {
 
     /**
      * Connect using a given connection string, authenticating using the given
@@ -40,6 +40,7 @@ public class AgentConnection {
      * Commit the current transactions to the blockchain, creating a new block
      * if necessary.
      */
+    @Override
     public void commitTransactions() throws IOException {
 
         /* make a block with any remaining transactions. */
@@ -51,6 +52,7 @@ public class AgentConnection {
     /**
      * Cancel the current transactions to the blockchain.
      */
+    @Override
     public void cancelTransactions() throws IOException {
 
         for (TransactionSubmissionRequest req : submissionList) {
@@ -63,6 +65,7 @@ public class AgentConnection {
     /**
      * Close the client connection.
      */
+    @Override
     public void close() throws IOException {
 
         /* commit outstanding transactions. */
@@ -90,6 +93,7 @@ public class AgentConnection {
      *
      * @return a Future which evaluates into the status of the transaction.
      */
+    @Override
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
             throws IOException {
 
@@ -114,6 +118,7 @@ public class AgentConnection {
      *
      * @return the latest block UUID.
      */
+    @Override
     public UUID getLatestBlockId() throws IOException {
 
         return getLatestBlockIdNative();
@@ -128,6 +133,7 @@ public class AgentConnection {
      *
      * @return the next block UUID.
      */
+    @Override
     public Optional<UUID> getNextBlockId(UUID blockId) throws IOException {
 
         return getNextBlockIdNative(blockId);
@@ -142,6 +148,7 @@ public class AgentConnection {
      *
      * @return the previous block UUID.
      */
+    @Override
     public Optional<UUID> getPrevBlockId(UUID blockId) throws IOException {
 
         return getPrevBlockIdNative(blockId);
@@ -157,6 +164,7 @@ public class AgentConnection {
      *
      * @return the block UUID associated with the transaction UUID.
      */
+    @Override
     public Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException {
 
         return getTransactionBlockIdNative(txnId);
@@ -171,6 +179,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
+    @Override
     public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
 
         return getBlockByIdNative(blockId);
@@ -183,6 +192,7 @@ public class AgentConnection {
      *
      * @return the block UUID at the given height, or empty if not found.
      */
+    @Override
     public Optional<UUID>
     getBlockIdByBlockHeight(long height) throws IOException {
 
@@ -198,6 +208,7 @@ public class AgentConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
+    @Override
     public Optional<Certificate> getTransactionById(UUID txnId)
             throws IOException {
 
@@ -211,6 +222,7 @@ public class AgentConnection {
      *
      * @return the first transaction id for a given artifact id.
      */
+    @Override
     public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
             throws IOException {
 
@@ -224,6 +236,7 @@ public class AgentConnection {
      *
      * @return the last transaction id for a given artifact id.
      */
+    @Override
     public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
             throws IOException {
 
@@ -239,6 +252,7 @@ public class AgentConnection {
      * @return the last block id containing a transaction for a given artifact
      * id.
      */
+    @Override
     public Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
             throws IOException {
 
@@ -252,6 +266,7 @@ public class AgentConnection {
      *
      * @return the previous transaction ID associated with this transaction ID.
      */
+    @Override
     public Optional<UUID>
     getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException {
         return getPreviousTransactionIdForTransactionByIdNative(txnId);
@@ -264,6 +279,7 @@ public class AgentConnection {
      *
      * @return the next transaction ID associated with this transaction ID.
      */
+    @Override
     public Optional<UUID>
     getNextTransactionIdForTransactionById(UUID txnId) throws IOException {
         return getNextTransactionIdForTransactionByIdNative(txnId);

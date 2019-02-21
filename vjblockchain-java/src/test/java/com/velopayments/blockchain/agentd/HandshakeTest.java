@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.util.UuidUtil;
@@ -20,7 +21,7 @@ public class HandshakeTest {
     UUID agentId;
     UUID entityId;
 
-    RemoteAgent remoteAgent;
+    RemoteAgentChannel remoteAgent;
 
     @Before
     public void setup() {
@@ -31,13 +32,13 @@ public class HandshakeTest {
         RemoteAgentConfiguration config = new RemoteAgentConfiguration(
                 "localhost",999, entityId, agentId, encryptionPublicKey);
 
-        remoteAgent = Mockito.mock(RemoteAgent.class);
+        remoteAgent = Mockito.mock(RemoteAgentChannel.class);
 
         handshake = new Handshake(config, remoteAgent);
     }
 
     @Test
-    public void initiateHandshake() {
+    public void initiateHandshake() throws Exception {
 
         // given a properly configured handshake instance
         byte[] response = new byte[Handshake.INITIATE_RESPONSE_SIZE];
@@ -55,7 +56,7 @@ public class HandshakeTest {
     }
 
     @Test
-    public void initiateHandshake_IncorrectAgentId() {
+    public void initiateHandshake_IncorrectAgentId() throws Exception {
 
         // given an improperly configured handshake instance
         byte[] response = new byte[Handshake.INITIATE_RESPONSE_SIZE];

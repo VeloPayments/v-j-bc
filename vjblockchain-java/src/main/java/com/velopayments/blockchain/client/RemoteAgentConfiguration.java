@@ -1,4 +1,4 @@
-package com.velopayments.blockchain.agentd;
+package com.velopayments.blockchain.client;
 
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 

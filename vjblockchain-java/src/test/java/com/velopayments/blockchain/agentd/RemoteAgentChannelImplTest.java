@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import org.junit.Before;
@@ -16,9 +17,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 
-public class RemoteAgentImplTest {
+public class RemoteAgentChannelImplTest {
 
-    RemoteAgentImpl remoteAgent;
+    RemoteAgentChannelImpl remoteAgentChannel;
 
     Socket socket;
 
@@ -41,7 +42,8 @@ public class RemoteAgentImplTest {
         when(socketFactory.createSocket(host, port)).thenReturn(socket);
 
         // create the remote agent under test
-        remoteAgent = new RemoteAgentImpl(config, socketFactory);
+        remoteAgentChannel = new RemoteAgentChannelImpl(config, socketFactory);
+        remoteAgentChannel.connect();
     }
 
 
@@ -56,7 +58,7 @@ public class RemoteAgentImplTest {
         byte[] message = "Hello!".getBytes();
 
         // when the message is sent
-        remoteAgent.send(message);
+        remoteAgentChannel.send(message);
 
         // the bytes should be written to the socket
         assertThat(bos.toByteArray(), is(message));
@@ -71,7 +73,7 @@ public class RemoteAgentImplTest {
         when(socket.getInputStream()).thenReturn(bis);
 
         // when recv is invoked
-        byte[] incoming = remoteAgent.recv(message.length);
+        byte[] incoming = remoteAgentChannel.recv(message.length);
 
         // the message should be received
         assertThat(incoming, is(message));

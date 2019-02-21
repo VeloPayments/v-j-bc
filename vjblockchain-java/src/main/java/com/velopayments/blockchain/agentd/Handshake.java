@@ -1,7 +1,9 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.util.UuidUtil;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.UUID;
@@ -11,21 +13,20 @@ public class Handshake {
     public static final int INITIATE_RESPONSE_SIZE = 112;
 
     private RemoteAgentConfiguration remoteAgentConfiguration;
-    private RemoteAgent remoteAgent;
+    private RemoteAgentChannel remoteAgentChannel;
     private SecureRandom random;
 
     private byte[] serverChallengeNonce;
 
-    public Handshake(RemoteAgentConfiguration remoteAgentConfiguration,RemoteAgent remoteAgent) {
+    public Handshake(RemoteAgentConfiguration remoteAgentConfiguration,
+                     RemoteAgentChannel remoteAgentChannel) {
         this.remoteAgentConfiguration = remoteAgentConfiguration;
-        this.remoteAgent = remoteAgent;
-
+        this.remoteAgentChannel = remoteAgentChannel;
         this.random = new SecureRandom();
-
         this.serverChallengeNonce = new byte[32];
     }
 
-    public void initiate() {
+    public void initiate() throws IOException {
 
         /*
          * request:
@@ -48,10 +49,10 @@ public class Handshake {
 
 
         // send handshake request
-        remoteAgent.send(request);
+        remoteAgentChannel.send(request);
 
         // receive response
-        byte[] response = remoteAgent.recv(INITIATE_RESPONSE_SIZE);
+        byte[] response = remoteAgentChannel.recv(INITIATE_RESPONSE_SIZE);
 
         /*
          * response:
