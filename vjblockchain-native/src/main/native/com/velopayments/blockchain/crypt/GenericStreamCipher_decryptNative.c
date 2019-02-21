@@ -61,8 +61,16 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_decryptNative(
         return NULL;
     }
 
-    /* create buffer to hold the key. */
+    /* verify the secret key size */
     size_t key_size = (*env)->GetArrayLength(env, secretKey);
+    if (key_size != crypto_suite.stream_cipher_opts.key_size)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "Invalid key size.");
+        return NULL;
+    }
+
+    /* create buffer to hold the key. */
     if (0 != vccrypt_buffer_init(&keyBuffer, &alloc_opts, key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
