@@ -6,28 +6,36 @@ import com.velopayments.blockchain.util.UuidUtil;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
-public class Handshake {
+public class ProtocolHandlerImpl implements ProtocolHandler {
 
-    public static final int INITIATE_RESPONSE_SIZE = 112;
+    public static final int HANDSHAKE_INITIATE_RESPONSE_SIZE = 112;
+
+    public static final int SEND_RECV_UUID_RESPONSE_SIZE = 16 +
+            Envelope.OUTER_ENVELOPE_OVERHEAD;
 
     private RemoteAgentConfiguration remoteAgentConfiguration;
     private RemoteAgentChannel remoteAgentChannel;
+
     private SecureRandom random;
+    private long requestId; // TODO: details on this
 
-    private byte[] serverChallengeNonce;
-
-    public Handshake(RemoteAgentConfiguration remoteAgentConfiguration,
-                     RemoteAgentChannel remoteAgentChannel) {
+    public ProtocolHandlerImpl(RemoteAgentConfiguration remoteAgentConfiguration,
+                               RemoteAgentChannel remoteAgentChannel) {
         this.remoteAgentConfiguration = remoteAgentConfiguration;
         this.remoteAgentChannel = remoteAgentChannel;
         this.random = new SecureRandom();
-        this.serverChallengeNonce = new byte[32];
     }
 
-    public void initiate() throws IOException {
+    @Override
+    public void handshake() throws IOException {
+        byte[] serverChallengeNonce = initiateHandshake();
+        acknowledgeHandshake(serverChallengeNonce);
+    }
 
+    private byte[] initiateHandshake() throws IOException {
         /*
          * request:
          *    bytes 0-15: entity ID
@@ -52,7 +60,7 @@ public class Handshake {
         remoteAgentChannel.send(request);
 
         // receive response
-        byte[] response = remoteAgentChannel.recv(INITIATE_RESPONSE_SIZE);
+        byte[] response = remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE);
 
         /*
          * response:
@@ -70,19 +78,18 @@ public class Handshake {
                     + " but received " + agentUUID);
         }
 
-        byte[] serverKeyNonce = new byte[32];
-        serverKeyNonce = Arrays.copyOfRange(response, 16,48);
+        byte[] serverKeyNonce = Arrays.copyOfRange(response, 16,48);
 
-        byte[] serverChallengeNonce = new byte[32];
-        serverChallengeNonce = Arrays.copyOfRange(response, 48, 80);
+        byte[] serverChallengeNonce = Arrays.copyOfRange(response, 48, 80);
 
         byte[] serverChallengeResponse = Arrays.copyOfRange(response, 80, 112);
 
         // TODO - verify challenge / response
+
+        return serverChallengeNonce;
     }
 
-
-    public void acknowledge() {
+    private void acknowledgeHandshake(byte[] serverChallengeNonce) {
 
         /*
          * request:
@@ -101,4 +108,37 @@ public class Handshake {
 
         // TODO: verify response
     }
+
+
+    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid) throws IOException {
+
+        // build request payload: UUID (16 bytes) in big endian
+        byte[] reqPayload = UuidUtil.getBytesFromUUID(uuid);
+
+        // wrap in inner envelope
+        byte[] reqInner = Envelope.wrapInner(apiMethod, requestId, reqPayload);
+
+        // wrap in outer envelope
+        byte[] reqOuter = Envelope.wrapOuter(MessageType.AUTHENTICATED,
+                remoteAgentConfiguration.getAgentPublicKey().getRawBytes(),
+                reqInner);
+
+        // send down channel
+        remoteAgentChannel.send(reqOuter);
+
+        // wait for response
+        byte[] respOuter = remoteAgentChannel.recv(SEND_RECV_UUID_RESPONSE_SIZE);
+
+        // unwrap outer envelope
+        byte[] respInner = Envelope.unwrapOuter(
+                remoteAgentConfiguration.getEntityPrivateKey().getRawBytes(),
+                respOuter);
+
+        // unwrap inner envelope
+        byte[] respPayload = Envelope.unwrapInner(respInner).getPayload();
+
+        // return response
+        return UuidUtil.getOptUUIDFromBytes(respPayload);
+    }
+
 }

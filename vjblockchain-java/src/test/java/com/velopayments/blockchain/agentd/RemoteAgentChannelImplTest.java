@@ -2,7 +2,6 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
-import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,14 +26,14 @@ public class RemoteAgentChannelImplTest {
     public void setup() throws  Exception {
 
         // create a configuration
-        EncryptionPublicKey encryptionPublicKey = EncryptionKeyPair.generate().getPublicKey();
-        UUID agentId = UUID.randomUUID();
-        UUID entityId = UUID.randomUUID();
         String host = "localhost";
         int port = 999;
 
         RemoteAgentConfiguration config = new RemoteAgentConfiguration(
-                host, port, entityId, agentId, encryptionPublicKey);
+                host, port,
+                UUID.randomUUID(), EncryptionKeyPair.generate().getPrivateKey(), // entity
+                UUID.randomUUID(), EncryptionKeyPair.generate().getPublicKey()   // agent
+        );
 
         // set up a mock socket
         socket = mock(Socket.class);

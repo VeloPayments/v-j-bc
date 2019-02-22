@@ -2,7 +2,6 @@ package com.velopayments.blockchain.agentd;
 
 public enum ApiMethod {
 
-    // TODO: these values are not correct
     SUBMIT(1),
     GET_LATEST_BLOCK_ID(2),
     GET_NEXT_BLOCK_ID(3),
