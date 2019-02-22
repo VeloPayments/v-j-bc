@@ -9,6 +9,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Envelope {
 
+    private static final int OUTER_ENVELOPE_MESSAGE_TYPE_SIZE = 1;
+    private static final int OUTER_ENVELOPE_PAYLOAD_SIZE_SIZE = 4;
+    private static final int OUTER_ENVELOPE_HMAC_SIZE = 32;
+
+    public static final int OUTER_ENVELOPE_OVERHEAD =
+            OUTER_ENVELOPE_MESSAGE_TYPE_SIZE +
+            OUTER_ENVELOPE_PAYLOAD_SIZE_SIZE +
+            OUTER_ENVELOPE_HMAC_SIZE;
+
     private static AtomicLong iv = new AtomicLong(0);
 
     /**
@@ -97,17 +106,17 @@ public class Envelope {
      *   bits 32 - 63 - request ID in big endian
      *   bits 64+     - payload
      *
-     * @param apiMethodId    API method ID
+     * @param apiMethod      API method
      * @param requestId      request ID
      * @param payload        payload to wrap
      * @return
      */
-    public static byte[] wrapInner(final long apiMethodId, final long requestId, byte[] payload) {
+    public static byte[] wrapInner(ApiMethod apiMethod, final long requestId, byte[] payload) {
 
         byte[] wrapped = new byte[8 + payload.length];
 
         // the first four bytes are the API Method ID
-        System.arraycopy(ByteUtil.longToBytes(apiMethodId, 4,true),
+        System.arraycopy(ByteUtil.longToBytes(apiMethod.getValue(), 4,true),
             0, wrapped, 0, 4);
 
         // the next four bytes are the request ID
@@ -123,10 +132,10 @@ public class Envelope {
     /**
      * Unwrap the inner envelope.  The wrapped envelope should be structured as:
      *
-     *   bits  0 - 31 - API method ID in big endian
-     *   bits 32 - 63 - request ID in big endian
-     *   bits 64 - 95 - status (0 = success, other for fail)
-     *   bits 96+     - payload
+     *   bytes 0 -  3 - API method ID in big endian
+     *   bytes 4 -  7 - request ID in big endian
+     *   bytes 8 - 11 - status (0 = success, other for fail)
+     *   bytes 12+     - payload
      *
      * @param wrapped     The inner envelope to be unwrapped
      *

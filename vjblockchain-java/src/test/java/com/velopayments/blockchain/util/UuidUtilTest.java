@@ -36,4 +36,16 @@ public class UuidUtilTest {
         assertThat(uuidBytes[0], is((byte)0x23));
     }
 
+    @Test
+    public void uuidToBytes_Optional() {
+
+        UUID uuid = UUID.fromString("23000000-0000-0000-0000-000000000012");
+        byte[] uuidBytes = UuidUtil.getBytesFromUUID(uuid);
+
+        assertThat(UuidUtil.getOptUUIDFromBytes(uuidBytes).get(),
+                is(UuidUtil.getUUIDFromBytes(uuidBytes)));
+
+        assertThat(UuidUtil.getOptUUIDFromBytes(new byte[16]).isPresent(), is(false));
+    }
+
 }

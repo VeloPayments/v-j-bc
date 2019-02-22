@@ -62,7 +62,8 @@ public class RemoteAgentConnection implements VelochainConnection {
     @Override
     public Optional<UUID> getNextBlockId(UUID blockId) throws IOException {
         GetNextBlockId getNextBlockId = new GetNextBlockId(remoteAgentChannel);
-        return getNextBlockId.getNextBlockId(0L, blockId);
+        // TODO: keys, requestId
+        return getNextBlockId.getNextBlockId(null, null, 0L, blockId);
     }
 
     @Override

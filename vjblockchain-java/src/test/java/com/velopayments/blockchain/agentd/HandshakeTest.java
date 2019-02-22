@@ -21,7 +21,7 @@ public class HandshakeTest {
     UUID agentId;
     UUID entityId;
 
-    RemoteAgentChannel remoteAgent;
+    RemoteAgentChannel remoteAgentChannel;
 
     @Before
     public void setup() {
@@ -32,9 +32,9 @@ public class HandshakeTest {
         RemoteAgentConfiguration config = new RemoteAgentConfiguration(
                 "localhost",999, entityId, agentId, encryptionPublicKey);
 
-        remoteAgent = Mockito.mock(RemoteAgentChannel.class);
+        remoteAgentChannel = Mockito.mock(RemoteAgentChannel.class);
 
-        handshake = new Handshake(config, remoteAgent);
+        handshake = new Handshake(config, remoteAgentChannel);
     }
 
     @Test
@@ -44,15 +44,15 @@ public class HandshakeTest {
         byte[] response = new byte[Handshake.INITIATE_RESPONSE_SIZE];
         System.arraycopy(UuidUtil.getBytesFromUUID(agentId), 0, response, 0, 16);
 
-        Mockito.when(remoteAgent.recv(Handshake.INITIATE_RESPONSE_SIZE)).thenReturn(response);
+        Mockito.when(remoteAgentChannel.recv(Handshake.INITIATE_RESPONSE_SIZE)).thenReturn(response);
 
         // when the handshake is initiated
         handshake.initiate();
 
        // then there should have been one round trip
-        verify(remoteAgent, times(1)).send(Mockito.any());
-        verify(remoteAgent, times(1)).recv(Handshake.INITIATE_RESPONSE_SIZE);
-        verifyNoMoreInteractions(remoteAgent);
+        verify(remoteAgentChannel, times(1)).send(Mockito.any());
+        verify(remoteAgentChannel, times(1)).recv(Handshake.INITIATE_RESPONSE_SIZE);
+        verifyNoMoreInteractions(remoteAgentChannel);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class HandshakeTest {
         // given an improperly configured handshake instance
         byte[] response = new byte[Handshake.INITIATE_RESPONSE_SIZE];
         System.arraycopy(UuidUtil.getBytesFromUUID(UUID.randomUUID()), 0, response, 0, 16);
-        Mockito.when(remoteAgent.recv(Handshake.INITIATE_RESPONSE_SIZE)).thenReturn(response);
+        Mockito.when(remoteAgentChannel.recv(Handshake.INITIATE_RESPONSE_SIZE)).thenReturn(response);
 
         // when the handshake is initiated
         try {

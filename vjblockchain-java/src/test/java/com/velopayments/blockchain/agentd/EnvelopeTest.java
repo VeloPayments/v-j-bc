@@ -17,13 +17,12 @@ public class EnvelopeTest {
 
         // given an API method ID, request ID, and a payload
 
-        long apiMethodId = 0x01L;
         long requestId = 0xFFL;
         byte[] payload = "this is my payload".getBytes();
 
         // when the payload is wrapped
 
-        byte[] wrapped = Envelope.wrapInner(apiMethodId, requestId, payload);
+        byte[] wrapped = Envelope.wrapInner(ApiMethod.SUBMIT, requestId, payload);
 
         // then the wrapped payload should be the correct size
         assertThat(wrapped, notNullValue());
@@ -82,10 +81,10 @@ public class EnvelopeTest {
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
 
         // when the envelope is wrapped
-        byte[] wrapped = Envelope.wrapOuter(MessageType.HANDSHAKE, key, inner);
+        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
 
         // then the first byte should be the message type
-        assertThat(wrapped[0], is((byte)MessageType.HANDSHAKE.getValue()));
+        assertThat(wrapped[0], is((byte) MessageType.UNAUTHENTICATED.getValue()));
 
         // ... and the next 4 bytes should be the size of the encrypted payload
         long payloadSize = ByteUtil.bytesToLong(Arrays.copyOfRange(wrapped, 1, 5), true);
@@ -105,7 +104,7 @@ public class EnvelopeTest {
 
         byte[] inner = "this is my inner envelope.".getBytes();
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
-        byte[] wrapped = Envelope.wrapOuter(MessageType.HANDSHAKE, key, inner);
+        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
 
 
         // when the envelope is unwrapped

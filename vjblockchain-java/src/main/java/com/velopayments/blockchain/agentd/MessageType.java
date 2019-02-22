@@ -2,7 +2,9 @@ package com.velopayments.blockchain.agentd;
 
 public enum MessageType {
 
-    HANDSHAKE(1);
+    // TODO: the values are not correct
+    UNAUTHENTICATED(1),
+    AUTHENTICATED(2);
 
     private int value;
 
