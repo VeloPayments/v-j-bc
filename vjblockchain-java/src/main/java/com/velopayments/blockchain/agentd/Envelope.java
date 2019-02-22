@@ -7,7 +7,7 @@ import com.velopayments.blockchain.util.ByteUtil;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RemoteAgentUtil {
+public class Envelope {
 
     private static AtomicLong iv = new AtomicLong(0);
 
@@ -57,10 +57,18 @@ public class RemoteAgentUtil {
 
     /**
      * Unwrap the outer envelope by HMAC'ing and then decrypting the
-     * payload.  The returned value represents the "inner envelope."
+     * payload.  The returned value represents the decrypted "inner envelope."
      *
-     * @param outer
-     * @return
+     * The format of the outer envelope is as follows:
+     *   byte 0            message type
+     *   bytes 1 - 4       size of payload big endian format
+     *   bytes 5 - N+5     encrypted payload
+     *   bytes N+6 - N+38  HMAC of envelope (all previous bytes)
+     *
+     * @param key           The secret key to use for decryption
+     * @param outer         The outer envelope
+     *
+     * @return              The decrypted inner envelope
      */
     public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
@@ -85,25 +93,25 @@ public class RemoteAgentUtil {
     /**
      * Wrap the payload in the inner envelope:
      *
-     *   bits  0 - 31 - request ID in big endian
-     *   bits 32 - 63 - request offset in big endian
+     *   bits  0 - 31 - API method ID in big endian
+     *   bits 32 - 63 - request ID in big endian
      *   bits 64+     - payload
      *
-     * @param requestId      request ID.  should be in range 0 - 2^31-1
-     * @param requestOffset  request offset.  should be in range 0 - 2^31-1
+     * @param apiMethodId    API method ID
+     * @param requestId      request ID
      * @param payload        payload to wrap
      * @return
      */
-    public static byte[] wrapInner(final long requestId, final long requestOffset, byte[] payload) {
+    public static byte[] wrapInner(final long apiMethodId, final long requestId, byte[] payload) {
 
         byte[] wrapped = new byte[8 + payload.length];
 
-        // the first four bytes are the request ID
-        System.arraycopy(ByteUtil.longToBytes(requestId, 4,true),
+        // the first four bytes are the API Method ID
+        System.arraycopy(ByteUtil.longToBytes(apiMethodId, 4,true),
             0, wrapped, 0, 4);
 
-        // the next four bytes are the request offset
-        System.arraycopy(ByteUtil.longToBytes(requestOffset, 4, true),
+        // the next four bytes are the request ID
+        System.arraycopy(ByteUtil.longToBytes(requestId, 4, true),
                 0, wrapped, 4, 4);
 
         // the remaining bytes are the payload
@@ -115,21 +123,21 @@ public class RemoteAgentUtil {
     /**
      * Unwrap the inner envelope.  The wrapped envelope should be structured as:
      *
-     *   bits  0 - 31 - request ID in big endian
-     *   bits 32 - 63 - request offset in big endian
-     *   bits 64 - 95 - status
+     *   bits  0 - 31 - API method ID in big endian
+     *   bits 32 - 63 - request ID in big endian
+     *   bits 64 - 95 - status (0 = success, other for fail)
      *   bits 96+     - payload
      *
      * @param wrapped     The inner envelope to be unwrapped
      *
      * @return            The unwrapped envelope
      */
-    public static UnwrappedInnerEnvelope unwrapInner(byte[] wrapped) {
+    public static InnerEnvelopeResponse unwrapInner(byte[] wrapped) {
 
-        long requestId = ByteUtil.bytesToLong(
+        long apiMethodId = ByteUtil.bytesToLong(
                 Arrays.copyOfRange(wrapped, 0, 4),true);
 
-        long requestOffset = ByteUtil.bytesToLong(
+        long requestId = ByteUtil.bytesToLong(
                 Arrays.copyOfRange(wrapped, 4, 8),true);
 
         long status = ByteUtil.bytesToLong(
@@ -138,7 +146,7 @@ public class RemoteAgentUtil {
         byte[] payload = Arrays.copyOfRange(wrapped, 12, wrapped.length);
 
 
-        return new UnwrappedInnerEnvelope(requestId, requestOffset, status, payload);
+        return new InnerEnvelopeResponse(apiMethodId, requestId, status, payload);
     }
 
 

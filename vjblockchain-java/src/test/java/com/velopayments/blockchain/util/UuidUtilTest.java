@@ -25,4 +25,15 @@ public class UuidUtilTest {
         assertThat(converted, is(uuid));
     }
 
+    @Test
+    public void uuidToBytes() {
+
+        UUID uuid = UUID.fromString("23000000-0000-0000-0000-000000000012");
+
+        byte[] uuidBytes = UuidUtil.getBytesFromUUID(uuid);
+
+        assertThat(uuidBytes[15], is((byte)0x12));
+        assertThat(uuidBytes[0], is((byte)0x23));
+    }
+
 }

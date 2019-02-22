@@ -1,12 +1,21 @@
 package com.velopayments.blockchain.util;
 
-
 public class ByteUtil {
 
     public static byte[] longToBytes(long val, boolean bigEndian) {
         return longToBytes(val, 8, bigEndian);
     }
 
+    /**
+     * Convert a long value to a byte array
+     *
+     * @param val          the value to convert
+     * @param numBytes     the number of (least significant) bytes of the long value to
+     *                     convert.  The remaining (most significant) bytes are ignored.
+     * @param bigEndian    whether the byte array should be written in big endian
+     *
+     * @return
+     */
     public static byte[] longToBytes(long val, int numBytes,
                                      boolean bigEndian) {
         byte[] bytes = new byte[numBytes];
@@ -19,6 +28,14 @@ public class ByteUtil {
         return bytes;
     }
 
+    /**
+     * Convert a byte array to a long value
+     *
+     * @param bytes         the bytes to convert
+     * @param bigEndian     whether the returned value should be written
+     *                      in big endian format
+     * @return
+     */
     public static long bytesToLong(byte[] bytes, boolean bigEndian) {
         long val = 0L;
 

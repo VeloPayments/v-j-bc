@@ -1,5 +1,7 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.util.UuidUtil;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +17,7 @@ public class GetNextBlockId {
     public Optional<UUID> getNextBlockId(long requestId,UUID blockId) {
 
         // build request payload: UUID (16 bytes) in big endian
+        byte[] payload = UuidUtil.getBytesFromUUID(blockId);
 
         // wrap in inner envelope -- API method, request ID, payload
 
