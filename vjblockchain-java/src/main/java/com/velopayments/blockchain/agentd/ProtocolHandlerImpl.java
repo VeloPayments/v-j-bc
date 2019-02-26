@@ -1,6 +1,8 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.client.RemoteAgentConfiguration;
+import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
 import java.io.IOException;
@@ -12,9 +14,6 @@ import java.util.UUID;
 public class ProtocolHandlerImpl implements ProtocolHandler {
 
     public static final int HANDSHAKE_INITIATE_RESPONSE_SIZE = 112;
-
-    public static final int SEND_RECV_UUID_RESPONSE_SIZE = 16 +
-            Envelope.OUTER_ENVELOPE_OVERHEAD;
 
     private RemoteAgentConfiguration remoteAgentConfiguration;
     private RemoteAgentChannel remoteAgentChannel;
@@ -34,6 +33,77 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] serverChallengeNonce = initiateHandshake();
         acknowledgeHandshake(serverChallengeNonce);
     }
+
+    @Override
+    public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
+
+        byte[] payload = sendAndReceive(
+                ApiMethod.GET_BLOCK_BY_ID, UuidUtil.getBytesFromUUID(blockId));
+
+        // block UUID (16 bytes)
+        // prev block UUID (16 bytes)
+        // next block UUID (16 bytes)
+        // first transaction UUID (16 bytes)
+        // block height (64 bit)
+
+        // block certificate (remaining bytes)
+        if (payload.length > 72) {
+            return Optional.of(
+                    Certificate.fromByteArray(
+                            Arrays.copyOfRange(payload, 72, payload.length)
+                    ));
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<UUID> getBlockIdByBlockHeight(long height) throws IOException {
+
+        return UuidUtil.getOptUUIDFromBytes(
+                sendAndReceive(ApiMethod.GET_BLOCK_ID_BY_BLOCK_HEIGHT,
+                    ByteUtil.longToBytes(height, true)));
+    }
+
+    @Override
+    public UUID getLatestBlockId() throws IOException {
+        return UuidUtil.getUUIDFromBytes(
+            sendAndReceive(ApiMethod.GET_LATEST_BLOCK_ID, new byte[0])
+        );
+    }
+
+    @Override
+    public Optional<Certificate> getTransactionById(UUID transactionId) throws IOException {
+
+        byte[] payload = sendAndReceive(
+                ApiMethod.GET_TXN_BY_ID, UuidUtil.getBytesFromUUID(transactionId));
+
+        // transaction uuid (16 bytes)
+        // prev transaction uuid (16 bytes)
+        // next transaction uuid (16 bytes)
+        // artifact uuid (16 bytes)
+
+        // transaction certificate (remaining bytes)
+        if (payload.length > 64) {
+            return Optional.of(
+                    Certificate.fromByteArray(
+                            Arrays.copyOfRange(payload, 64, payload.length)
+                    ));
+        }
+
+
+        return Optional.empty();
+    }
+
+
+    @Override
+    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid) throws IOException {
+
+        return UuidUtil.getOptUUIDFromBytes(
+            sendAndReceive(apiMethod, UuidUtil.getBytesFromUUID(uuid))
+        );
+    }
+
 
     private byte[] initiateHandshake() throws IOException {
         /*
@@ -109,11 +179,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // TODO: verify response
     }
 
-
-    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid) throws IOException {
-
-        // build request payload: UUID (16 bytes) in big endian
-        byte[] reqPayload = UuidUtil.getBytesFromUUID(uuid);
+    private byte[] sendAndReceive(ApiMethod apiMethod, byte[] reqPayload)
+    throws IOException {
 
         // wrap in inner envelope
         byte[] reqInner = Envelope.wrapInner(apiMethod, requestId, reqPayload);
@@ -126,19 +193,24 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // send down channel
         remoteAgentChannel.send(reqOuter);
 
-        // wait for response
-        byte[] respOuter = remoteAgentChannel.recv(SEND_RECV_UUID_RESPONSE_SIZE);
+        // receive message type and payload size
+        byte[] msgTypeAndSize = remoteAgentChannel.recv(5);
+        int payloadSize = (int) ByteUtil.bytesToLong(
+                Arrays.copyOfRange(msgTypeAndSize, 1, 5),true);
+
+
+        // receive payload and HMAC
+        byte[] payloadAndHmac = remoteAgentChannel.recv(payloadSize + 32);
 
         // unwrap outer envelope
+        // TODO: if the HMAC is just for the payload (not including the first 5 bytes)
+        // then modify unwrapOuter accordingly
         byte[] respInner = Envelope.unwrapOuter(
                 remoteAgentConfiguration.getEntityPrivateKey().getRawBytes(),
-                respOuter);
+                ByteUtil.merge(msgTypeAndSize, payloadAndHmac));
 
         // unwrap inner envelope
-        byte[] respPayload = Envelope.unwrapInner(respInner).getPayload();
-
-        // return response
-        return UuidUtil.getOptUUIDFromBytes(respPayload);
+        return Envelope.unwrapInner(respInner).getPayload();
     }
 
 }

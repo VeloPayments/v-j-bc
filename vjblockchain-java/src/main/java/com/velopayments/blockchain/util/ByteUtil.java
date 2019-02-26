@@ -1,5 +1,7 @@
 package com.velopayments.blockchain.util;
 
+import java.util.Arrays;
+
 public class ByteUtil {
 
     public static byte[] longToBytes(long val, boolean bigEndian) {
@@ -47,4 +49,17 @@ public class ByteUtil {
         return val;
     }
 
+    /**
+     * Merge two byte arrays into a single array.
+     *
+     * @param array1
+     * @param array2
+     *
+     * @return
+     */
+    public static byte[] merge(byte[] array1, byte[] array2) {
+        byte[] joinedArray = Arrays.copyOf(array1, array1.length + array2.length);
+        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        return joinedArray;
+    }
 }

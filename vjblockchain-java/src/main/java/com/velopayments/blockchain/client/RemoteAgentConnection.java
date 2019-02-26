@@ -56,7 +56,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public UUID getLatestBlockId()
     throws IOException {
 
-        return null;
+        return protocolHandler.getLatestBlockId();
     }
 
     @Override
@@ -84,21 +84,21 @@ public class RemoteAgentConnection implements VelochainConnection {
     public Optional<Certificate> getBlockById(UUID blockId)
     throws IOException {
 
-        return Optional.empty();
+        return protocolHandler.getBlockById(blockId);
     }
 
     @Override
     public Optional<UUID> getBlockIdByBlockHeight(long height)
     throws IOException {
 
-        return Optional.empty();
+        return protocolHandler.getBlockIdByBlockHeight(height);
     }
 
     @Override
     public Optional<Certificate> getTransactionById(UUID txnId)
     throws IOException {
 
-        return Optional.empty();
+        return protocolHandler.getTransactionById(txnId);
     }
 
     @Override
