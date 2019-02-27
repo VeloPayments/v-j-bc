@@ -1,7 +1,5 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.client.RemoteAgentConfiguration;
-
 import javax.net.SocketFactory;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -10,19 +8,21 @@ import java.net.Socket;
 
 public class RemoteAgentChannelImpl implements RemoteAgentChannel {
 
-    private RemoteAgentConfiguration config;
+    private String host;
+    private Integer port;
     private SocketFactory socketFactory;
     private Socket socket;
 
-    public RemoteAgentChannelImpl(RemoteAgentConfiguration config, SocketFactory socketFactory) {
-        this.config = config;
+    public RemoteAgentChannelImpl(String host, Integer port, SocketFactory socketFactory) {
+        this.host = host;
+        this.port = port;
         this.socketFactory = socketFactory;
     }
 
 
     @Override
     public void connect() throws  IOException {
-        this.socket = socketFactory.createSocket(config.getHost(), config.getPort());
+        this.socket = socketFactory.createSocket(host, port);
     }
 
     @Override

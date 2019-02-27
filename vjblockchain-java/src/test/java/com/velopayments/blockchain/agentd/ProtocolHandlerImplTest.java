@@ -1,12 +1,11 @@
 package com.velopayments.blockchain.agentd;
 
-import com.sun.corba.se.spi.orb.Operation;
 import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.cert.CertificateBuilder;
 import com.velopayments.blockchain.cert.CertificateType;
 import com.velopayments.blockchain.cert.Field;
-import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
+import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.util.UuidUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,22 +29,24 @@ public class ProtocolHandlerImplTest {
 
     ProtocolHandlerImpl protocolHandler;
 
-    RemoteAgentConfiguration config;
-
     RemoteAgentChannel remoteAgentChannel;
+
+    UUID agentId;
+
+    EncryptionPrivateKey entityPrivateKey;
 
     @Before
     public void setup() {
-        EncryptionKeyPair encryptionKeyPair = EncryptionKeyPair.generate();
-        config = new RemoteAgentConfiguration(
-                "localhost",
-                999,
-                UUID.randomUUID(), encryptionKeyPair.getPrivateKey(), // entity
-                UUID.randomUUID(), encryptionKeyPair.getPublicKey()); // agent
 
         remoteAgentChannel = Mockito.mock(RemoteAgentChannel.class);
 
-        protocolHandler = new ProtocolHandlerImpl(config, remoteAgentChannel);
+        agentId = UUID.randomUUID();
+
+        entityPrivateKey = EncryptionKeyPair.generate().getPrivateKey();
+
+        protocolHandler = new ProtocolHandlerImpl(remoteAgentChannel,
+                agentId, EncryptionKeyPair.generate().getPublicKey(),
+                UUID.randomUUID(), entityPrivateKey);
     }
 
     @Test
@@ -53,7 +54,7 @@ public class ProtocolHandlerImplTest {
 
         // given a properly configured handshake instance
         byte[] response = new byte[HANDSHAKE_INITIATE_RESPONSE_SIZE];
-        System.arraycopy(UuidUtil.getBytesFromUUID(config.getAgentId()), 0, response, 0, 16);
+        System.arraycopy(UuidUtil.getBytesFromUUID(agentId), 0, response, 0, 16);
         Mockito.when(remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE)).thenReturn(response);
 
         // when the handshake is invoked
@@ -91,7 +92,7 @@ public class ProtocolHandlerImplTest {
         byte[] certBytes = "some block bytes".getBytes();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_BLOCK_BY_ID, requestId,0,
                 createBlockResponsePayload(blockId, certBytes)));
 
@@ -113,7 +114,7 @@ public class ProtocolHandlerImplTest {
         UUID blockId = UUID.randomUUID();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_BLOCK_BY_ID, requestId,0,
                 createBlockResponsePayload(blockId, null)));
 
@@ -134,7 +135,7 @@ public class ProtocolHandlerImplTest {
         UUID blockId = UUID.randomUUID();
 
         // set up the response
-        stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_BLOCK_ID_BY_BLOCK_HEIGHT, requestId,0,
                 UuidUtil.getBytesFromUUID(blockId)));
 
@@ -153,7 +154,7 @@ public class ProtocolHandlerImplTest {
         UUID respUuid = UUID.randomUUID();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_LATEST_BLOCK_ID, requestId,0,
                 UuidUtil.getBytesFromUUID(respUuid)));
 
@@ -174,7 +175,7 @@ public class ProtocolHandlerImplTest {
         byte[] certBytes = "some transaction bytes".getBytes();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_TXN_BY_ID, requestId,0,
                 createTransactionResponsePayload(transactionId, certBytes)));
 
@@ -195,7 +196,7 @@ public class ProtocolHandlerImplTest {
         UUID transactionId = UUID.randomUUID();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 ApiMethod.GET_TXN_BY_ID, requestId,0,
                 createTransactionResponsePayload(transactionId, null)));
 
@@ -218,7 +219,7 @@ public class ProtocolHandlerImplTest {
         UUID respUuid = UUID.randomUUID();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 apiMethod, requestId,0,
                 UuidUtil.getBytesFromUUID(respUuid)));
 
@@ -247,7 +248,7 @@ public class ProtocolHandlerImplTest {
                 .emit();
 
         // set up the response
-        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        int n = stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 apiMethod, requestId,0,
                 new byte[0]));
 
@@ -273,7 +274,7 @@ public class ProtocolHandlerImplTest {
                 .emit();
 
         // set up the response
-        stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+        stubChannel(createAgentdResponse(entityPrivateKey.getRawBytes(),
                 apiMethod, requestId,1, // <-- failure
                 new byte[0]));
 

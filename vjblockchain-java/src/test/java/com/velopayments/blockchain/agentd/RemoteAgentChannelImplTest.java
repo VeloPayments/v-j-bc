@@ -1,7 +1,5 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.client.RemoteAgentConfiguration;
-import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,7 +7,6 @@ import javax.net.SocketFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.Socket;
-import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,19 +26,13 @@ public class RemoteAgentChannelImplTest {
         String host = "localhost";
         int port = 999;
 
-        RemoteAgentConfiguration config = new RemoteAgentConfiguration(
-                host, port,
-                UUID.randomUUID(), EncryptionKeyPair.generate().getPrivateKey(), // entity
-                UUID.randomUUID(), EncryptionKeyPair.generate().getPublicKey()   // agent
-        );
-
         // set up a mock socket
         socket = mock(Socket.class);
         SocketFactory socketFactory = mock(SocketFactory.class);
         when(socketFactory.createSocket(host, port)).thenReturn(socket);
 
         // create the remote agent under test
-        remoteAgentChannel = new RemoteAgentChannelImpl(config, socketFactory);
+        remoteAgentChannel = new RemoteAgentChannelImpl(host, port, socketFactory);
         remoteAgentChannel.connect();
     }
 

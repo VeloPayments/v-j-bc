@@ -2,6 +2,7 @@ package com.velopayments.blockchain.client;
 
 import com.velopayments.blockchain.agentd.*;
 import com.velopayments.blockchain.cert.Certificate;
+import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -15,9 +16,15 @@ public class RemoteAgentConnection implements VelochainConnection {
     private ProtocolHandler protocolHandler;
 
     public RemoteAgentConnection(RemoteAgentConfiguration config,
-                                 SocketFactory socketFactory) {
-        this.remoteAgentChannel = new RemoteAgentChannelImpl(config, socketFactory);
-        this.protocolHandler = new ProtocolHandlerImpl(config,remoteAgentChannel);
+                                 SocketFactory socketFactory,
+                                 UUID entityId,
+                                 EncryptionPrivateKey entityPrivateEncKey) {
+
+        this.remoteAgentChannel = new RemoteAgentChannelImpl(
+                config.getHost(), config.getPort(), socketFactory);
+        this.protocolHandler = new ProtocolHandlerImpl(
+                remoteAgentChannel, config.getAgentId(), config.getAgentPublicKey(),
+                entityId, entityPrivateEncKey);
     }
 
     /**

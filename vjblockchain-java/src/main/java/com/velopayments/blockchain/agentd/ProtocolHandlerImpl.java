@@ -4,7 +4,8 @@ import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.cert.CertificateParser;
 import com.velopayments.blockchain.cert.CertificateReader;
 import com.velopayments.blockchain.cert.Field;
-import com.velopayments.blockchain.client.RemoteAgentConfiguration;
+import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
+import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
@@ -18,16 +19,26 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     public static final int HANDSHAKE_INITIATE_RESPONSE_SIZE = 112;
 
-    private RemoteAgentConfiguration remoteAgentConfiguration;
     private RemoteAgentChannel remoteAgentChannel;
+    private UUID agentId;
+    private EncryptionPublicKey agentPublicEncKey;
+    private UUID entityId;
+    private EncryptionPrivateKey entityPrivateEncKey;
 
     private SecureRandom random;
     private long requestId; // TODO: details on this
 
-    public ProtocolHandlerImpl(RemoteAgentConfiguration remoteAgentConfiguration,
-                               RemoteAgentChannel remoteAgentChannel) {
-        this.remoteAgentConfiguration = remoteAgentConfiguration;
+    public ProtocolHandlerImpl(RemoteAgentChannel remoteAgentChannel,
+                               UUID agentId,
+                               EncryptionPublicKey agentPublicEncKey,
+                               UUID entityId,
+                               EncryptionPrivateKey entityPrivateEncKey) {
+
         this.remoteAgentChannel = remoteAgentChannel;
+        this.agentId = agentId;
+        this.agentPublicEncKey = agentPublicEncKey;
+        this.entityId = entityId;
+        this.entityPrivateEncKey = entityPrivateEncKey;
         this.random = new SecureRandom();
     }
 
@@ -140,7 +151,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         byte[] request = new byte[80];
 
-        byte[] entityIdBytes = UuidUtil.getBytesFromUUID(remoteAgentConfiguration.getEntityId());
+        byte[] entityIdBytes = UuidUtil.getBytesFromUUID(entityId);
         System.arraycopy(entityIdBytes, 0, request, 0, 16);
 
         byte clientKeyNonce[] = new byte[32];
@@ -164,10 +175,10 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         // verify agent UUID
         // TODO - use timing resistant equality check
-        UUID agentUUID = UuidUtil.getUUIDFromBytes(Arrays.copyOfRange(response, 0, 16));
-        if (! remoteAgentConfiguration.getAgentId().equals(agentUUID)) {
-            throw new AgentVerificationException("Expected agent ID " + remoteAgentConfiguration.getAgentId()
-                    + " but received " + agentUUID);
+        UUID responseAgentId = UuidUtil.getUUIDFromBytes(Arrays.copyOfRange(response, 0, 16));
+        if (! agentId.equals(responseAgentId)) {
+            throw new AgentVerificationException("Invalid agentId.  Expected: " + agentId
+                    + " actual: " + responseAgentId);
         }
 
         byte[] serverKeyNonce = Arrays.copyOfRange(response, 16,48);
@@ -200,30 +211,30 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     throws IOException {
 
         // wrap in inner envelope
-        byte[] reqInner = Envelope.wrapInner(apiMethod, requestId, reqPayload);
+        byte[] reqInner = Envelope.wrapInner(
+                apiMethod, requestId, reqPayload);
 
         // wrap in outer envelope
-        byte[] reqOuter = Envelope.wrapOuter(MessageType.AUTHENTICATED,
-                remoteAgentConfiguration.getAgentPublicKey().getRawBytes(),
-                reqInner);
+        byte[] reqOuter = Envelope.wrapOuter(
+                MessageType.AUTHENTICATED, agentPublicEncKey.getRawBytes(), reqInner);
 
         // send down channel
         remoteAgentChannel.send(reqOuter);
+
+        // receive the response.  This needs to be done in two steps as we don't
+        // always know the size of the response in advance.
 
         // receive message type and payload size
         byte[] msgTypeAndSize = remoteAgentChannel.recv(5);
         int payloadSize = (int) ByteUtil.bytesToLong(
                 Arrays.copyOfRange(msgTypeAndSize, 1, 5),true);
 
-
         // receive payload and HMAC
         byte[] payloadAndHmac = remoteAgentChannel.recv(payloadSize + 32);
 
         // unwrap outer envelope
-        // TODO: if the HMAC is just for the payload (not including the first 5 bytes)
-        // then modify unwrapOuter accordingly
         byte[] respInnerBytes = Envelope.unwrapOuter(
-                remoteAgentConfiguration.getEntityPrivateKey().getRawBytes(),
+                entityPrivateEncKey.getRawBytes(),
                 ByteUtil.merge(msgTypeAndSize, payloadAndHmac));
 
         // unwrap inner envelope
@@ -231,8 +242,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         // verify the request ID and apiMethod
         if (respInner.getApiMethodId() != apiMethod.getValue()) {
-            throw new InvalidResponseException("Invalid ApiMethod - expected: " + apiMethod.getValue()
-                    + ", actual: " + respInner.getApiMethodId());
+            throw new InvalidResponseException("Invalid ApiMethod - expected: "
+                    + apiMethod.getValue() + ", actual: " + respInner.getApiMethodId());
         }
 
         /*if (respInner.getRequestId() != requestId) {
@@ -242,7 +253,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         // the status code should be 0 for success
         if (respInner.getStatus() != 0) {
-            throw new OperationFailureException("The remote operation failed.  ApiMethod: " + apiMethod);
+            throw new OperationFailureException(
+                    "The remote operation failed.  ApiMethod: " + apiMethod);
         }
 
         return respInner.getPayload();
