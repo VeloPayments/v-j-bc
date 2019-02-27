@@ -1,6 +1,9 @@
 package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.cert.Certificate;
+import com.velopayments.blockchain.cert.CertificateParser;
+import com.velopayments.blockchain.cert.CertificateReader;
+import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
@@ -97,32 +100,55 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
 
     @Override
-    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid) throws IOException {
+    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid)
+    throws IOException {
 
         return UuidUtil.getOptUUIDFromBytes(
             sendAndReceive(apiMethod, UuidUtil.getBytesFromUUID(uuid))
         );
     }
 
+    @Override
+    public void submit(Certificate transaction) throws IOException {
+
+        byte[] certficateBytes = transaction.toByteArray();
+
+        byte[] payload = new byte[16 + 16 + certficateBytes.length];
+
+        // transaction id (16 bytes)
+        CertificateReader reader = new CertificateReader(new CertificateParser(transaction));
+        UUID transactionId = reader.getFirst(Field.CERTIFICATE_ID).asUUID();
+        System.arraycopy(UuidUtil.getBytesFromUUID(transactionId), 0, payload, 0, 16);
+
+        // artifact id (16 bytes)
+        UUID artifactId = reader.getFirst(Field.ARTIFACT_ID).asUUID();
+        System.arraycopy(UuidUtil.getBytesFromUUID(artifactId), 0, payload, 16, 16);
+
+        // transaction certificate (remaining bytes)
+        System.arraycopy(certficateBytes, 0, payload, 32, certficateBytes.length);
+
+        sendAndReceive(ApiMethod.SUBMIT, payload);
+    }
+
 
     private byte[] initiateHandshake() throws IOException {
-        /*
-         * request:
-         *    bytes 0-15: entity ID
-         *    bytes 16-47: client key nonce
-         *    bytes 48-79: client challenge nonce
-         */
+
+        // request
+        //   entity ID (16 bytes)
+        //   client key nonce (32 bytes)
+        //   client challenge nonce (32 bytes)
+
+        byte[] request = new byte[80];
+
         byte[] entityIdBytes = UuidUtil.getBytesFromUUID(remoteAgentConfiguration.getEntityId());
+        System.arraycopy(entityIdBytes, 0, request, 0, 16);
 
         byte clientKeyNonce[] = new byte[32];
         random.nextBytes(clientKeyNonce);
+        System.arraycopy(clientKeyNonce, 0, request, 16, 32);
 
         byte clientChallengeNonce[] = new byte[32];
         random.nextBytes(clientChallengeNonce);
-
-        byte[] request = new byte[entityIdBytes.length + clientKeyNonce.length + clientChallengeNonce.length];
-        System.arraycopy(entityIdBytes, 0, request, 0, 16);
-        System.arraycopy(clientKeyNonce, 0, request, 16, 32);
         System.arraycopy(clientChallengeNonce, 0, request, 48, 32);
 
 
@@ -130,15 +156,11 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         remoteAgentChannel.send(request);
 
         // receive response
+        //   agentId (16 bytes)
+        //   server key nonce (32 bytes)
+        //   server challenge nonce (32 bytes)
+        //   server challenge / response (32 bytes)
         byte[] response = remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE);
-
-        /*
-         * response:
-         *    bytes 0-15: agent ID
-         *    bytes 16-47: server key nonce
-         *    bytes 48-79: server challenge nonce
-         *    bytes 80-111 : server challenge/response
-         */
 
         // verify agent UUID
         // TODO - use timing resistant equality check
@@ -161,20 +183,15 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     private void acknowledgeHandshake(byte[] serverChallengeNonce) {
 
-        /*
-         * request:
-         *    HMAC: server challenge nonce / session key
-         */
+        // request
+        //   HMAC: server challenge nonce / session key (32 bytes)
+
         byte[] request = new byte[32];
         // TODO: construct request
 
 
         // TODO: send and receive
 
-        /*
-         * response:
-         *    "OK" [AUTHED]
-         */
 
         // TODO: verify response
     }

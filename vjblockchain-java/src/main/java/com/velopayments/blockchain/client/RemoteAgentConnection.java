@@ -22,26 +22,20 @@ public class RemoteAgentConnection implements VelochainConnection {
         this.protocolHandler = new ProtocolHandlerImpl(config,remoteAgentChannel);
     }
 
-    @Override
-    public void commitTransactions() throws IOException {
-
-    }
-
-    @Override
-    public void cancelTransactions() throws IOException {
-
-    }
-
+    /**
+     * Open a client connection.
+     */
     public void connect() throws IOException {
         remoteAgentChannel.connect();
+
         protocolHandler.handshake();
     }
 
+    /**
+     * Close the client connection.
+     */
     @Override
     public void close() throws IOException {
-
-        /* commit outstanding transactions. */
-        commitTransactions();
 
         remoteAgentChannel.close();
     }
@@ -49,7 +43,10 @@ public class RemoteAgentConnection implements VelochainConnection {
     @Override
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
     throws IOException {
-        return null;
+
+        protocolHandler.submit(transaction);
+
+        return null; // TODO
     }
 
     @Override

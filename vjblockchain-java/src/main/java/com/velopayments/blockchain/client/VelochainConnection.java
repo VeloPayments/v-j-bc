@@ -10,18 +10,6 @@ import java.util.concurrent.CompletableFuture;
 public interface VelochainConnection {
 
     /**
-     * Commit the current transactions to the blockchain, creating a new block
-     * if necessary.
-     */
-    void commitTransactions() throws IOException;
-
-
-    /**
-     * Cancel the current transactions to the blockchain.
-     */
-    void cancelTransactions() throws IOException;
-
-    /**
      * Close the client connection.
      */
     void close() throws IOException;

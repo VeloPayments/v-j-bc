@@ -25,4 +25,7 @@ public interface ProtocolHandler {
     Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid)
         throws IOException;
 
+    void submit(Certificate transaction)
+        throws IOException;
+
 }

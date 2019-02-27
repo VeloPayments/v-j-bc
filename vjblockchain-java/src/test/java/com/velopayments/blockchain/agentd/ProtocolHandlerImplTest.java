@@ -1,6 +1,9 @@
 package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.cert.Certificate;
+import com.velopayments.blockchain.cert.CertificateBuilder;
+import com.velopayments.blockchain.cert.CertificateType;
+import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.client.RemoteAgentConfiguration;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.util.UuidUtil;
@@ -226,6 +229,33 @@ public class ProtocolHandlerImplTest {
 
         // and the returned value should be correct
         assertThat(apiResponse.get(), is(respUuid));
+    }
+
+    @Test
+    public void submit() throws IOException {
+
+        // given a valid request
+        ApiMethod apiMethod = ApiMethod.SUBMIT;
+        long requestId = 25L;
+        UUID transactionId = UUID.randomUUID();
+        UUID artifactId = UUID.randomUUID();
+        Certificate certificate = CertificateBuilder
+                .createCertificateBuilder(CertificateType.TRANSACTION)
+                .addUUID(Field.CERTIFICATE_ID, transactionId)
+                .addUUID(Field.ARTIFACT_ID, artifactId)
+                .emit();
+
+        // set up the response
+        int n = stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+                apiMethod, requestId,0,
+                new byte[0]));
+
+        // when the API is invoked
+        protocolHandler.submit(certificate);
+
+        verifyChannelInteractions(n);
+
+        // then no errors should be thrown
     }
 
     private int stubChannel(byte[] responseBytes) throws IOException {

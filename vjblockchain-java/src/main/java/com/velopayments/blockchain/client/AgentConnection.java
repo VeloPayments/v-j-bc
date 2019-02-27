@@ -40,7 +40,6 @@ public class AgentConnection implements VelochainConnection {
      * Commit the current transactions to the blockchain, creating a new block
      * if necessary.
      */
-    @Override
     public void commitTransactions() throws IOException {
 
         /* make a block with any remaining transactions. */
@@ -52,7 +51,6 @@ public class AgentConnection implements VelochainConnection {
     /**
      * Cancel the current transactions to the blockchain.
      */
-    @Override
     public void cancelTransactions() throws IOException {
 
         for (TransactionSubmissionRequest req : submissionList) {

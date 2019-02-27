@@ -9,15 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Envelope {
 
-    private static final int OUTER_ENVELOPE_MESSAGE_TYPE_SIZE = 1;
-    private static final int OUTER_ENVELOPE_PAYLOAD_SIZE_SIZE = 4;
-    private static final int OUTER_ENVELOPE_HMAC_SIZE = 32;
-
-    public static final int OUTER_ENVELOPE_OVERHEAD =
-            OUTER_ENVELOPE_MESSAGE_TYPE_SIZE +
-            OUTER_ENVELOPE_PAYLOAD_SIZE_SIZE +
-            OUTER_ENVELOPE_HMAC_SIZE;
-
     private static AtomicLong iv = new AtomicLong(0);
 
     /**

@@ -74,6 +74,32 @@ public class EnvelopeTest {
     }
 
     @Test
+    public void unwrapInner_noPayload() {
+
+        // given an inner envelope with no payload
+        byte[] inner = new byte[] {
+                (byte)0xFF,(byte)0x00,(byte)0x00,(byte)0x01,  // API method ID
+                (byte)0xEE,(byte)0x00,(byte)0x00,(byte)0x02,  // request ID
+                (byte)0x01,(byte)0x02,(byte)0x03,(byte)0x04   // status
+        };
+
+        // when the envelope is unwrapped
+        InnerEnvelopeResponse unwrapped = Envelope.unwrapInner(inner);
+
+        // then the API method Id should be correct
+        assertThat(unwrapped.getApiMethodId(), is(0xFF000001L));
+
+        // and the request ID should be correct
+        assertThat(unwrapped.getRequestId(), is(0xEE000002L));
+
+        // and the status should be correct
+        assertThat(unwrapped.getStatus(), is(0x1020304L));
+
+        // and the payload should be empty
+        assertThat(unwrapped.getPayload(), is(new byte[0]));
+    }
+
+    @Test
     public void wrapOuter() {
 
         // given an inner envelope, an encryption key, and an IV
