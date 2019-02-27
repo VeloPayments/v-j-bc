@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.sun.corba.se.spi.orb.Operation;
 import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.cert.CertificateBuilder;
 import com.velopayments.blockchain.cert.CertificateType;
@@ -256,6 +257,28 @@ public class ProtocolHandlerImplTest {
         verifyChannelInteractions(n);
 
         // then no errors should be thrown
+    }
+
+    @Test(expected = OperationFailureException.class)
+    public void submitFailure() throws IOException {
+        // given a valid request
+        ApiMethod apiMethod = ApiMethod.SUBMIT;
+        long requestId = 25L;
+        UUID transactionId = UUID.randomUUID();
+        UUID artifactId = UUID.randomUUID();
+        Certificate certificate = CertificateBuilder
+                .createCertificateBuilder(CertificateType.TRANSACTION)
+                .addUUID(Field.CERTIFICATE_ID, transactionId)
+                .addUUID(Field.ARTIFACT_ID, artifactId)
+                .emit();
+
+        // set up the response
+        stubChannel(createAgentdResponse(config.getEntityPrivateKey().getRawBytes(),
+                apiMethod, requestId,1, // <-- failure
+                new byte[0]));
+
+        // when the API is invoked
+        protocolHandler.submit(certificate);
     }
 
     private int stubChannel(byte[] responseBytes) throws IOException {

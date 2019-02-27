@@ -222,12 +222,30 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // unwrap outer envelope
         // TODO: if the HMAC is just for the payload (not including the first 5 bytes)
         // then modify unwrapOuter accordingly
-        byte[] respInner = Envelope.unwrapOuter(
+        byte[] respInnerBytes = Envelope.unwrapOuter(
                 remoteAgentConfiguration.getEntityPrivateKey().getRawBytes(),
                 ByteUtil.merge(msgTypeAndSize, payloadAndHmac));
 
         // unwrap inner envelope
-        return Envelope.unwrapInner(respInner).getPayload();
+        InnerEnvelopeResponse respInner = Envelope.unwrapInner(respInnerBytes);
+
+        // verify the request ID and apiMethod
+        if (respInner.getApiMethodId() != apiMethod.getValue()) {
+            throw new InvalidResponseException("Invalid ApiMethod - expected: " + apiMethod.getValue()
+                    + ", actual: " + respInner.getApiMethodId());
+        }
+
+        /*if (respInner.getRequestId() != requestId) {
+            throw new InvalidResponseException("Invalid requestId - expected: " + requestId
+                    + ", actual: " + respInner.getRequestId());
+        }*/
+
+        // the status code should be 0 for success
+        if (respInner.getStatus() != 0) {
+            throw new OperationFailureException("The remote operation failed.  ApiMethod: " + apiMethod);
+        }
+
+        return respInner.getPayload();
     }
 
 }

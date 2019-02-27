@@ -30,14 +30,14 @@ public class TestUtil {
         byte inner[] = new byte[12 + payload.length];
 
         // first four bytes of inner envelope are the api method
-        System.arraycopy(ByteUtil.longToBytes(apiMethod.getValue(),true),
+        System.arraycopy(ByteUtil.longToBytes(apiMethod.getValue(),4,true),
                 0, inner,0,4);
 
         // next four bytes of inner envelope are the request ID
-        System.arraycopy(ByteUtil.longToBytes(requestId, true), 0, inner, 4, 4);
+        System.arraycopy(ByteUtil.longToBytes(requestId, 4,true), 0, inner, 4, 4);
 
         // next four bytes of inner envelope are the response
-        System.arraycopy(ByteUtil.longToBytes(status, true), 0, inner, 8, 4);
+        System.arraycopy(ByteUtil.longToBytes(status, 4,true), 0, inner, 8, 4);
 
         // the remaining bytes of the inner envelope are the payload
         System.arraycopy(payload, 0, inner, 12, payload.length);

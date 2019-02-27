@@ -11,13 +11,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class RemoteAgentConnection implements VelochainConnection {
 
-    private RemoteAgentConfiguration config;
     private RemoteAgentChannel remoteAgentChannel;
     private ProtocolHandler protocolHandler;
 
     public RemoteAgentConnection(RemoteAgentConfiguration config,
                                  SocketFactory socketFactory) {
-        this.config = config;
         this.remoteAgentChannel = new RemoteAgentChannelImpl(config, socketFactory);
         this.protocolHandler = new ProtocolHandlerImpl(config,remoteAgentChannel);
     }
@@ -44,9 +42,13 @@ public class RemoteAgentConnection implements VelochainConnection {
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
     throws IOException {
 
-        protocolHandler.submit(transaction);
+        try {
+            protocolHandler.submit(transaction);
+            return CompletableFuture.completedFuture(TransactionStatus.SUCCEEDED);
+        } catch (OperationFailureException e) {
+            return CompletableFuture.completedFuture(TransactionStatus.FAILED);
+        }
 
-        return null; // TODO
     }
 
     @Override
