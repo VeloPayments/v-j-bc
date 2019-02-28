@@ -26,9 +26,23 @@ public class UuidUtilTest {
     }
 
     @Test
+    public void bytesToUuid() {
+
+        byte[] bytes = new byte[16];
+        bytes[15] = 1;
+
+        UUID uuid = UuidUtil.getUUIDFromBytes(bytes);
+
+        assertThat(uuid, is(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+
+        assertThat(uuid.getLeastSignificantBits(), is(1L));
+    }
+
+    @Test
     public void uuidToBytes() {
 
         UUID uuid = UUID.fromString("23000000-0000-0000-0000-000000000012");
+        assertThat(uuid.getLeastSignificantBits(), is(0x12L));
 
         byte[] uuidBytes = UuidUtil.getBytesFromUUID(uuid);
 

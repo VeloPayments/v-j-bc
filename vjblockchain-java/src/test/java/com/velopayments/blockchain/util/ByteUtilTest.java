@@ -2,13 +2,16 @@ package com.velopayments.blockchain.util;
 
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class ByteUtilTest {
 
     @Test
-    public void littleEndian() {
+    public void longToBytes_littleEndian() {
 
         long val = 0x0a0b0c0dL;
 
@@ -24,7 +27,6 @@ public class ByteUtilTest {
         assertThat(bytes[6], is((byte)0));
         assertThat(bytes[7], is((byte)0));
 
-
         bytes = ByteUtil.longToBytes(val, 2,false);
 
         assertThat(bytes.length, is(2));
@@ -33,7 +35,18 @@ public class ByteUtilTest {
     }
 
     @Test
-    public void bigEndian() {
+    public void bytesToLong_littleEndian() {
+
+        byte[] bytes = new byte[] { 0,1,2,3,4,5,6,7 };
+
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        long val = bb.getLong();
+        assertThat(ByteUtil.bytesToLong(bytes, false), is(val));
+    }
+
+    @Test
+    public void longToBytes_bigEndian() {
         long val = 0x0a0b0c0dL;
 
         byte[] bytes = ByteUtil.longToBytes(val, true);
@@ -53,6 +66,17 @@ public class ByteUtilTest {
         assertThat(bytes.length, is(2));
         assertThat(bytes[1], is((byte)0x0d));
         assertThat(bytes[0], is((byte)0x0c));
+    }
+
+    @Test
+    public void bytesToLong_bigEndian() {
+
+        byte[] bytes = new byte[] { 0,1,2,3,4,5,6,7 };
+
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        long val = bb.getLong();
+        assertThat(ByteUtil.bytesToLong(bytes, true), is(val));
     }
 
     @Test

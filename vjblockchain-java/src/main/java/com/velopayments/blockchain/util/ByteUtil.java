@@ -2,21 +2,32 @@ package com.velopayments.blockchain.util;
 
 import java.util.Arrays;
 
+/**
+ * Utility class for operations involving byte arrays.
+ */
 public class ByteUtil {
 
+    /**
+     * Convert a long value to a byte array
+     *
+     * @param val          the value to convert
+     * @param bigEndian    whether the byte array should be written in big endian
+     *
+     * @return the byte array
+     */
     public static byte[] longToBytes(long val, boolean bigEndian) {
         return longToBytes(val, 8, bigEndian);
     }
 
     /**
-     * Convert a long value to a byte array
+     * Convert a long value, or a part of a long value, to a byte array
      *
      * @param val          the value to convert
      * @param numBytes     the number of (least significant) bytes of the long value to
      *                     convert.  The remaining (most significant) bytes are ignored.
      * @param bigEndian    whether the byte array should be written in big endian
      *
-     * @return
+     * @return the byte array
      */
     public static byte[] longToBytes(long val, int numBytes,
                                      boolean bigEndian) {
@@ -36,7 +47,7 @@ public class ByteUtil {
      * @param bytes         the bytes to convert
      * @param bigEndian     whether the returned value should be written
      *                      in big endian format
-     * @return
+     * @return the converted long
      */
     public static long bytesToLong(byte[] bytes, boolean bigEndian) {
         long val = 0L;
@@ -52,10 +63,11 @@ public class ByteUtil {
     /**
      * Merge two byte arrays into a single array.
      *
-     * @param array1
-     * @param array2
+     * @param array1 an array of bytes
+     * @param array2 an array of bytes
      *
-     * @return
+     * @return an array containing all the elements of array1 followed
+     *   by all the elements of array2.
      */
     public static byte[] merge(byte[] array1, byte[] array2) {
         byte[] joinedArray = Arrays.copyOf(array1, array1.length + array2.length);

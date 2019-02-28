@@ -8,6 +8,9 @@ import com.velopayments.blockchain.util.EqualsUtil;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Utility methods to wrap and unwrap inner and outer envelopes.
+ */
 public class Envelope {
 
     private static AtomicLong iv = new AtomicLong(0);
