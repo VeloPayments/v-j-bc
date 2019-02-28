@@ -7,6 +7,7 @@ import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.util.ByteUtil;
+import com.velopayments.blockchain.util.EqualsUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
 import java.io.IOException;
@@ -174,11 +175,11 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] response = remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE);
 
         // verify agent UUID
-        // TODO - use timing resistant equality check
-        UUID responseAgentId = UuidUtil.getUUIDFromBytes(Arrays.copyOfRange(response, 0, 16));
-        if (! agentId.equals(responseAgentId)) {
-            throw new AgentVerificationException("Invalid agentId.  Expected: " + agentId
-                    + " actual: " + responseAgentId);
+        if (!EqualsUtil.constantTimeEqual(
+                UuidUtil.getBytesFromUUID(agentId),
+                Arrays.copyOfRange(response, 0, 16)))
+        {
+            throw new AgentVerificationException("Invalid agentId.");
         }
 
         byte[] serverKeyNonce = Arrays.copyOfRange(response, 16,48);

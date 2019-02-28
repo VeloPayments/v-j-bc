@@ -3,6 +3,7 @@ package com.velopayments.blockchain.agentd;
 import com.velopayments.blockchain.crypt.GenericStreamCipher;
 import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
+import com.velopayments.blockchain.util.EqualsUtil;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,8 +50,9 @@ public class Envelope {
 
         // bytes N+6 - N+38 are the HMAC'd value
         HMAC hmac = new HMAC(key);
-        //hmac.createHMACLong()   // TODO: - should be short HMAC of the entire outer envelope
-
+        System.arraycopy(
+                hmac.createHMACShort(Arrays.copyOfRange(outer, 0, outer.length - 32)),
+                0, outer, outer.length - 32, 32);
 
         return outer;
     }
@@ -73,8 +75,16 @@ public class Envelope {
     public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
         // the last 32 bytes are the HMAC of the previous bytes
-        byte[] hmac = Arrays.copyOfRange(outer, outer.length - 32, outer.length);
-        // TODO: verify HMAC
+        byte[] returnedHmac = Arrays.copyOfRange(outer, outer.length - 32, outer.length);
+
+        // verify HMAC
+        HMAC hmac = new HMAC(key);
+        if (!EqualsUtil.constantTimeEqual(
+                hmac.createHMACShort(Arrays.copyOfRange(outer, 0, outer.length-32)),
+                returnedHmac))
+        {
+            throw new MessageVerificationException("Invalid HMAC!");
+        }
 
         // the first byte is the type, which should be "authed data"
         byte messageType = outer[0];

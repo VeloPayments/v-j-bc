@@ -2,6 +2,7 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.GenericStreamCipher;
+import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import org.junit.Test;
 
@@ -120,7 +121,11 @@ public class EnvelopeTest {
         assertThat(GenericStreamCipher.decrypt(key, encrypted), is(inner));
 
         // ... and the last 32 bytes should be the HMAC of the previous bytes
-        // TODO
+        byte[] returnedHmac = Arrays.copyOfRange(wrapped, wrapped.length-32, wrapped.length);
+        HMAC hmac = new HMAC(key);
+        assertThat(hmac.createHMACShort(
+                Arrays.copyOfRange(wrapped, 0, wrapped.length - 32)),
+                is(returnedHmac));
     }
 
     @Test
@@ -142,4 +147,22 @@ public class EnvelopeTest {
         assertThat(unwrapped, is(inner));
     }
 
+    @Test(expected = MessageVerificationException.class)
+    public void unwrapOuter_InvalidHMAC() {
+
+        // given an outer envelope where the message has been tampered with
+        // (the HMAC isn't valid)
+
+        byte[] inner = "this is my inner envelope.".getBytes();
+        byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
+        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
+
+        // alter the last couple of bytes
+        wrapped[wrapped.length-2] = 1;
+        wrapped[wrapped.length-1] = 1;
+
+        // when the envelope is unwrapped, an exception should be thrown
+
+        Envelope.unwrapOuter(key, wrapped);
+    }
 }

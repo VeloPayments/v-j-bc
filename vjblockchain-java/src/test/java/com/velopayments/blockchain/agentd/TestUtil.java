@@ -1,10 +1,11 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.cert.Certificate;
 import com.velopayments.blockchain.crypt.GenericStreamCipher;
+import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class TestUtil {
@@ -54,7 +55,12 @@ public class TestUtil {
         // bytes 5 - N+5 are the encrypted payload
         System.arraycopy(encryptedPayload, 0, response, 5, encryptedPayload.length);
 
-        // TODO: HMAC
+        // the last 32 bytes are the HMAC
+        HMAC hmac = new HMAC(encryptionKey);
+        System.arraycopy(
+                hmac.createHMACShort(
+                        Arrays.copyOfRange(response, 0, response.length - 32)),
+                0, response, response.length - 32, 32);
 
         return response;
     }
