@@ -37,4 +37,21 @@ public class HMACTest {
         // the digest value should be reproducible
         assertThat(hmac.createHMACLong(message1),is(digest1));
     }
+
+    @Test
+    public void createHMACShort() {
+
+        // generate a random message
+        byte[] message1 = new byte[secureRandom.nextInt(100) + 1];
+        secureRandom.nextBytes(message1);
+
+        // HMAC the message
+        byte[] digest1 = hmac.createHMACShort(message1);
+
+        // the digest value should be 32 bytes long
+        assertThat(digest1.length, is(32));
+
+        // the digest value should be reproducible
+        assertThat(hmac.createHMACShort(message1),is(digest1));
+    }
 }

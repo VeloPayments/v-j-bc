@@ -211,7 +211,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     /* create buffer for receiving the MAC. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_suite_buffer_init_for_mac_authentication_code(
-                &crypto_suite, &macBuffer))
+                &crypto_suite, &macBuffer, false))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "mac buffer init failure.");
