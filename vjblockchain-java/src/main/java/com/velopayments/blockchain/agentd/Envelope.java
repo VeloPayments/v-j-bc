@@ -16,20 +16,20 @@ public class Envelope {
     private static AtomicLong iv = new AtomicLong(0);
 
     /**
-     * Wrap the inner envelope by encrypting and HMAC'ing the
+     * Wraps the inner envelope by encrypting and HMAC'ing the
      * message.  The returned value represents the outer envelope.
-     *
+     * <p>
      * byte 0            message type
      * bytes 1 - 4       size of payload big endian format
      * bytes 5 - N+5     encrypted payload
      * bytes N+6 - N+38  HMAC of envelope (all previous bytes)
-     *
+     * </p>
      * The IV is incremented after this call.
      *
      * @param messageType    message type
      * @param key            key to use to encrypt the payload
      * @param input          unencrypted payload (inner envelope)
-     * @return
+     * @return               the outer envelope
      */
     public static byte[] wrapOuter(MessageType messageType, byte[] key,
                                    byte[] input) {
@@ -61,9 +61,9 @@ public class Envelope {
     }
 
     /**
-     * Unwrap the outer envelope by HMAC'ing and then decrypting the
-     * payload.  The returned value represents the decrypted "inner envelope."
-     *
+     * Unwraps the outer envelope by HMAC'ing and then decrypting the
+     * payload.  The returned value represents the decrypted inner envelope.
+     * <p>
      * The format of the outer envelope is as follows:
      *   byte 0            message type
      *   bytes 1 - 4       size of payload big endian format
@@ -73,7 +73,7 @@ public class Envelope {
      * @param key           The secret key to use for decryption
      * @param outer         The outer envelope
      *
-     * @return              The decrypted inner envelope
+     * @return              The decrypted payload
      */
     public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
@@ -105,7 +105,7 @@ public class Envelope {
 
     /**
      * Wrap the payload in the inner envelope:
-     *
+     * <p>
      *   bits  0 - 31 - API method ID in big endian
      *   bits 32 - 63 - request ID in big endian
      *   bits 64+     - payload
@@ -113,7 +113,7 @@ public class Envelope {
      * @param apiMethod      API method
      * @param requestId      request ID
      * @param payload        payload to wrap
-     * @return
+     * @return               the inner envelope
      */
     public static byte[] wrapInner(ApiMethod apiMethod, final long requestId, byte[] payload) {
 
@@ -135,7 +135,7 @@ public class Envelope {
 
     /**
      * Unwrap the inner envelope.  The wrapped envelope should be structured as:
-     *
+     * <p>
      *   bytes 0 -  3 - API method ID in big endian
      *   bytes 4 -  7 - request ID in big endian
      *   bytes 8 - 11 - status (0 = success, other for fail)

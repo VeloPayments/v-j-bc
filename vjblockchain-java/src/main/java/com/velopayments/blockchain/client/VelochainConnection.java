@@ -7,6 +7,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Connect to an agent and perform basic client functions.
+ */
 public interface VelochainConnection {
 
     /**

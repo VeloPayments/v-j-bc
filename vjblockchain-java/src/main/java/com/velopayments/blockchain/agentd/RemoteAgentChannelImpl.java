@@ -13,7 +13,16 @@ public class RemoteAgentChannelImpl implements RemoteAgentChannel {
     private SocketFactory socketFactory;
     private Socket socket;
 
-    public RemoteAgentChannelImpl(String host, Integer port, SocketFactory socketFactory) {
+    /**
+     * Constructor method to create an unconnected channel.
+     *
+     * @param host          the host to establish a remote connection to
+     * @param port          the port number to establish a remote connection to
+     * @param socketFactory a factory capable of creating a socket
+     * @throws IOException
+     */
+    public RemoteAgentChannelImpl(String host, Integer port,
+                                  SocketFactory socketFactory) {
         this.host = host;
         this.port = port;
         this.socketFactory = socketFactory;
@@ -30,13 +39,6 @@ public class RemoteAgentChannelImpl implements RemoteAgentChannel {
         this.socket.close();
     }
 
-    /**
-     * Synchronously send raw bytes to the socket
-     *
-     * @param message     bytes to send to socket
-     *
-     * @throws IOException
-     */
     @Override
     public void send(byte[] message) throws IOException {
         try (OutputStream out = socket.getOutputStream())
@@ -45,15 +47,6 @@ public class RemoteAgentChannelImpl implements RemoteAgentChannel {
         }
     }
 
-    /**
-     * Synchronously read <n> bytes from the socket.
-     *
-     * @param n   the number of bytes to read
-     *
-     * @return    bytes read
-     *
-     * @throws IOException
-     */
     @Override
     public byte[] recv(int n) throws IOException {
 
