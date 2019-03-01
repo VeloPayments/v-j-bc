@@ -1,5 +1,9 @@
 package com.velopayments.blockchain.util;
 
+/**
+ * Utility class for doing timing resistant equality checks.
+ *
+ */
 public class EqualsUtil {
 
     /**

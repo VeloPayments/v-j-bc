@@ -1,5 +1,10 @@
 package com.velopayments.blockchain.crypt;
 
+/**
+ * Generic stream cipher.  This class exposes the suite provided stream
+ * cipher as defined in the Velochain specification to encrypt and MAC
+ * a field.
+ */
 public class GenericStreamCipher {
 
     /**

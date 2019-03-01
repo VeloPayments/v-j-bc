@@ -4,6 +4,9 @@ import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 
 import java.util.UUID;
 
+/**
+ * Configuration data for a {@code RemoteAgentConnection}
+ */
 public class RemoteAgentConfiguration {
 
     private String host;

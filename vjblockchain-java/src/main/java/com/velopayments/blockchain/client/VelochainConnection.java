@@ -19,14 +19,7 @@ public interface VelochainConnection {
      * Submit a transaction to the blockchain / agent.
      *
      * This method returns a future that indicates the status of the
-     * transaction.  The Future#get() method must be called either on a separate
-     * thread from the thread used by this AgentConnection, or only after the
-     * connection has been closed.  Note that the Future can only be completed
-     * successfully if a status update is received while the connection is
-     * valid.  Otherwise, it will be completed with a status code indicating
-     * that the status for this transaction was unknown.  This mechanism exists
-     * only as a convenience.  At any point, the status of a transaction can be
-     * queried using AgentConnection#getTransactionStatus().
+     * transaction.
      *
      * @param transaction       The transaction to be added.
      *
