@@ -197,7 +197,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     memcpy(outData, outbuf, cert_size);
 
     /* commit data to the byte array */
-    (*env)->ReleaseByteArrayElements(env, out, outData, JNI_COMMIT);
+    (*env)->ReleaseByteArrayElements(env, out, outData, 0);
 
     /* set retval to the byte array */
     retval = 
