@@ -258,7 +258,6 @@ public class AgentConnectionTest {
                     () -> new IOException()),
                 is(newBlockId));
 
-
         } finally {
             if (null != conn) conn.close();
         }
@@ -319,7 +318,7 @@ public class AgentConnectionTest {
      * the latest block for that artifact.
      */
     @Test
-    public void getBlockIdForArtifactById()
+    public void getLastBlockIdForArtifactById()
             throws Exception {
 
         File dbLoc = tempDir.newFolder();
