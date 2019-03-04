@@ -20,11 +20,11 @@
 
 /*
  * Class:     com_velopayments_blockchain_client_AgentConnection
- * Method:    getLastTransactionIdForArtifactByIdNative
+ * Method:    getLastBlockIdForArtifactByIdNative
  * Signature: (Ljava/util/UUID;)Ljava/util/Optional;
  */
-JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnection_getLastTransactionIdForArtifactByIdNative(
-    JNIEnv * env, jobject that, jobject artifactId)
+JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnection_getLastBlockIdForArtifactByIdNative
+        (JNIEnv * env, jobject that, jobject artifactId)
 {
     jobject retval = NULL;
 
@@ -50,7 +50,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnectio
 
     /* get the handle for our connection details. */
     jlong handle =
-        (*env)->GetLongField(env, that, AgentConnection_field_handle);
+            (*env)->GetLongField(env, that, AgentConnection_field_handle);
+
 
     /* transform this value into our connection details struct. */
     agent_connection_details_t* details = (agent_connection_details_t*)handle;
@@ -93,16 +94,16 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_client_AgentConnectio
 
     /* create a UUID from a given set of ID bytes. */
     artifact_record_t* rec = (artifact_record_t*)val.mv_data;
-    jobject txnId = uuidFromBytes(env, rec->last_transaction_uuid);
-    if (NULL == txnId)
+    jobject blockId = uuidFromBytes(env, rec->last_block_uuid);
+    if (NULL == blockId)
     {
         (*env)->ThrowNew(env, IllegalStateException,
-                         "Could not create transaction UUID.");
+                         "Could not create block UUID.");
         goto cleanup_txn;
     }
 
     /* success. */
-    retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, txnId);
+    retval = (*env)->CallStaticObjectMethod(env, Optional, Optional_of, blockId);
 
 cleanup_txn:
     mdb_txn_abort(txn);
