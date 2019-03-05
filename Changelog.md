@@ -7,6 +7,8 @@ Release 0.1.4
 -------------
 
 * more efficient implementation of EncryptedDocumentBuilder and EncryptedDocumentReader.
+* Bugfix: AgentConnection.getLastBlockIdForArtifactById was throwing 
+  java.lang.UnsatisfiedLinkError due to missing native code implementation.
 
 Release 0.1.3
 -------------
