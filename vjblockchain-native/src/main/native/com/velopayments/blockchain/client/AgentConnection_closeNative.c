@@ -34,6 +34,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_closeNative(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vjblockchain not initialized.");
+        return;
     }
 
     /* get the agent connection details structure. */
@@ -42,6 +43,7 @@ Java_com_velopayments_blockchain_client_AgentConnection_closeNative(
     {
         (*env)->ThrowNew(env, NullPointerException,
                          "Attempt to close invalid handle.");
+        return;
     }
 
     /* force sync the database. */
