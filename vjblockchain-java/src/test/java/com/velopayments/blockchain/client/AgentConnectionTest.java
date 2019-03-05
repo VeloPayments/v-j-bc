@@ -289,6 +289,90 @@ public class AgentConnectionTest {
     }
 
     /**
+     * Test that, by default, getLastTransactionIdForArtifactById() returns
+     * Empty when a an artifact with the given ID does not exist.
+     */
+    @Test
+    public void getLastBlockIdForArtifactByIdReturnsEmpty()
+            throws Exception {
+        File dbLoc = tempDir.newFolder();
+        UUID missingArtifactId =
+                UUID.fromString("a7b7ec6f-dc9b-4fce-b44d-f35f6572af32");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            assertThat(
+                    conn.getLastBlockIdForArtifactById(missingArtifactId)
+                            .isPresent(),
+                    is(false));
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
+     * Test that, as we add transactions for an artifact, we can query for
+     * the latest block for that artifact.
+     */
+    @Test
+    public void getLastBlockIdForArtifactById()
+            throws Exception {
+
+        File dbLoc = tempDir.newFolder();
+        UUID dummyArtifactId =
+                UUID.fromString("fb3ce166-46b5-4ae7-b5cc-147244c13641");
+        UUID dummyTxnId =
+                UUID.fromString("c2ef63fd-cf04-44de-b350-fa5969967b66");
+        UUID dummyTxnId2 =
+                UUID.fromString("518ff68b-32d1-481a-aafa-87e33cd01deb");
+        UUID dummyTxnId3 =
+                UUID.fromString("d49192bd-0ba2-4756-b303-73803a3e24be");
+
+        AgentConnection conn = null;
+
+        try {
+            conn = new AgentConnection(dbLoc.getPath(), entityId, PRIVATE_KEY);
+
+            /* Precondition: querying for artifact id returns nothing. */
+            assertThat(
+                    conn.getLastBlockIdForArtifactById(dummyArtifactId)
+                            .isPresent(),
+                    is(false));
+
+            conn.submit(makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId, zeroUUID, dummyArtifactId));
+
+            /* commit transactions. */
+            conn.commitTransactions();
+
+            /* we should be able to get the last block ID using the artifact
+             * ID. */
+            Optional<UUID> lastBlockId =
+                    conn.getLastBlockIdForArtifactById(dummyArtifactId);
+            assertThat(lastBlockId.isPresent(), is(true));
+            assertThat(lastBlockId.get(), is(conn.getTransactionBlockId(dummyTxnId).get()));
+
+            /* add two more transactions for this artifact, and the last block ID should change */
+            conn.submit(makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId2, dummyTxnId, dummyArtifactId));
+            conn.submit(makeDummyTxn(
+                    DUMMY_TXN_TYPE, dummyTxnId3, dummyTxnId2, dummyArtifactId));
+            conn.commitTransactions();
+            Optional<UUID> lastBlockId2 =
+                    conn.getLastBlockIdForArtifactById(dummyArtifactId);
+            assertThat(lastBlockId2.isPresent(), is(true));
+            assertThat(lastBlockId2.get(), not(lastBlockId.get()));
+            assertThat(lastBlockId2.get(), is(conn.getTransactionBlockId(dummyTxnId3).get()));
+
+        } finally {
+            if (null != conn) conn.close();
+        }
+    }
+
+    /**
      * Test that, if we insert a transaction and commit, we can query it by
      * artifact ID.
      */
@@ -315,6 +399,10 @@ public class AgentConnectionTest {
                 conn.getLastTransactionIdForArtifactById(dummyArtifactId)
                     .isPresent(),
                 is(false));
+            assertThat(
+                conn.getLastBlockIdForArtifactById(dummyArtifactId)
+                    .isPresent(),
+                is(false));
 
             Certificate dummyTxn =
                 makeDummyTxn(
@@ -339,6 +427,9 @@ public class AgentConnectionTest {
                 conn.getLastTransactionIdForArtifactById(dummyArtifactId);
             assertThat(lastUUID.isPresent(), is(true));
             assertThat(lastUUID.get(), is(dummyTxnId));
+            Optional<UUID> lastBlockId =
+                conn.getLastBlockIdForArtifactById(dummyArtifactId);
+            assertThat(lastBlockId.isPresent(), is(true));
 
         } finally {
             if (null != conn) conn.close();
