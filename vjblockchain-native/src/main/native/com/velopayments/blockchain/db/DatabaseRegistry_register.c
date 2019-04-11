@@ -11,6 +11,8 @@
 #include <vpr/parameters.h>
 #include <com_velopayments_blockchain_db_DatabaseRegistry.h>
 
+#include "../../../../java/lang/NullPointerException.h"
+
 /*
  * Class:     com_velopayments_blockchain_db_DatabaseRegistry
  * Method:    register
@@ -20,8 +22,23 @@ JNIEXPORT void JNICALL
 Java_com_velopayments_blockchain_db_DatabaseRegistry_register(
     JNIEnv* env, jclass UNUSED(that), jlong handle, jstring engine)
 {
-    const char* engine_str = (*env)->GetStringUTFChars(env, engine, NULL);
+
+    /* get the database engine details structure. */
     vcdb_database_engine_t* engine_ptr = (vcdb_database_engine_t*)handle;
+    if (NULL == engine_ptr)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "handle");
+        return;
+    }
+
+    /* verify that the engine parameter is not null. */
+    if (NULL == engine)
+    {
+        (*env)->ThrowNew(env, NullPointerException, "engine");
+        return;
+    }
+
+    const char* engine_str = (*env)->GetStringUTFChars(env, engine, NULL);
 
     vcdb_database_engine_register(engine_ptr, engine_str);
 
