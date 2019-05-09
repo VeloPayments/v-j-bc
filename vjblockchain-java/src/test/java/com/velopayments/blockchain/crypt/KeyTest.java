@@ -53,9 +53,10 @@ public class KeyTest {
 
     /**
      * Test that the native function produces a key that  matches the Java impl
+     * using HMAC-SHA-512
      */
     @Test
-    public void createKeyFromPasswordTest() throws Exception {
+    public void sha512EquivalenceTest() throws Exception {
 
         String password = "password";
         String salt = "salt";
@@ -74,19 +75,31 @@ public class KeyTest {
 
         // now generate via native code
         byte[] nativeKey = Key.createFromPasswordAsBytes(
-                salt.getBytes(), iterations, password);
-        assertThat(nativeKey, is(notNullValue()));
+                salt.getBytes(), iterations, password, true);
         assertThat(nativeKey, is(notNullValue()));
 
         // the size should be 512 bits (64 bytes).
         assertThat(nativeKey.length, is(keyLength));
 
-        System.out.println("java: " + getHex(javaKey));
-        System.out.println("c: " + getHex(nativeKey));
-
         // the byte arrays should be equal
         assertThat(nativeKey, is(equalTo(javaKey)));
+    }
 
+    @Test
+    public void sha512_256Test() throws Exception {
+
+        String password = "password";
+        String salt = "salt";
+
+        int iterations = 10000;
+        int keyLength = 32;
+
+        byte[] nativeKey = Key.createFromPasswordAsBytes(
+                salt.getBytes(), iterations, password, false);
+        assertThat(nativeKey, is(notNullValue()));
+
+        // the size should be 256 bits (32 bytes).
+        assertThat(nativeKey.length, is(keyLength));
     }
 
     static final String HEXES = "0123456789ABCDEF";
