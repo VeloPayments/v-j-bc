@@ -48,6 +48,24 @@ public class Key {
         } catch (Exception e) {
             throw new IllegalStateException("Wrongness.", e);
         }
+
+        //return createFromPasswordNative(password, salt, iterations);
+    }
+
+    /**
+     * Generate a key from a password.
+     *
+     * @param salt The random salt to use for this password.  Must be unique per
+     *             password and should be stored as password metadata.
+     * @param iterations The number of iterations (e.g. 10000).
+     * @param password The password from which this key is derived.
+     *
+     * @return a byte array from this password and metadata.
+     */
+    public static byte[] createFromPasswordAsBytes(
+            byte[] salt, int iterations, String password)
+    {
+        return createFromPasswordNative(password.getBytes(), salt, iterations);
     }
 
     /**
@@ -78,6 +96,13 @@ public class Key {
      * Create a Key from a cryptographically random source.
      */
     private static native Key createRandomNative();
+
+
+    /**
+     * Create a key from a password and salt
+     */
+    private static native byte[] createFromPasswordNative(
+            byte[] password, byte[] salt, int iterations);
 
     private byte[] key;
 }
