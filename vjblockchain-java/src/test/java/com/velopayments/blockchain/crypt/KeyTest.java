@@ -86,7 +86,7 @@ public class KeyTest {
     }
 
     @Test
-    public void sha512_256Test() throws Exception {
+    public void sha512_256Test() {
 
         String password = "password";
         String salt = "salt";
@@ -102,16 +102,4 @@ public class KeyTest {
         assertThat(nativeKey.length, is(keyLength));
     }
 
-    static final String HEXES = "0123456789ABCDEF";
-    public static String getHex( byte [] raw ) {
-        if ( raw == null ) {
-            return null;
-        }
-        final StringBuilder hex = new StringBuilder( 2 * raw.length );
-        for ( final byte b : raw ) {
-            hex.append(HEXES.charAt((b & 0xF0) >> 4))
-                    .append(HEXES.charAt((b & 0x0F)));
-        }
-        return hex.toString();
-    }
 }
