@@ -31,14 +31,13 @@ public class TestUtil {
         byte inner[] = new byte[12 + payload.length];
 
         // first four bytes of inner envelope are the api method
-        System.arraycopy(ByteUtil.longToBytes(apiMethod.getValue(),4,true),
-                0, inner,0,4);
+        System.arraycopy(ByteUtil.htonl(apiMethod.getValue()),0, inner,0,4);
 
         // next four bytes of inner envelope are the request ID
-        System.arraycopy(ByteUtil.longToBytes(requestId, 4,true), 0, inner, 4, 4);
+        System.arraycopy(ByteUtil.htonll(requestId), 4, inner, 4, 4);
 
         // next four bytes of inner envelope are the response
-        System.arraycopy(ByteUtil.longToBytes(status, 4,true), 0, inner, 8, 4);
+        System.arraycopy(ByteUtil.htonll(status), 4, inner, 8, 4);
 
         // the remaining bytes of the inner envelope are the payload
         System.arraycopy(payload, 0, inner, 12, payload.length);
@@ -50,7 +49,7 @@ public class TestUtil {
         byte response[] = new byte[1 + 4 + encryptedPayload.length + 32];
 
         // bytes 1 - 4 are the size of the encrypted payload
-        System.arraycopy(ByteUtil.longToBytes(encryptedPayload.length,4, true), 0, response, 1, 4);
+        System.arraycopy(ByteUtil.htonl(encryptedPayload.length), 0, response, 1, 4);
 
         // bytes 5 - N+5 are the encrypted payload
         System.arraycopy(encryptedPayload, 0, response, 5, encryptedPayload.length);
@@ -82,7 +81,7 @@ public class TestUtil {
         System.arraycopy(UuidUtil.getBytesFromUUID(firstTxId), 0, response, 48, 16);
 
         long blockHeight = 7L;
-        System.arraycopy(ByteUtil.longToBytes(blockHeight, true), 0, response, 64, 8);
+        System.arraycopy(ByteUtil.htonll(blockHeight), 0, response, 64, 8);
 
         // the remaining bytes are the certificate
         if (certificateBytes != null) {

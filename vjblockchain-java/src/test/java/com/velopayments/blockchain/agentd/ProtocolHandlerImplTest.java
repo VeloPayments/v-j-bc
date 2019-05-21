@@ -54,7 +54,7 @@ public class ProtocolHandlerImplTest {
 
         // given a properly configured handshake instance
         byte[] response = new byte[HANDSHAKE_INITIATE_RESPONSE_SIZE];
-        System.arraycopy(UuidUtil.getBytesFromUUID(agentId), 0, response, 0, 16);
+        System.arraycopy(UuidUtil.getBytesFromUUID(agentId), 0, response, 20, 16);
         Mockito.when(remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE)).thenReturn(response);
 
         // when the handshake is invoked
@@ -71,7 +71,7 @@ public class ProtocolHandlerImplTest {
 
         // given an improperly configured handshake instance
         byte[] response = new byte[HANDSHAKE_INITIATE_RESPONSE_SIZE];
-        System.arraycopy(UuidUtil.getBytesFromUUID(UUID.randomUUID()), 0, response, 0, 16);
+        System.arraycopy(UuidUtil.getBytesFromUUID(UUID.randomUUID()), 0, response, 20, 16);
         Mockito.when(remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE)).thenReturn(response);
 
         // when the handshake is initiated

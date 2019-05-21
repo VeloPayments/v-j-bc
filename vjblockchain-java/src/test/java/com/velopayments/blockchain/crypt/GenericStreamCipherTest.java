@@ -20,7 +20,7 @@ public class GenericStreamCipherTest {
         EncryptionKeyPair keyPair = EncryptionKeyPair.generate();
         byte secretKey[] = keyPair.getPrivateKey().getRawBytes();
 
-        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE),false);
+        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE));
 
         // when the message is encrypted
         byte encrypted[] = GenericStreamCipher.encrypt(secretKey, iv, input);
@@ -45,7 +45,7 @@ public class GenericStreamCipherTest {
         EncryptionKeyPair keyPair = EncryptionKeyPair.generate();
         byte secretKey[] = keyPair.getPrivateKey().getRawBytes();
 
-        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE),false);
+        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE));
 
         // when the message is encrypted and then decrypted using a different key
         byte encrypted[] = GenericStreamCipher.encrypt(secretKey, iv, input);
@@ -64,7 +64,7 @@ public class GenericStreamCipherTest {
 
         // given a simple message to encrypt, an IV, and a key
         byte input[] = { 1, 2, 3, 4, 5 };
-        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE),false);
+        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE));
         EncryptionKeyPair keyPair = EncryptionKeyPair.generate();
         byte key[] = keyPair.getPrivateKey().getRawBytes();
 
@@ -104,7 +104,7 @@ public class GenericStreamCipherTest {
 
         // given a simple message to decrypt, an IV, and a key
         byte input[] = { 1, 2, 3, 4, 5 };
-        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE),false);
+        byte iv[] = ByteUtil.longToBytes((long)(Math.random()*Long.MAX_VALUE));
         EncryptionKeyPair keyPair = EncryptionKeyPair.generate();
         byte key[] = keyPair.getPrivateKey().getRawBytes();
         byte encrypted[] = GenericStreamCipher.encrypt(key, iv, input);

@@ -14,13 +14,12 @@ public class UuidUtil {
     /**
      * Convert a UUID to a byte array.  The UUID is converted using Big Endian format.
      *
-     *    For example, a byte array
+     *    For example, the UUID
      *
-     *    1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+     *    23000000-0000-0000-0000-000000000012
      *
-     *    where byte 15==1, will be converted into a UUID
-     *
-     *    00000000-0000-0000-0000-000000000001
+     *    is converted into a 16 byte array with byte '23' in the first element (0)
+     *    and byte '12' in the last element (15)
      *
      * @param uuid to be converted
      * @return byte array
@@ -35,14 +34,15 @@ public class UuidUtil {
     }
 
     /**
-     * Convert byte array to a UUID.  The UUID is converted in Big Endian format.
+     * Convert byte array to a UUID.  The byte array is converted using Big Endian format.
      *
-     *    For example, the UUID
+     *    For example, a byte array
      *
-     *    23000000-0000-0000-0000-000000000012
+     *    1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
      *
-     *    is converted into a 16 byte array with byte '23' in the first element (0)
-     *    and byte '12' in the last element (15)
+     *    where byte 15==1, will be converted into a UUID
+     *
+     *    00000000-0000-0000-0000-000000000001
      *
      * @param bytes byte array to be converted
      * @return uuid

@@ -2,6 +2,7 @@ package com.velopayments.blockchain.client;
 
 import com.velopayments.blockchain.agentd.*;
 import com.velopayments.blockchain.cert.Certificate;
+import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 
 import javax.net.SocketFactory;
@@ -168,4 +169,32 @@ public class RemoteAgentConnection implements VelochainConnection {
                 ApiMethod.GET_NEXT_TXN_ID_FOR_TXN_BY_ID,
                 txnId);
     }
+
+    public static void main(String[] args) {
+        System.out.println("testing agentd connection...");
+
+        RemoteAgentConfiguration config = new RemoteAgentConfiguration(
+        "localhost",4931,null,null);
+
+        RemoteAgentConnection conn = new RemoteAgentConnection(
+            config, SocketFactory.getDefault(),
+            UUID.randomUUID(), EncryptionKeyPair.generate().getPrivateKey());
+
+        try {
+            conn.connect();
+            System.out.println("success!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                conn.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        System.out.println("execution complete.");
+    }
+
 }

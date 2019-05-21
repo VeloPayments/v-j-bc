@@ -1,5 +1,7 @@
 package com.velopayments.blockchain.util;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -7,57 +9,77 @@ import java.util.Arrays;
  */
 public class ByteUtil {
 
+    public static byte[] htonl(int val)
+    {
+        return ByteBuffer.allocate(4).putInt(val)
+                .order(ByteOrder.BIG_ENDIAN).array();
+    }
+
+    public static byte[] htonll(long val)
+    {
+        return ByteBuffer.allocate(8).putLong(val)
+                .order(ByteOrder.BIG_ENDIAN).array();
+    }
+
+    public static long ntohl(byte[] val)
+    {
+        if (val.length != 4)
+        {
+            throw new IllegalArgumentException("ntohl expects 4 byte array");
+        }
+
+        byte[] padded = new byte[8];
+        System.arraycopy(val, 0, padded, 4, 4);
+
+        return ByteBuffer.wrap(padded)
+                .order(ByteOrder.BIG_ENDIAN).getLong();
+    }
+
+    public static long ntohll(byte[] val)
+    {
+        if (val.length != 8)
+        {
+            throw new IllegalArgumentException("ntohll expects 8 byte array");
+        }
+
+        return ByteBuffer.wrap(val)
+                .order(ByteOrder.BIG_ENDIAN).getLong();
+    }
+
     /**
      * Convert a long value to a byte array
      *
      * @param val          the value to convert
-     * @param bigEndian    whether the byte array should be written in big endian
      *
      * @return the byte array
      */
-    public static byte[] longToBytes(long val, boolean bigEndian) {
-        return longToBytes(val, 8, bigEndian);
-    }
+    public static byte[] longToBytes(long val) {
 
-    /**
-     * Convert a long value, or a part of a long value, to a byte array
-     *
-     * @param val          the value to convert
-     * @param numBytes     the number of (least significant) bytes of the long value to
-     *                     convert.  The remaining (most significant) bytes are ignored.
-     * @param bigEndian    whether the byte array should be written in big endian
-     *
-     * @return the byte array
-     */
-    public static byte[] longToBytes(long val, int numBytes,
-                                     boolean bigEndian) {
-        byte[] bytes = new byte[numBytes];
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        buffer.putLong(val);
 
-        for (int i=0; i<numBytes; i++) {
-            int shift = bigEndian ? (8*(numBytes-1-i)) : (8 * i);
-            bytes[i] = (byte) (val >> shift);
-        }
-
-        return bytes;
+        return buffer.array();
     }
 
     /**
      * Convert a byte array to a long value
      *
      * @param bytes         the bytes to convert
-     * @param bigEndian     whether the returned value should be written
-     *                      in big endian format
+     *
      * @return the converted long
      */
-    public static long bytesToLong(byte[] bytes, boolean bigEndian) {
-        long val = 0L;
+    public static long bytesToLong(byte[] bytes) {
 
-        for (int i=0; i<bytes.length && i<8; i++) {
-            int shift = bigEndian ? (8*(bytes.length-1-i)) : (8 * i);
-            val |= ((long) bytes[i] & 0xFF) << shift;
+        if (bytes.length != 8)
+        {
+            throw new IllegalArgumentException("ntohll expects 8 byte array");
         }
 
-        return val;
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        buffer.put(bytes);
+        buffer.flip();
+
+        return buffer.getLong();
     }
 
     /**
@@ -70,8 +92,12 @@ public class ByteUtil {
      *   by all the elements of array2.
      */
     public static byte[] merge(byte[] array1, byte[] array2) {
-        byte[] joinedArray = Arrays.copyOf(array1, array1.length + array2.length);
-        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        byte[] joinedArray = Arrays.copyOf(
+                array1, array1.length + array2.length);
+
+        System.arraycopy(
+                array2, 0, joinedArray, array1.length, array2.length);
+
         return joinedArray;
     }
 }

@@ -79,7 +79,7 @@ public class EnvelopeTest {
 
         // given an inner envelope with no payload
         byte[] inner = new byte[] {
-                (byte)0xFF,(byte)0x00,(byte)0x00,(byte)0x01,  // API method ID
+                (byte)0x3F,(byte)0x00,(byte)0x00,(byte)0x01,  // API method ID
                 (byte)0xEE,(byte)0x00,(byte)0x00,(byte)0x02,  // request ID
                 (byte)0x01,(byte)0x02,(byte)0x03,(byte)0x04   // status
         };
@@ -88,7 +88,7 @@ public class EnvelopeTest {
         InnerEnvelopeResponse unwrapped = Envelope.unwrapInner(inner);
 
         // then the API method Id should be correct
-        assertThat(unwrapped.getApiMethodId(), is(0xFF000001L));
+        assertThat(unwrapped.getApiMethodId(), is(0x3F000001L));
 
         // and the request ID should be correct
         assertThat(unwrapped.getRequestId(), is(0xEE000002L));
@@ -114,7 +114,7 @@ public class EnvelopeTest {
         assertThat(wrapped[0], is((byte) MessageType.UNAUTHENTICATED.getValue()));
 
         // ... and the next 4 bytes should be the size of the encrypted payload
-        long payloadSize = ByteUtil.bytesToLong(Arrays.copyOfRange(wrapped, 1, 5), true);
+        long payloadSize = ByteUtil.ntohl(Arrays.copyOfRange(wrapped, 1, 5));
 
         // ... and the next N bytes should be the encrypted payload
         byte[] encrypted = Arrays.copyOfRange(wrapped, 5, (int)payloadSize+5);
