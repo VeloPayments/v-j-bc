@@ -173,12 +173,14 @@ public class RemoteAgentConnection implements VelochainConnection {
     public static void main(String[] args) {
         System.out.println("testing agentd connection...");
 
+        UUID agentId = UUID.fromString("cb6c02aa-605f-4f81-bb01-5bb6f5975746");
         RemoteAgentConfiguration config = new RemoteAgentConfiguration(
-        "localhost",4931,null,null);
+        "localhost",4931,agentId,null);
 
+        UUID entityId = UUID.fromString("aca029b6-2602-4b20-a8a4-cd8a95985a9a");
         RemoteAgentConnection conn = new RemoteAgentConnection(
             config, SocketFactory.getDefault(),
-            UUID.randomUUID(), EncryptionKeyPair.generate().getPrivateKey());
+            entityId, EncryptionKeyPair.generate().getPrivateKey());
 
         try {
             conn.connect();

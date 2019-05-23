@@ -218,6 +218,9 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] response = remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE);
 
         // verify agent UUID
+        UUID responseAgentId = UuidUtil.getUUIDFromBytes(
+                Arrays.copyOfRange(response, 20, 36));
+
         if (!EqualsUtil.constantTimeEqual(
                 UuidUtil.getBytesFromUUID(agentId),
                 Arrays.copyOfRange(response, 20, 36)))

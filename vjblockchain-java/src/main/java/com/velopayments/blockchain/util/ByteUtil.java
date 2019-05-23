@@ -25,7 +25,7 @@ public class ByteUtil {
     {
         if (val.length != 4)
         {
-            throw new IllegalArgumentException("ntohl expects 4 byte array");
+            throw new IllegalArgumentException("expected 4 byte array");
         }
 
         byte[] padded = new byte[8];
@@ -39,7 +39,7 @@ public class ByteUtil {
     {
         if (val.length != 8)
         {
-            throw new IllegalArgumentException("ntohll expects 8 byte array");
+            throw new IllegalArgumentException("expected 8 byte array");
         }
 
         return ByteBuffer.wrap(val)
@@ -72,7 +72,7 @@ public class ByteUtil {
 
         if (bytes.length != 8)
         {
-            throw new IllegalArgumentException("ntohll expects 8 byte array");
+            throw new IllegalArgumentException("expected 8 byte array");
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(8);
