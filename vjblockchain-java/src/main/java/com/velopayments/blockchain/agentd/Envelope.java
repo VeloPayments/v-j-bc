@@ -19,46 +19,34 @@ public class Envelope {
      * Wraps the inner envelope by encrypting and HMAC'ing the
      * message.  The returned value represents the outer envelope.
      * <p>
-     * byte 0            message type
-     * bytes 1 - 4       size of payload
-     * bytes 5 - N+5     encrypted payload
-     * bytes N+6 - N+38  HMAC of envelope (all previous bytes)
+     * bytes   0 - N      encrypted payload
+     * bytes N+1 - N+32   HMAC of encrypted payload
      * </p>
      * The IV is incremented after this call.
      *
-     * @param messageType    message type
      * @param key            key to use to encrypt the payload
      * @param input          unencrypted payload (inner envelope)
+     *
      * @return               the outer envelope
      */
-    public static byte[] wrapOuter(MessageType messageType, byte[] key,
-                                   byte[] input) {
+    public static byte[] wrapOuter(byte[] key, byte[] input) {
 
         // encrypt the payload
         byte[] ivBytes = ByteUtil.longToBytes(iv.getAndIncrement());
-        byte[] encryptedPayload = GenericStreamCipher.encrypt(key, ivBytes, input);
+        byte[] encryptedPayload = GenericStreamCipher.encrypt(
+                key, ivBytes, input);
 
         // create a buffer to hold the output
-        byte outer[] = new byte[1 + 4 + encryptedPayload.length + 32];
+        byte outer[] = new byte[encryptedPayload.length + 32];
 
-        // the first byte is the message type
-        outer[0] = (byte)messageType.getValue();
-
-        // bytes 1 - 4 are the size of the encrypted payload
-        byte[] payloadSize = ByteUtil.htonl(encryptedPayload.length);
-        System.arraycopy(payloadSize, 0, outer, 1, 4);
-
-        // bytes 5 - N+5 are the encrypted payload
+        // add the encrypted payload to the output buffer
         System.arraycopy(
-                encryptedPayload, 0, outer, 5,
-                encryptedPayload.length);
+                encryptedPayload, 0, outer, 0, encryptedPayload.length);
 
-        // bytes N+6 - N+38 are the HMAC'd value
+        // add the HMAC of the encrypted payload to the output buffer
         HMAC hmac = new HMAC(key);
         System.arraycopy(
-                hmac.createHMACShort(
-                        Arrays.copyOfRange(
-                                outer, 0, outer.length - 32)),
+                hmac.createHMACShort(encryptedPayload),
                 0, outer, outer.length - 32, 32);
 
         return outer;
@@ -66,13 +54,12 @@ public class Envelope {
 
     /**
      * Unwraps the outer envelope by HMAC'ing and then decrypting the
-     * payload.  The returned value represents the decrypted inner envelope.
+     * payload.  The returned value represents the inner envelope.
      * <p>
      * The format of the outer envelope is as follows:
-     *   byte 0            message type
-     *   bytes 1 - 4       size of payload big endian format
-     *   bytes 5 - N+5     encrypted payload
-     *   bytes N+6 - N+38  HMAC of envelope (all previous bytes)
+     *
+     *   bytes      0 - len-33     encrypted payload
+     *   bytes len-32 - len        HMAC of encrypted payload
      *
      * @param key           The secret key to use for decryption
      * @param outer         The outer envelope
@@ -81,28 +68,22 @@ public class Envelope {
      */
     public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
-        // the last 32 bytes are the HMAC of the previous bytes
-        byte[] returnedHmac = Arrays.copyOfRange(outer, outer.length - 32, outer.length);
+        // the first len-32 bytes are the encrypted payload
+        byte[] encryptedPayload = Arrays.copyOfRange(
+                outer, 0, outer.length-32);
+
+        // the last 32 bytes are the HMAC
+        byte[] hmacBytes = Arrays.copyOfRange(
+                outer, outer.length - 32, outer.length);
 
         // verify HMAC
         HMAC hmac = new HMAC(key);
         if (!EqualsUtil.constantTimeEqual(
-                hmac.createHMACShort(Arrays.copyOfRange(outer, 0, outer.length-32)),
-                returnedHmac))
+                hmac.createHMACShort(encryptedPayload), hmacBytes))
         {
             throw new MessageVerificationException("Invalid HMAC!");
         }
 
-        // the first byte is the type, which should be "authed data"
-        byte messageType = outer[0];
-
-        // the next four bytes are the size of the payload
-        int payloadSize = (int)ByteUtil.ntohl(
-                Arrays.copyOfRange(outer, 1, 5));
-
-        // bytes 5 - payloadSize+5 are the payload
-        byte[] encryptedPayload = Arrays.copyOfRange(
-                outer, 5, payloadSize+5);
 
         return GenericStreamCipher.decrypt(key, encryptedPayload);
     }
@@ -111,9 +92,9 @@ public class Envelope {
     /**
      * Wrap the payload in the inner envelope:
      * <p>
-     *   bits  0 - 31 - API method ID in big endian
-     *   bits 32 - 63 - request ID in big endian
-     *   bits 64+     - payload
+     *   bytes 0-3      API method ID
+     *   bytes 4-7      request ID
+     *   bytes 8+       payload
      *
      * @param apiMethod      API method
      * @param requestId      request ID
@@ -144,10 +125,10 @@ public class Envelope {
     /**
      * Unwrap the inner envelope.  The wrapped envelope should be structured as:
      * <p>
-     *   bytes 0 -  3 - API method ID
-     *   bytes 4 -  7 - request ID
-     *   bytes 8 - 11 - status (0 = success, other for fail)
-     *   bytes 12+     - payload
+     *   bytes 0-3      API method ID
+     *   bytes 4-7      request ID
+     *   bytes 8-11     status (0 = success, other for fail)
+     *   bytes 12+      payload
      *
      * @param wrapped     The inner envelope to be unwrapped
      *

@@ -5,17 +5,14 @@ import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 public class TestUtil {
 
     /**
      * The format of the outer envelope response is as follows:
-     *   byte 0            message type
-     *   bytes 1 - 4       size of payload big endian format
-     *   bytes 5 - N+5     encrypted payload
-     *   bytes N+6 - N+38  HMAC of envelope (all previous bytes)
+     *   bytes 0   - N     encrypted payload
+     *   bytes N+1 - N+32  HMAC of encrypted payload
      *
      * @param encryptionKey
      * @param apiMethod
@@ -24,8 +21,8 @@ public class TestUtil {
      * @param payload
      * @return
      */
-    public static byte[] createAgentdResponse(byte[] encryptionKey,ApiMethod apiMethod,
-                                              long requestId, long status, byte[] payload) {
+    public static byte[] createResponse(byte[] encryptionKey, ApiMethod apiMethod,
+                                        long requestId, long status, byte[] payload) {
 
         // build inner envelope response
         byte inner[] = new byte[12 + payload.length];
@@ -36,7 +33,7 @@ public class TestUtil {
         // next four bytes of inner envelope are the request ID
         System.arraycopy(ByteUtil.htonll(requestId), 4, inner, 4, 4);
 
-        // next four bytes of inner envelope are the response
+        // next four bytes of inner envelope are the status
         System.arraycopy(ByteUtil.htonll(status), 4, inner, 8, 4);
 
         // the remaining bytes of the inner envelope are the payload
@@ -46,19 +43,15 @@ public class TestUtil {
         byte[] encryptedPayload = GenericStreamCipher.encrypt(encryptionKey, new byte[8], inner);
 
         // create a buffer to hold the output
-        byte response[] = new byte[1 + 4 + encryptedPayload.length + 32];
+        byte response[] = new byte[encryptedPayload.length + 32];
 
-        // bytes 1 - 4 are the size of the encrypted payload
-        System.arraycopy(ByteUtil.htonl(encryptedPayload.length), 0, response, 1, 4);
-
-        // bytes 5 - N+5 are the encrypted payload
-        System.arraycopy(encryptedPayload, 0, response, 5, encryptedPayload.length);
+        // add the encrypted payload to the output buffer
+        System.arraycopy(encryptedPayload, 0, response, 0, encryptedPayload.length);
 
         // the last 32 bytes are the HMAC
         HMAC hmac = new HMAC(encryptionKey);
         System.arraycopy(
-                hmac.createHMACShort(
-                        Arrays.copyOfRange(response, 0, response.length - 32)),
+                hmac.createHMACShort(encryptedPayload),
                 0, response, response.length - 32, 32);
 
         return response;

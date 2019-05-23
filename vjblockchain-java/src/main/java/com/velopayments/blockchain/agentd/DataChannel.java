@@ -4,9 +4,9 @@ package com.velopayments.blockchain.agentd;
 import java.io.IOException;
 
 /**
- * Socket based communication channel between client and remote agent.
+ * Class representing a data channel between client and server
  */
-public interface RemoteAgentChannel {
+public interface DataChannel {
 
     /**
      * Establishes the channel's connection to the remote endpoint.
@@ -23,23 +23,21 @@ public interface RemoteAgentChannel {
     void close() throws IOException;
 
     /**
-     * Sends raw bytes to the socket
+     * Sends a message through the channel
      *
-     * @param message     bytes to send to socket
+     * @param message     bytes to send
      *
      * @throws IOException
      */
     void send(byte[] message) throws IOException;
 
     /**
-     * Reads {@code n} bytes from the socket.
-     *
-     * @param n   the number of bytes to read
+     * Read a message from the channel
      *
      * @return    bytes read
      *
      * @throws IOException
      */
-    byte[] recv(int n) throws IOException;
+    byte[] recv() throws IOException;
 
 }

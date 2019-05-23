@@ -3,7 +3,6 @@ package com.velopayments.blockchain.agentd;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.GenericStreamCipher;
 import com.velopayments.blockchain.crypt.HMAC;
-import com.velopayments.blockchain.util.ByteUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -17,12 +16,10 @@ public class EnvelopeTest {
     public void wrapInner() {
 
         // given an API method ID, request ID, and a payload
-
         long requestId = 0xFFL;
         byte[] payload = "this is my payload".getBytes();
 
         // when the payload is wrapped
-
         byte[] wrapped = Envelope.wrapInner(ApiMethod.SUBMIT, requestId, payload);
 
         // then the wrapped payload should be the correct size
@@ -43,14 +40,15 @@ public class EnvelopeTest {
 
 
         // and the remaining bytes should be the payload
-        assertThat(Arrays.copyOfRange(wrapped, 8, wrapped.length), is(payload));
+        assertThat(
+                Arrays.copyOfRange(wrapped, 8, wrapped.length),
+                is(payload));
     }
 
     @Test
     public void unwrapInner() {
 
         // given an inner envelope
-
         byte[] inner = new byte[] {
             (byte)0xFF,(byte)0x00,(byte)0x00,(byte)0x01,  // API method ID
             (byte)0xEE,(byte)0x00,(byte)0x00,(byte)0x02,  // request ID
@@ -71,7 +69,8 @@ public class EnvelopeTest {
         assertThat(unwrapped.getStatus(), is(0x1020304L));
 
         // and the payload should be correct
-        assertThat(unwrapped.getPayload(), is(new byte[] {(byte)0x87, (byte)0xa0}));
+        assertThat(unwrapped.getPayload(),
+                is(new byte[] {(byte)0x87, (byte)0xa0}));
     }
 
     @Test
@@ -108,61 +107,48 @@ public class EnvelopeTest {
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
 
         // when the envelope is wrapped
-        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
+        byte[] wrapped = Envelope.wrapOuter(key, inner);
 
-        // then the first byte should be the message type
-        assertThat(wrapped[0], is((byte) MessageType.UNAUTHENTICATED.getValue()));
-
-        // ... and the next 4 bytes should be the size of the encrypted payload
-        long payloadSize = ByteUtil.ntohl(Arrays.copyOfRange(wrapped, 1, 5));
-
-        // ... and the next N bytes should be the encrypted payload
-        byte[] encrypted = Arrays.copyOfRange(wrapped, 5, (int)payloadSize+5);
+        // the first bytes should be the encrypted payload
+        byte[] encrypted = Arrays.copyOfRange(wrapped, 0, wrapped.length-32);
         assertThat(GenericStreamCipher.decrypt(key, encrypted), is(inner));
 
-        // ... and the last 32 bytes should be the HMAC of the previous bytes
-        byte[] returnedHmac = Arrays.copyOfRange(wrapped, wrapped.length-32, wrapped.length);
+        // and the last 32 bytes should be the HMAC of the encrypted payload
+        byte[] hmacBytes = Arrays.copyOfRange(
+                wrapped, wrapped.length-32, wrapped.length);
         HMAC hmac = new HMAC(key);
-        assertThat(hmac.createHMACShort(
-                Arrays.copyOfRange(wrapped, 0, wrapped.length - 32)),
-                is(returnedHmac));
+        assertThat(hmac.createHMACShort(encrypted), is(hmacBytes));
     }
 
     @Test
     public void unwrapOuter() {
 
         // given an outer envelope
-
         byte[] inner = "this is my inner envelope.".getBytes();
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
-        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
+        byte[] wrapped = Envelope.wrapOuter(key, inner);
 
 
         // when the envelope is unwrapped
-
         byte[] unwrapped = Envelope.unwrapOuter(key, wrapped);
 
         // the decrypted message is correct
-
         assertThat(unwrapped, is(inner));
     }
 
     @Test(expected = MessageVerificationException.class)
     public void unwrapOuter_InvalidHMAC() {
 
-        // given an outer envelope where the message has been tampered with
-        // (the HMAC isn't valid)
-
+        // given an outer envelope with an invalid HMAC
         byte[] inner = "this is my inner envelope.".getBytes();
         byte[] key = EncryptionKeyPair.generate().getPrivateKey().getRawBytes();
-        byte[] wrapped = Envelope.wrapOuter(MessageType.UNAUTHENTICATED, key, inner);
+        byte[] wrapped = Envelope.wrapOuter(key, inner);
 
         // alter the last couple of bytes
         wrapped[wrapped.length-2] = 1;
         wrapped[wrapped.length-1] = 1;
 
         // when the envelope is unwrapped, an exception should be thrown
-
         Envelope.unwrapOuter(key, wrapped);
     }
 }

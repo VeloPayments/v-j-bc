@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class RemoteAgentConnection implements VelochainConnection {
 
-    private RemoteAgentChannel remoteAgentChannel;
+    private DataChannel dataChannel;
     private ProtocolHandler protocolHandler;
 
     /**
@@ -33,10 +33,10 @@ public class RemoteAgentConnection implements VelochainConnection {
                                  UUID entityId,
                                  EncryptionPrivateKey entityPrivateEncKey) {
 
-        this.remoteAgentChannel = new RemoteAgentChannelImpl(
+        this.dataChannel = new SocketDataChannelImpl(
                 config.getHost(), config.getPort(), socketFactory);
         this.protocolHandler = new ProtocolHandlerImpl(
-                remoteAgentChannel, config.getAgentId(), config.getAgentPublicKey(),
+                dataChannel, config.getAgentId(), config.getAgentPublicKey(),
                 entityId, entityPrivateEncKey);
     }
 
@@ -44,7 +44,7 @@ public class RemoteAgentConnection implements VelochainConnection {
      * Open a client connection.
      */
     public void connect() throws IOException {
-        remoteAgentChannel.connect();
+        dataChannel.connect();
 
         protocolHandler.handshake();
     }
@@ -52,7 +52,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     @Override
     public void close() throws IOException {
 
-        remoteAgentChannel.close();
+        dataChannel.close();
     }
 
     /**
@@ -170,6 +170,7 @@ public class RemoteAgentConnection implements VelochainConnection {
                 txnId);
     }
 
+    // TODO: temp code while hacking; to be replaced with integration tests
     public static void main(String[] args) {
         System.out.println("testing agentd connection...");
 

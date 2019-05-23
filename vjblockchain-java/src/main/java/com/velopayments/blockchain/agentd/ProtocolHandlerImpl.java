@@ -18,9 +18,7 @@ import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
 
-    public static final int HANDSHAKE_INITIATE_RESPONSE_SIZE = 164;
-
-    private RemoteAgentChannel remoteAgentChannel;
+    private DataChannel dataChannel;
     private UUID agentId;
     private EncryptionPublicKey agentPublicEncKey;
     private UUID entityId;
@@ -29,13 +27,13 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private SecureRandom random;
     private long requestId; // TODO: details on this
 
-    public ProtocolHandlerImpl(RemoteAgentChannel remoteAgentChannel,
+    public ProtocolHandlerImpl(DataChannel dataChannel,
                                UUID agentId,
                                EncryptionPublicKey agentPublicEncKey,
                                UUID entityId,
                                EncryptionPrivateKey entityPrivateEncKey) {
 
-        this.remoteAgentChannel = remoteAgentChannel;
+        this.dataChannel = dataChannel;
         this.agentId = agentId;
         this.agentPublicEncKey = agentPublicEncKey;
         this.entityId = entityId;
@@ -152,18 +150,18 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
      */
     private byte[] initiateHandshake() throws IOException {
 
-        /* | --------------------------------------------------- | ------------ | */
-        /* | DATA                                                | SIZE         | */
-        /* | --------------------------------------------------- | ------------ | */
-        /* | UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE           |  4 bytes     | */
-        /* | offset                                              |  4 bytes     | */
-        /* | record:                                             | 88 bytes     | */
-        /* |    protocol_version                                 |  4 bytes     | */
-        /* |    crypto_suite                                     |  4 bytes     | */
-        /* |    entity_id                                        | 16 bytes     | */
-        /* |    client key nonce                                 | 32 bytes     | */
-        /* |    client challenge nonce                           | 32 bytes     | */
-        /* | --------------------------------------------------- | ------------ | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE      |  4 bytes     | */
+        /* | offset                                         |  4 bytes     | */
+        /* | record:                                        | 88 bytes     | */
+        /* |    protocol_version                            |  4 bytes     | */
+        /* |    crypto_suite                                |  4 bytes     | */
+        /* |    entity_id                                   | 16 bytes     | */
+        /* |    client key nonce                            | 32 bytes     | */
+        /* |    client challenge nonce                      | 32 bytes     | */
+        /* | ---------------------------------------------- | ------------ | */
 
         byte[] request = new byte[96];
 
@@ -196,31 +194,32 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
 
         // send handshake request
-        remoteAgentChannel.send(request);
+        dataChannel.send(request);
 
-        /* | Handshake request response packet.                                 | */
-        /* | --------------------------------------------------- | ------------ | */
-        /* | DATA                                                | SIZE         | */
-        /* | --------------------------------------------------- | ------------ | */
-        /* | UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE           |   4 bytes    | */
-        /* | offset                                              |   4 bytes    | */
-        /* | status                                              |   4 bytes    | */
-        /* | record:                                             | 152 bytes    | */
-        /* |    protocol_version                                 |   4 bytes    | */
-        /* |    crypto_suite                                     |   4 bytes    | */
-        /* |    agent_id                                         |  16 bytes    | */
-        /* |    server public key                                |  32 bytes    | */
-        /* |    server key nonce                                 |  32 bytes    | */
-        /* |    server challenge nonce                           |  32 bytes    | */
-        /* |    server_cr_hmac                                   |  32 bytes    | */
-        /* | --------------------------------------------------- | ------------ | */
+        /* | Handshake request response packet.                            | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE      |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | record:                                        | 152 bytes    | */
+        /* |    protocol_version                            |   4 bytes    | */
+        /* |    crypto_suite                                |   4 bytes    | */
+        /* |    agent_id                                    |  16 bytes    | */
+        /* |    server public key                           |  32 bytes    | */
+        /* |    server key nonce                            |  32 bytes    | */
+        /* |    server challenge nonce                      |  32 bytes    | */
+        /* |    server_cr_hmac                              |  32 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
 
-        byte[] response = remoteAgentChannel.recv(HANDSHAKE_INITIATE_RESPONSE_SIZE);
+        byte[] response = dataChannel.recv();
+
+        // TODO: verify protocol version (should be 1)
+
+        // TODO: verify the crypto suite version (should be 1)
 
         // verify agent UUID
-        UUID responseAgentId = UuidUtil.getUUIDFromBytes(
-                Arrays.copyOfRange(response, 20, 36));
-
         if (!EqualsUtil.constantTimeEqual(
                 UuidUtil.getBytesFromUUID(agentId),
                 Arrays.copyOfRange(response, 20, 36)))
@@ -228,13 +227,20 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             throw new AgentVerificationException("Invalid agentId.");
         }
 
+        // TODO: get server public key
+
         byte[] serverKeyNonce = Arrays.copyOfRange(response, 68,100);
 
         byte[] serverChallengeNonce = Arrays.copyOfRange(response, 100, 132);
 
-        byte[] serverChallengeResponse = Arrays.copyOfRange(response, 132, 164);
+        byte[] serverChallengeResponseHMAC = Arrays.copyOfRange(
+                response, 132, 164);
 
-        // TODO - verify challenge / response
+        // TODO: compute shared secret
+
+        // TODO: compute HMAC from payload + client challenge nonce
+
+        // TODO: verify HMAC matches
 
         return serverChallengeNonce;
     }
@@ -258,31 +264,23 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     throws IOException {
 
         // wrap in inner envelope
-        byte[] reqInner = Envelope.wrapInner(
-                apiMethod, requestId, reqPayload);
+        byte[] reqInner = Envelope.wrapInner(apiMethod, requestId, reqPayload);
 
         // wrap in outer envelope
         byte[] reqOuter = Envelope.wrapOuter(
-                MessageType.AUTHENTICATED, agentPublicEncKey.getRawBytes(), reqInner);
+                agentPublicEncKey.getRawBytes(), reqInner);
 
         // send down channel
-        remoteAgentChannel.send(reqOuter);
+        dataChannel.send(reqOuter);
 
-        // receive the response.  This needs to be done in two steps as we don't
-        // always know the size of the response in advance.
-
-        // receive message type and payload size
-        byte[] msgTypeAndSize = remoteAgentChannel.recv(5);
-        int payloadSize = (int)ByteUtil.ntohl(
-                Arrays.copyOfRange(msgTypeAndSize, 1, 5));
-
-        // receive payload and HMAC
-        byte[] payloadAndHmac = remoteAgentChannel.recv(payloadSize + 32);
+        // receive response
+        byte[] response = dataChannel.recv();
 
         // unwrap outer envelope
         byte[] respInnerBytes = Envelope.unwrapOuter(
-                entityPrivateEncKey.getRawBytes(),
-                ByteUtil.merge(msgTypeAndSize, payloadAndHmac));
+                entityPrivateEncKey.getRawBytes(), response);
+        // TODO: maybe there should be an OuterEnvelopeResponse, with HMAC verification
+        // done here
 
         // unwrap inner envelope
         InnerEnvelopeResponse respInner = Envelope.unwrapInner(respInnerBytes);
@@ -290,9 +288,11 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // verify the request ID and apiMethod
         if (respInner.getApiMethodId() != apiMethod.getValue()) {
             throw new InvalidResponseException("Invalid ApiMethod - expected: "
-                    + apiMethod.getValue() + ", actual: " + respInner.getApiMethodId());
+                    + apiMethod.getValue()
+                    + ", actual: " + respInner.getApiMethodId());
         }
 
+        // TODO: request ID
         /*if (respInner.getRequestId() != requestId) {
             throw new InvalidResponseException("Invalid requestId - expected: " + requestId
                     + ", actual: " + respInner.getRequestId());
