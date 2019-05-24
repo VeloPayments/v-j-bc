@@ -6,6 +6,7 @@ import com.velopayments.blockchain.cert.CertificateReader;
 import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.EqualsUtil;
 import com.velopayments.blockchain.util.UuidUtil;
@@ -250,13 +251,34 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] serverChallengeResponseHMAC = Arrays.copyOfRange(
                 response, 132, 164);
 
-        // TODO: compute shared secret
+        // compute shared secret
+        byte[] sharedSecret = computeSharedSecret(
+                entityPrivateEncKey, new EncryptionPublicKey(serverPublicKey),
+                serverKeyNonce, clientKeyNonce);
 
-        // TODO: compute HMAC from payload + client challenge nonce
+        // compute HMAC from payload + client challenge nonce
+        HMAC hmac = new HMAC(sharedSecret);
+        byte[] computedHMAC = hmac.createHMACShort(
+                Arrays.copyOfRange(response, 0, 132));
+        // TODO: client challenge nonce needs to be digested into HMAC
 
-        // TODO: verify HMAC matches
+
+        // verify HMAC matches
+        if (!EqualsUtil.constantTimeEqual(
+                computedHMAC, serverChallengeResponseHMAC))
+        {
+            throw new MessageVerificationException("Invalid HMAC.");
+        }
 
         return serverChallengeNonce;
+    }
+
+    private byte[] computeSharedSecret(EncryptionPrivateKey clientPrivateKey,
+          EncryptionPublicKey serverPublicKey, byte[] serverNonce,
+          byte[] clientNonce)
+    {
+        // TODO
+        return new byte[32];
     }
 
     private void acknowledgeHandshake(byte[] serverChallengeNonce) {
