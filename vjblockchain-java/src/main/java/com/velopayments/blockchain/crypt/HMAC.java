@@ -2,6 +2,8 @@ package com.velopayments.blockchain.crypt;
 
 import com.velopayments.blockchain.init.Initializer;
 
+import java.util.Arrays;
+
 /**
  * HMAC.  This class exposes the HMAC algorithm defined in the Velochain
  * specification.  The constructor takes a variable length key as input.
@@ -43,6 +45,11 @@ public class HMAC {
     }
 
     public byte[] createHMACShort(byte[][] messages) {
+        // this check avoids a JVM crash
+        if (Arrays.stream(messages).anyMatch(msg -> null == msg))
+        {
+            throw new NullPointerException("null message");
+        }
         return digestArrNative(key, messages, true);
     }
 

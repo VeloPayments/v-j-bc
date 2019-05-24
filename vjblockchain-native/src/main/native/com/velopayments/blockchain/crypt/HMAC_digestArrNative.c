@@ -99,31 +99,40 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestArrNative(
         goto key_buffer_dispose;
     }
 
-    //////////////////////
+    /* digest each message */
+    int num_messages = (*env)->GetArrayLength(env, messages);
 
-//    jbyte* message_bytes = NULL;
-
-
-    /* get the raw bytes of the  message */
-    /*message_bytes = (*env)->GetByteArrayElements(env, message, NULL);
-    if (NULL == message_bytes)
+    for (int i=0; i<num_messages; i++)
     {
-        (*env)->ThrowNew(
-                env, NullPointerException, "message_bytes");
-        goto key_buffer_dispose;
-    }*/
+        jbyteArray msg_arr = (jbyteArray)(*env)->GetObjectArrayElement(
+                env, messages, i);
 
-    /* digest */
-    /*size_t message_size = (*env)->GetArrayLength(env, message);
-    if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_mac_digest(&mac, (uint8_t*)message_bytes, message_size))
-    {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not digest.");
-        goto message_bytes_dispose;
-    }*/
+        /* get the raw bytes of the message */
+        jbyte* msg_bytes = NULL;
 
-    ///////////////////////
+        msg_bytes = (*env)->GetByteArrayElements(env, msg_arr, NULL);
+        if (NULL == msg_bytes)
+        {
+            (*env)->ThrowNew(env, NullPointerException, "msg_bytes");
+            goto key_buffer_dispose;
+        }
+
+        /* digest */
+        size_t msg_size = (*env)->GetArrayLength(env, msg_arr);
+        if (VCCRYPT_STATUS_SUCCESS !=
+            vccrypt_mac_digest(&mac, (uint8_t*)msg_bytes, msg_size))
+        {
+            (*env)->ThrowNew(env, IllegalStateException, "could not digest");
+            (*env)->ReleaseByteArrayElements(env, msg_arr, msg_bytes, 0);
+            goto key_buffer_dispose;
+        }
+
+        /* release byte array elements */
+        (*env)->ReleaseByteArrayElements(env, msg_arr, msg_bytes, 0);
+
+        /* no longer need local reference to this message */
+        (*env)->DeleteLocalRef(env, msg_arr);
+    }
 
 
     /* create a buffer to receive the MAC */
@@ -133,7 +142,6 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestArrNative(
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not finalize.");
-//        goto message_bytes_dispose;
         goto key_buffer_dispose;
     }
 
@@ -177,9 +185,6 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestArrNative(
 
 mac_buffer_dispose:
     dispose((disposable_t*)&mac_buffer);
-
-//message_bytes_dispose:
-//    (*env)->ReleaseByteArrayElements(env, message, message_bytes, 0);
 
 key_buffer_dispose:
     dispose((disposable_t*)&key_buffer);
