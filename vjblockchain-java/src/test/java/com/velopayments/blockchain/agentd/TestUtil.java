@@ -9,6 +9,26 @@ import java.util.UUID;
 
 public class TestUtil {
 
+
+    public static byte[] createHandshakeResponse(UUID agentdId)
+    {
+        byte response[] = new byte[164];
+
+        // protocol version
+        System.arraycopy(ByteUtil.htonl(1), 0, response, 12,4);
+
+        // crypto version suite
+        System.arraycopy(ByteUtil.htonl(1), 0, response, 16, 4);
+
+        // agentd ID
+        System.arraycopy(UuidUtil.getBytesFromUUID(agentdId), 0, response,
+                20, 16);
+
+
+
+        return response;
+    }
+
     /**
      * The format of the outer envelope response is as follows:
      *   bytes 0   - N     encrypted payload
@@ -22,8 +42,8 @@ public class TestUtil {
      * @return
      */
     public static byte[] createResponse(byte[] encryptionKey, ApiMethod apiMethod,
-                                        long requestId, long status, byte[] payload) {
-
+                                        long requestId, long status, byte[] payload)
+    {
         // build inner envelope response
         byte inner[] = new byte[12 + payload.length];
 

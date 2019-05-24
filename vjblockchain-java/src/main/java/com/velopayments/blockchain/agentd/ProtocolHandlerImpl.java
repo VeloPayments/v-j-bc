@@ -258,10 +258,10 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         // compute HMAC from payload + client challenge nonce
         HMAC hmac = new HMAC(sharedSecret);
-        byte[] computedHMAC = hmac.createHMACShort(
-                Arrays.copyOfRange(response, 0, 132));
-        // TODO: client challenge nonce needs to be digested into HMAC
-
+        byte[][] hmacParts = new byte[2][];
+        hmacParts[0] = Arrays.copyOfRange(response, 0, 132);
+        hmacParts[1] = clientChallengeNonce;
+        byte[] computedHMAC = hmac.createHMACShort(hmacParts);
 
         // verify HMAC matches
         if (!EqualsUtil.constantTimeEqual(

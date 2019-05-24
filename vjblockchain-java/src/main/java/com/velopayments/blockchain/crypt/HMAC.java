@@ -42,7 +42,13 @@ public class HMAC {
         return digestNative(key, message, true);
     }
 
+    public byte[] createHMACShort(byte[][] messages) {
+        return digestArrNative(key, messages, true);
+    }
 
-    private native byte[] digestNative(byte[] key, byte[]  message, boolean shortHmac);
+
+    private native byte[] digestNative(byte[] key, byte[] message, boolean shortHmac);
+
+    private native byte[] digestArrNative(byte[] key, byte[][] messages, boolean shortHmac);
 
 }
