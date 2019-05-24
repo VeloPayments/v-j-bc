@@ -215,9 +215,23 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         byte[] response = dataChannel.recv();
 
-        // TODO: verify protocol version (should be 1)
+        // verify protocol version
+        long protocolVersion = ByteUtil.ntohl(
+                Arrays.copyOfRange(response, 12, 16));
+        if (protocolVersion != 1L)
+        {
+            throw new UnsupportedProtocolVersionException(
+                    "Unsupported protocol version: " + protocolVersion);
+        }
 
-        // TODO: verify the crypto suite version (should be 1)
+        // verify the crypto suite version
+        long cryptoSuiteVersion = ByteUtil.ntohl(
+                Arrays.copyOfRange(response, 16, 20));
+        if (cryptoSuiteVersion != 1L)
+        {
+            throw new UnsupportedCryptoSuiteVersion(
+                    "Unsupported crypto suite version: " + cryptoSuiteVersion);
+        }
 
         // verify agent UUID
         if (!EqualsUtil.constantTimeEqual(
@@ -227,7 +241,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             throw new AgentVerificationException("Invalid agentId.");
         }
 
-        // TODO: get server public key
+        byte[] serverPublicKey = Arrays.copyOfRange(response, 36, 68);
 
         byte[] serverKeyNonce = Arrays.copyOfRange(response, 68,100);
 
