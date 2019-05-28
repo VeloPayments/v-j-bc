@@ -7,6 +7,7 @@ import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.crypt.HMAC;
+import com.velopayments.blockchain.init.Initializer;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.EqualsUtil;
 import com.velopayments.blockchain.util.UuidUtil;
@@ -18,6 +19,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
+
+    static {
+        Initializer.init();
+    }
 
     private DataChannel dataChannel;
     private UUID agentId;
@@ -277,9 +282,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
           EncryptionPublicKey serverPublicKey, byte[] serverNonce,
           byte[] clientNonce)
     {
-        // TODO
-        return new byte[32];
+        return computeSharedSecretNative(clientPrivateKey.getRawBytes(),
+                serverPublicKey.getRawBytes(), serverNonce, clientNonce);
     }
+
+    private native byte[] computeSharedSecretNative(byte[] clientPrivateKey,
+        byte[] serverPublicKey, byte[] serverNonce, byte[] clientNonce);
 
     private void acknowledgeHandshake(byte[] serverChallengeNonce) {
 
