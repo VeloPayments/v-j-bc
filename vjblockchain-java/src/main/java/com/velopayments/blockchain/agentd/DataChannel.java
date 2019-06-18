@@ -31,13 +31,16 @@ public interface DataChannel {
      */
     void send(byte[] message) throws IOException;
 
+
     /**
      * Read a message from the channel
+     *
+     * @param nBytes    The number of bytes to read
      *
      * @return    bytes read
      *
      * @throws IOException
      */
-    byte[] recv() throws IOException;
+    byte[] recv(int nBytes) throws IOException;
 
 }

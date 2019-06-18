@@ -68,12 +68,13 @@ public class RemoteAgentConnection implements VelochainConnection {
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
     throws IOException {
 
-        try {
+        /*try {
             protocolHandler.submit(transaction);
             return CompletableFuture.completedFuture(TransactionStatus.SUCCEEDED);
         } catch (OperationFailureException e) {
             return CompletableFuture.completedFuture(TransactionStatus.FAILED);
-        }
+        }*/
+        return null;
 
     }
 
@@ -81,94 +82,106 @@ public class RemoteAgentConnection implements VelochainConnection {
     public UUID getLatestBlockId()
     throws IOException {
 
-        return protocolHandler.getLatestBlockId();
+        //return protocolHandler.getLatestBlockId();
+        return null;
     }
 
     @Override
     public Optional<UUID> getNextBlockId(UUID blockId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_NEXT_BLOCK_ID, blockId);
+        //return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_NEXT_BLOCK_ID, blockId);
+        return null;
     }
 
     @Override
     public Optional<UUID> getPrevBlockId(UUID blockId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_PREV_BLOCK_ID, blockId);
+        //return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_PREV_BLOCK_ID, blockId);
+        return null;
     }
 
     @Override
     public Optional<UUID> getTransactionBlockId(UUID txnId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_TXN_BLOCK_ID, txnId);
+        //return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_TXN_BLOCK_ID, txnId);
+        return null;
     }
 
     @Override
     public Optional<Certificate> getBlockById(UUID blockId)
     throws IOException {
 
-        return protocolHandler.getBlockById(blockId);
+        //return protocolHandler.getBlockById(blockId);
+        return null;
     }
 
     @Override
     public Optional<UUID> getBlockIdByBlockHeight(long height)
     throws IOException {
 
-        return protocolHandler.getBlockIdByBlockHeight(height);
+        //return protocolHandler.getBlockIdByBlockHeight(height);
+        return null;
     }
 
     @Override
     public Optional<Certificate> getTransactionById(UUID txnId)
     throws IOException {
 
-        return protocolHandler.getTransactionById(txnId);
+        //return protocolHandler.getTransactionById(txnId);
+        return null;
     }
 
     @Override
     public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(
+        /*return protocolHandler.sendAndReceiveUUID(
                 ApiMethod.GET_FIRST_TXN_ID_FOR_ARTIFACT_BY_ID,
-                artifactId);
+                artifactId);*/
+        return null;
     }
 
     @Override
     public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(
+        /*return protocolHandler.sendAndReceiveUUID(
                 ApiMethod.GET_LAST_TXN_ID_FOR_ARTIFACT_BY_ID,
-                artifactId);
+                artifactId);*/
+        return null;
     }
 
     @Override
     public Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(
+        /*return protocolHandler.sendAndReceiveUUID(
                 ApiMethod.GET_LAST_BLOCK_ID_FOR_ARTIFACT_BY_ID,
-                artifactId);
+                artifactId);*/
+        return null;
     }
 
     @Override
     public Optional<UUID> getPreviousTransactionIdForTransactionById(UUID txnId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(
+        /*return protocolHandler.sendAndReceiveUUID(
                 ApiMethod.GET_PREV_TXN_ID_FOR_TXN_BY_ID,
-                txnId);
+                txnId);*/
+        return null;
     }
 
     @Override
     public Optional<UUID> getNextTransactionIdForTransactionById(UUID txnId)
     throws IOException {
 
-        return protocolHandler.sendAndReceiveUUID(
+        /*return protocolHandler.sendAndReceiveUUID(
                 ApiMethod.GET_NEXT_TXN_ID_FOR_TXN_BY_ID,
-                txnId);
+                txnId);*/
+        return null;
     }
 
     // TODO: temp code while hacking; to be replaced with integration tests

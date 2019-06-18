@@ -1,14 +1,10 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.util.ByteUtil;
-
 import javax.net.SocketFactory;
 import java.io.*;
 import java.net.Socket;
 
 public class SocketDataChannelImpl implements DataChannel {
-
-    private static final byte IPC_DATA_TYPE_DATA_PACKET = 0x20;
 
     private String host;
     private Integer port;
@@ -50,42 +46,18 @@ public class SocketDataChannelImpl implements DataChannel {
     }
 
     @Override
-    public void send(byte[] payload) throws IOException {
-
-        byte[] message = new byte[payload.length + 5];
-
-        // set the type
-        message[0] = IPC_DATA_TYPE_DATA_PACKET;
-
-        // set the message length
-        byte[] length = ByteUtil.htonl(payload.length);
-        System.arraycopy(length, 0, message, 1, 4);
-
-        // copy the payload into the output buffer
-        System.arraycopy(payload, 0, message, 5, payload.length);
-
+    public void send(byte[] message) throws IOException {
         out.write(message);
     }
 
+
     @Override
-    public byte[] recv() throws IOException {
+    public byte[] recv(int nBytes) throws IOException {
+        byte[] receivedBytes = new byte[nBytes];
 
-        // verify the type is correct
-        byte msgType = in.readByte();
-        if (IPC_DATA_TYPE_DATA_PACKET != msgType) {
-            throw new RuntimeException("Incorrect message type"); // TODO
-        }
+        in.readFully(receivedBytes);
 
-        // get the length of the payload
-        byte[] msgLengthBytes = new byte[4];
-        in.readFully(msgLengthBytes);
-        int msgLength = (int)ByteUtil.ntohl(msgLengthBytes);
-
-        // read the rest of the message
-        byte[] payload = new byte[msgLength];
-        in.readFully(payload);
-
-        return payload;
+        return receivedBytes;
     }
 
 }

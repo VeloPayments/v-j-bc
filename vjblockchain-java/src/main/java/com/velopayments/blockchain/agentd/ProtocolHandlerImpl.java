@@ -1,11 +1,8 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.cert.Certificate;
-import com.velopayments.blockchain.cert.CertificateParser;
-import com.velopayments.blockchain.cert.CertificateReader;
-import com.velopayments.blockchain.cert.Field;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.crypt.GenericStreamCipher;
 import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.init.Initializer;
 import com.velopayments.blockchain.util.ByteUtil;
@@ -15,10 +12,11 @@ import com.velopayments.blockchain.util.UuidUtil;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
+
+    private static final byte IPC_DATA_TYPE_DATA_PACKET   = 0x20;
 
     static {
         Initializer.init();
@@ -31,7 +29,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private EncryptionPrivateKey entityPrivateEncKey;
 
     private SecureRandom random;
-    private long requestId; // TODO: details on this
+    private byte[] sharedSecret;
 
     public ProtocolHandlerImpl(DataChannel dataChannel,
                                UUID agentId,
@@ -53,104 +51,10 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         acknowledgeHandshake(serverChallengeNonce);
     }
 
-    @Override
-    public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
-
-        byte[] payload = sendAndReceive(
-                ApiMethod.GET_BLOCK_BY_ID, UuidUtil.getBytesFromUUID(blockId));
-
-        // block UUID (16 bytes)
-        // prev block UUID (16 bytes)
-        // next block UUID (16 bytes)
-        // first transaction UUID (16 bytes)
-        // block height (64 bit)
-
-        // block certificate (remaining bytes)
-        if (payload.length > 72) {
-            return Optional.of(
-                    Certificate.fromByteArray(
-                            Arrays.copyOfRange(payload, 72, payload.length)
-                    ));
-        }
-
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<UUID> getBlockIdByBlockHeight(long height) throws IOException {
-
-        return UuidUtil.getOptUUIDFromBytes(
-                sendAndReceive(ApiMethod.GET_BLOCK_ID_BY_BLOCK_HEIGHT,
-                    ByteUtil.htonll(height)));
-    }
-
-    @Override
-    public UUID getLatestBlockId() throws IOException {
-        return UuidUtil.getUUIDFromBytes(
-            sendAndReceive(ApiMethod.GET_LATEST_BLOCK_ID, new byte[0])
-        );
-    }
-
-    @Override
-    public Optional<Certificate> getTransactionById(UUID transactionId) throws IOException {
-
-        byte[] payload = sendAndReceive(
-                ApiMethod.GET_TXN_BY_ID, UuidUtil.getBytesFromUUID(transactionId));
-
-        // transaction uuid (16 bytes)
-        // prev transaction uuid (16 bytes)
-        // next transaction uuid (16 bytes)
-        // artifact uuid (16 bytes)
-
-        // transaction certificate (remaining bytes)
-        if (payload.length > 64) {
-            return Optional.of(
-                    Certificate.fromByteArray(
-                            Arrays.copyOfRange(payload, 64, payload.length)
-                    ));
-        }
-
-
-        return Optional.empty();
-    }
-
-
-    @Override
-    public Optional<UUID> sendAndReceiveUUID(ApiMethod apiMethod, UUID uuid)
-    throws IOException {
-
-        return UuidUtil.getOptUUIDFromBytes(
-            sendAndReceive(apiMethod, UuidUtil.getBytesFromUUID(uuid))
-        );
-    }
-
-    @Override
-    public void submit(Certificate transaction) throws IOException {
-
-        byte[] certficateBytes = transaction.toByteArray();
-
-        byte[] payload = new byte[16 + 16 + certficateBytes.length];
-
-        // transaction id (16 bytes)
-        CertificateReader reader = new CertificateReader(new CertificateParser(transaction));
-        UUID transactionId = reader.getFirst(Field.CERTIFICATE_ID).asUUID();
-        System.arraycopy(UuidUtil.getBytesFromUUID(transactionId), 0, payload, 0, 16);
-
-        // artifact id (16 bytes)
-        UUID artifactId = reader.getFirst(Field.ARTIFACT_ID).asUUID();
-        System.arraycopy(UuidUtil.getBytesFromUUID(artifactId), 0, payload, 16, 16);
-
-        // transaction certificate (remaining bytes)
-        System.arraycopy(certficateBytes, 0, payload, 32, certficateBytes.length);
-
-        sendAndReceive(ApiMethod.SUBMIT, payload);
-    }
-
-
     /**
      * Initiate a handshake with the remote server
      *
-     * @return response payload
+     * @return server challenge nonce
      *
      * @throws IOException
      */
@@ -168,6 +72,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         /* |    client key nonce                            | 32 bytes     | */
         /* |    client challenge nonce                      | 32 bytes     | */
         /* | ---------------------------------------------- | ------------ | */
+
 
         byte[] request = new byte[96];
 
@@ -198,9 +103,35 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         random.nextBytes(clientChallengeNonce);
         System.arraycopy(clientChallengeNonce, 0, request, 64, 32);
 
+        // create the request header - 1 byte type + 4 size
+        byte[] requestHeader = new byte[5];
+
+        // set the type
+        requestHeader[0] = IPC_DATA_TYPE_DATA_PACKET;
+
+        // set the message length
+        System.arraycopy(ByteUtil.htonl(request.length), 0,
+                requestHeader, 1, 4);
 
         // send handshake request
-        dataChannel.send(request);
+        dataChannel.send(ByteUtil.merge(requestHeader, request));
+
+        // get enough of the response to validate the type and get the size
+        byte[] responseHeader = dataChannel.recv(5);
+
+        // validate the message type
+        if (responseHeader[0] != IPC_DATA_TYPE_DATA_PACKET)
+        {
+            throw new RuntimeException("Incorrect message type"); // TODO - better exception
+        }
+
+        // get the length of the rest of the message
+        int msgLength = (int)ByteUtil.ntohl(
+                Arrays.copyOfRange(responseHeader, 1, 5));
+        // TODO: santity check size
+
+        // read the rest of the message
+        byte[] response = dataChannel.recv(msgLength);
 
         /* | Handshake request response packet.                            | */
         /* | ---------------------------------------------- | ------------ | */
@@ -218,8 +149,6 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         /* |    server challenge nonce                      |  32 bytes    | */
         /* |    server_cr_hmac                              |  32 bytes    | */
         /* | ---------------------------------------------- | ------------ | */
-
-        byte[] response = dataChannel.recv();
 
         // verify protocol version
         long protocolVersion = ByteUtil.ntohl(
@@ -257,7 +186,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 response, 132, 164);
 
         // compute shared secret
-        byte[] sharedSecret = computeSharedSecret(
+        sharedSecret = computeSharedSecret(
                 entityPrivateEncKey, new EncryptionPublicKey(serverPublicKey),
                 serverKeyNonce, clientKeyNonce);
 
@@ -275,6 +204,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             throw new MessageVerificationException("Invalid HMAC.");
         }
 
+        // success - we have a shared secret
+
         return serverChallengeNonce;
     }
 
@@ -286,69 +217,34 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 serverPublicKey.getRawBytes(), serverNonce, clientNonce);
     }
 
+
     private native byte[] computeSharedSecretNative(byte[] clientPrivateKey,
         byte[] serverPublicKey, byte[] serverNonce, byte[] clientNonce);
 
-    private void acknowledgeHandshake(byte[] serverChallengeNonce) {
 
-        // request
-        //   HMAC: server challenge nonce / session key (32 bytes)
+    private void acknowledgeHandshake(byte[] serverChallengeNonce)
+            throws IOException
+    {
 
-        byte[] request = new byte[32];
-        // TODO: construct request
+        // MAC the server challenge response using the shared secret
+        HMAC hmac = new HMAC(sharedSecret);
+        byte[] computedHMAC = hmac.createHMACShort(serverChallengeNonce);
+
+        // send the data packet to the server
+        OuterEnvelope outerEnvelope = new OuterEnvelope(
+                sharedSecret, computedHMAC);
+        byte[] wrapped = outerEnvelope.getWrapped();
+        dataChannel.send(wrapped);
 
 
-        // TODO: send and receive
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
 
-
-        // TODO: verify response
+        OuterEnvelopeReader outerEnvelopeReader =
+                new OuterEnvelopeReader(sharedSecret, header);
+        System.out.println("payload size: " +
+                outerEnvelopeReader.getPayloadSize());
     }
 
-    private byte[] sendAndReceive(ApiMethod apiMethod, byte[] reqPayload)
-    throws IOException {
-
-        // wrap in inner envelope
-        byte[] reqInner = Envelope.wrapInner(apiMethod, requestId, reqPayload);
-
-        // wrap in outer envelope
-        byte[] reqOuter = Envelope.wrapOuter(
-                agentPublicEncKey.getRawBytes(), reqInner);
-
-        // send down channel
-        dataChannel.send(reqOuter);
-
-        // receive response
-        byte[] response = dataChannel.recv();
-
-        // unwrap outer envelope
-        byte[] respInnerBytes = Envelope.unwrapOuter(
-                entityPrivateEncKey.getRawBytes(), response);
-        // TODO: maybe there should be an OuterEnvelopeResponse, with HMAC verification
-        // done here
-
-        // unwrap inner envelope
-        InnerEnvelopeResponse respInner = Envelope.unwrapInner(respInnerBytes);
-
-        // verify the request ID and apiMethod
-        if (respInner.getApiMethodId() != apiMethod.getValue()) {
-            throw new InvalidResponseException("Invalid ApiMethod - expected: "
-                    + apiMethod.getValue()
-                    + ", actual: " + respInner.getApiMethodId());
-        }
-
-        // TODO: request ID
-        /*if (respInner.getRequestId() != requestId) {
-            throw new InvalidResponseException("Invalid requestId - expected: " + requestId
-                    + ", actual: " + respInner.getRequestId());
-        }*/
-
-        // the status code should be 0 for success
-        if (respInner.getStatus() != 0) {
-            throw new OperationFailureException(
-                    "The remote operation failed.  ApiMethod: " + apiMethod);
-        }
-
-        return respInner.getPayload();
-    }
 
 }

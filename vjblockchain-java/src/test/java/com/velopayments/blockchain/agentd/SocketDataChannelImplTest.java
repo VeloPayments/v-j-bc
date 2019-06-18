@@ -1,6 +1,5 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.util.ByteUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,7 +7,6 @@ import javax.net.SocketFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.Socket;
-import java.util.Arrays;
 
 import static org.mockito.Mockito.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,12 +60,7 @@ public class SocketDataChannelImplTest {
 
         // the message should be written to the socket
         byte[] message = bos.toByteArray();
-        assertThat(message.length, is(payload.length + 5));
-        assertThat(message[0], is((byte)0x20)); // type
-        assertThat(
-                (int)ByteUtil.ntohl(Arrays.copyOfRange(message, 1, 5)),
-                is(payload.length));
-        assertThat(Arrays.copyOfRange(message,5,message.length), is(payload));
+        assertThat(message, is(payload));
     }
 
     @Test

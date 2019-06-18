@@ -2,6 +2,7 @@ package com.velopayments.blockchain.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * Utility class for operations involving byte arrays.
@@ -79,6 +80,25 @@ public class ByteUtil {
         buffer.flip();
 
         return buffer.getLong();
+    }
+
+    /**
+     * Merge two byte arrays into a single array.
+     *
+     * @param array1 an array of bytes
+     * @param array2 an array of bytes
+     *
+     * @return an array containing all the elements of array1 followed
+     *   by all the elements of array2.
+     */
+    public static byte[] merge(byte[] array1, byte[] array2) {
+        byte[] joinedArray = Arrays.copyOf(
+                array1, array1.length + array2.length);
+
+        System.arraycopy(
+                array2, 0, joinedArray, array1.length, array2.length);
+
+        return joinedArray;
     }
 
 }

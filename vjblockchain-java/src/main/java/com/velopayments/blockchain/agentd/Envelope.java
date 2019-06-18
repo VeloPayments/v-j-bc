@@ -1,56 +1,13 @@
 package com.velopayments.blockchain.agentd;
 
-import com.velopayments.blockchain.crypt.GenericStreamCipher;
-import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
-import com.velopayments.blockchain.util.EqualsUtil;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Utility methods to wrap and unwrap inner and outer envelopes.
  */
 public class Envelope {
-
-    private static AtomicLong iv = new AtomicLong(0);
-
-    /**
-     * Wraps the inner envelope by encrypting and HMAC'ing the
-     * message.  The returned value represents the outer envelope.
-     * <p>
-     * bytes   0 - N      encrypted payload
-     * bytes N+1 - N+32   HMAC of encrypted payload
-     * </p>
-     * The IV is incremented after this call.
-     *
-     * @param key            key to use to encrypt the payload
-     * @param input          unencrypted payload (inner envelope)
-     *
-     * @return               the outer envelope
-     */
-    public static byte[] wrapOuter(byte[] key, byte[] input) {
-
-        // encrypt the payload
-        byte[] ivBytes = ByteUtil.longToBytes(iv.getAndIncrement());
-        byte[] encryptedPayload = GenericStreamCipher.encrypt(
-                key, ivBytes, input);
-
-        // create a buffer to hold the output
-        byte outer[] = new byte[encryptedPayload.length + 32];
-
-        // add the encrypted payload to the output buffer
-        System.arraycopy(
-                encryptedPayload, 0, outer, 0, encryptedPayload.length);
-
-        // add the HMAC of the encrypted payload to the output buffer
-        HMAC hmac = new HMAC(key);
-        System.arraycopy(
-                hmac.createHMACShort(encryptedPayload),
-                0, outer, outer.length - 32, 32);
-
-        return outer;
-    }
 
     /**
      * Unwraps the outer envelope by HMAC'ing and then decrypting the
@@ -66,7 +23,7 @@ public class Envelope {
      *
      * @return              The decrypted payload
      */
-    public static byte[] unwrapOuter(byte[] key, byte[] outer) {
+    /*public static byte[] unwrapOuter(byte[] key, byte[] outer) {
 
         // the first len-32 bytes are the encrypted payload
         byte[] encryptedPayload = Arrays.copyOfRange(
@@ -86,7 +43,7 @@ public class Envelope {
 
 
         return GenericStreamCipher.decrypt(key, encryptedPayload);
-    }
+    }*/
 
 
     /**
