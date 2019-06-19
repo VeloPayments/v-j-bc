@@ -1,7 +1,7 @@
 package com.velopayments.blockchain.agentd;
 
-public class UnsupportedCryptoSuiteVersion extends RuntimeException {
-
+public class UnsupportedCryptoSuiteVersion extends RuntimeException
+{
     static final long serialVersionUID = 1;
 
     /**

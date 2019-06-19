@@ -5,46 +5,9 @@ import com.velopayments.blockchain.util.ByteUtil;
 import java.util.Arrays;
 
 /**
- * Utility methods to wrap and unwrap inner and outer envelopes.
+ * Utility methods to wrap and unwrap inner envelopes.
  */
-public class Envelope {
-
-    /**
-     * Unwraps the outer envelope by HMAC'ing and then decrypting the
-     * payload.  The returned value represents the inner envelope.
-     * <p>
-     * The format of the outer envelope is as follows:
-     *
-     *   bytes      0 - len-33     encrypted payload
-     *   bytes len-32 - len        HMAC of encrypted payload
-     *
-     * @param key           The secret key to use for decryption
-     * @param outer         The outer envelope
-     *
-     * @return              The decrypted payload
-     */
-    /*public static byte[] unwrapOuter(byte[] key, byte[] outer) {
-
-        // the first len-32 bytes are the encrypted payload
-        byte[] encryptedPayload = Arrays.copyOfRange(
-                outer, 0, outer.length-32);
-
-        // the last 32 bytes are the HMAC
-        byte[] hmacBytes = Arrays.copyOfRange(
-                outer, outer.length - 32, outer.length);
-
-        // verify HMAC
-        HMAC hmac = new HMAC(key);
-        if (!EqualsUtil.constantTimeEqual(
-                hmac.createHMACShort(encryptedPayload), hmacBytes))
-        {
-            throw new MessageVerificationException("Invalid HMAC!");
-        }
-
-
-        return GenericStreamCipher.decrypt(key, encryptedPayload);
-    }*/
-
+public class InnerEnvelope {
 
     /**
      * Wrap the payload in the inner envelope:
@@ -58,8 +21,8 @@ public class Envelope {
      * @param payload        payload to wrap
      * @return               the inner envelope
      */
-    public static byte[] wrapInner(ApiMethod apiMethod, final long requestId,
-                                   byte[] payload)
+    public static byte[] wrap(ApiMethod apiMethod, final long requestId,
+                              byte[] payload)
     {
         byte[] wrapped = new byte[8 + payload.length];
 
@@ -91,7 +54,7 @@ public class Envelope {
      *
      * @return            The unwrapped envelope
      */
-    public static InnerEnvelopeResponse unwrapInner(byte[] wrapped) {
+    public static InnerEnvelopeResponse unwrap(byte[] wrapped) {
 
         long apiMethodId = ByteUtil.ntohl(
                 Arrays.copyOfRange(wrapped, 0, 4));

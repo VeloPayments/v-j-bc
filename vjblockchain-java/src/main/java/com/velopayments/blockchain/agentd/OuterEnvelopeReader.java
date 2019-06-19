@@ -20,4 +20,8 @@ public class OuterEnvelopeReader {
     public int getPayloadSize() {
         return payloadSize;
     }
+
+    public byte[] decryptPayload(byte[] payload) {
+        return payload;
+    }
 }

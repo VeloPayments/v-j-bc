@@ -2,7 +2,6 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
-import com.velopayments.blockchain.crypt.GenericStreamCipher;
 import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.init.Initializer;
 import com.velopayments.blockchain.util.ByteUtil;
@@ -122,7 +121,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // validate the message type
         if (responseHeader[0] != IPC_DATA_TYPE_DATA_PACKET)
         {
-            throw new RuntimeException("Incorrect message type"); // TODO - better exception
+            throw new MessageVerificationException("Incorrect message type");
         }
 
         // get the length of the rest of the message
@@ -149,6 +148,9 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         /* |    server challenge nonce                      |  32 bytes    | */
         /* |    server_cr_hmac                              |  32 bytes    | */
         /* | ---------------------------------------------- | ------------ | */
+
+        // TODO: verify type, offset, status
+        //UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE  = 0x00000000,
 
         // verify protocol version
         long protocolVersion = ByteUtil.ntohl(
@@ -201,7 +203,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         if (!EqualsUtil.constantTimeEqual(
                 computedHMAC, serverChallengeResponseHMAC))
         {
-            throw new MessageVerificationException("Invalid HMAC.");
+            throw new MessageVerificationException(
+                    "Invalid HMAC in first round of handshake.");
         }
 
         // success - we have a shared secret
@@ -225,16 +228,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private void acknowledgeHandshake(byte[] serverChallengeNonce)
             throws IOException
     {
-
-        // MAC the server challenge response using the shared secret
         HMAC hmac = new HMAC(sharedSecret);
-        byte[] computedHMAC = hmac.createHMACShort(serverChallengeNonce);
 
         // send the data packet to the server
-        OuterEnvelope outerEnvelope = new OuterEnvelope(
-                sharedSecret, computedHMAC);
-        byte[] wrapped = outerEnvelope.getWrapped();
-        dataChannel.send(wrapped);
+        OuterEnvelopeWriter outerEnvelopeWriter = new OuterEnvelopeWriter(
+                sharedSecret, hmac.createHMACShort(serverChallengeNonce));
+        dataChannel.send(outerEnvelopeWriter.getWrapped());
 
 
         // receive the header: type, size
@@ -242,8 +241,44 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         OuterEnvelopeReader outerEnvelopeReader =
                 new OuterEnvelopeReader(sharedSecret, header);
-        System.out.println("payload size: " +
-                outerEnvelopeReader.getPayloadSize());
+
+        int payloadSize = outerEnvelopeReader.getPayloadSize();
+
+        if (payloadSize != 12) // 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + ").  Expected 12 bytes.");
+        }
+
+        byte[] responseHMAC = dataChannel.recv(32);
+
+        byte[] encryptedPayload = dataChannel.recv(payloadSize);
+
+        // verify HMAC
+        byte[][] hmacParts = new byte[2][];
+        hmacParts[0] = header;
+        hmacParts[1] = encryptedPayload;
+        byte[] computedHMAC = hmac.createHMACShort(hmacParts);
+
+        if (!EqualsUtil.constantTimeEqual(responseHMAC, computedHMAC))
+        {
+            throw new MessageVerificationException(
+                    "Invalid HMAC in second round of handshake.");
+        }
+
+        // we have a valid encrypted payload, now to decrypt it
+        byte[] decryptedPayload =
+                outerEnvelopeReader.decryptPayload(encryptedPayload);
+
+        // verify message type
+        if (decryptedPayload[0] != 1) //UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE
+        {
+        //    throw new MessageVerificationException("Invalid message type in acknowledgement.");
+        }
+
+        // TODO: validate status (byte 1)
+
+        // TODO: validate offset (byte 2)
     }
 
 

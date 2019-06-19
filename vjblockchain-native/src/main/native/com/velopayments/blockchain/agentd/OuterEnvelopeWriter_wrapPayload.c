@@ -1,5 +1,5 @@
 /**
- * \file OuterEnvelope_wrapPayload.c
+ * \file OuterEnvelopeWriter_wrapPayload.c
  *
  * Wrap the payload for an authenticated request.
  *
@@ -20,12 +20,12 @@
 #include "../init/init.h"
 
 /*
- * Class:     com_velopayments_blockchain_agentd_OuterEnvelope
+ * Class:     com_velopayments_blockchain_agentd_OuterEnvelopeWriter
  * Method:    wrapPayload
  * Signature: ()[B
  */
 JNIEXPORT jbyteArray JNICALL 
-Java_com_velopayments_blockchain_agentd_OuterEnvelope_wrapPayload(
+Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_wrapPayload(
         JNIEnv* env, jobject UNUSED(outer_env), jbyteArray shared_secret,
         jbyteArray payload)
 {

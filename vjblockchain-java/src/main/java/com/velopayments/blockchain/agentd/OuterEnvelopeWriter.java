@@ -2,8 +2,7 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.init.Initializer;
 
-// TODO: OuterEnvelopeWrapper?
-public class OuterEnvelope {
+public class OuterEnvelopeWriter {
 
     static {
         Initializer.init();
@@ -14,7 +13,7 @@ public class OuterEnvelope {
 
     private byte[] wrapped;
 
-    public OuterEnvelope(byte[] key, byte[] payload)
+    public OuterEnvelopeWriter(byte[] key, byte[] payload)
     {
         this.key = key;
         this.payload = payload;
