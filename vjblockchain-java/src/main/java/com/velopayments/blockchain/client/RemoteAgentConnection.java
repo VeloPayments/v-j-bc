@@ -2,12 +2,11 @@ package com.velopayments.blockchain.client;
 
 import com.velopayments.blockchain.agentd.*;
 import com.velopayments.blockchain.cert.Certificate;
-import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
-import com.velopayments.blockchain.util.UuidUtil;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,8 +36,8 @@ public class RemoteAgentConnection implements VelochainConnection {
         this.dataChannel = new SocketDataChannelImpl(
                 config.getHost(), config.getPort(), socketFactory);
         this.protocolHandler = new ProtocolHandlerImpl(
-                dataChannel, config.getAgentId(), config.getAgentPublicKey(),
-                entityId, entityPrivateEncKey);
+                dataChannel, config.getAgentId(), entityId,
+                entityPrivateEncKey, new SecureRandom());
     }
 
     /**
@@ -68,6 +67,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
     throws IOException {
 
+        // TODO: BLOC-174
         /*try {
             protocolHandler.submit(transaction);
             return CompletableFuture.completedFuture(TransactionStatus.SUCCEEDED);
@@ -114,6 +114,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public Optional<Certificate> getBlockById(UUID blockId)
     throws IOException {
 
+        // TODO: BLOC-173
         //return protocolHandler.getBlockById(blockId);
         return null;
     }

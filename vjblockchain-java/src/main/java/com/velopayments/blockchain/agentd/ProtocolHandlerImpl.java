@@ -15,6 +15,9 @@ import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
 
+    private static final long PROTOCOL_VERSION    = 1L;
+    private static final long CRYPTO_SUITE_VERSION = 1L;
+
     private static final byte IPC_DATA_TYPE_DATA_PACKET   = 0x20;
 
     private static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE = 0L;
@@ -26,25 +29,21 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     private DataChannel dataChannel;
     private UUID agentId;
-    private EncryptionPublicKey agentPublicEncKey;
     private UUID entityId;
     private EncryptionPrivateKey entityPrivateEncKey;
-
     private SecureRandom random;
+
     private byte[] sharedSecret;
 
-    public ProtocolHandlerImpl(DataChannel dataChannel,
-                               UUID agentId,
-                               EncryptionPublicKey agentPublicEncKey,
-                               UUID entityId,
-                               EncryptionPrivateKey entityPrivateEncKey) {
-
+    public ProtocolHandlerImpl(
+            DataChannel dataChannel, UUID agentId, UUID entityId,
+            EncryptionPrivateKey entityPrivateEncKey, SecureRandom random)
+    {
         this.dataChannel = dataChannel;
         this.agentId = agentId;
-        this.agentPublicEncKey = agentPublicEncKey;
         this.entityId = entityId;
         this.entityPrivateEncKey = entityPrivateEncKey;
-        this.random = new SecureRandom();
+        this.random = random;
     }
 
     @Override
@@ -84,11 +83,11 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // bytes 4-7: offset - already initialized as zero
 
         // bytes 8-11: protocol version
-        byte[] protocolVersionBytes = ByteUtil.htonl(1);
+        byte[] protocolVersionBytes = ByteUtil.htonl((int)PROTOCOL_VERSION);
         System.arraycopy(protocolVersionBytes, 0, request,  8, 4);
 
         // bytes 12-15: crypto suite
-        byte[] cryptoSuiteBytes = ByteUtil.htonl(1);
+        byte[] cryptoSuiteBytes = ByteUtil.htonl((int)CRYPTO_SUITE_VERSION);
         System.arraycopy(cryptoSuiteBytes, 0, request, 12, 4);
 
         // bytes 16-31: entity ID
@@ -96,12 +95,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         System.arraycopy(entityIdBytes, 0, request, 16, 16);
 
         // bytes 32-63: client key nonce
-        byte clientKeyNonce[] = new byte[32];
+        byte[] clientKeyNonce = new byte[32];
         random.nextBytes(clientKeyNonce);
         System.arraycopy(clientKeyNonce, 0, request, 32, 32);
 
         // bytes 64-95: client challenge nonce
-        byte clientChallengeNonce[] = new byte[32];
+        byte[] clientChallengeNonce = new byte[32];
         random.nextBytes(clientChallengeNonce);
         System.arraycopy(clientChallengeNonce, 0, request, 64, 32);
 
@@ -127,17 +126,17 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             throw new MessageVerificationException("Incorrect message type");
         }
 
-        // get the length of the rest of the message
-        int msgLength = (int)ByteUtil.ntohl(
+        // get the length of the rest of the response
+        int responseLength = (int)ByteUtil.ntohl(
                 Arrays.copyOfRange(responseHeader, 1, 5));
-        if (msgLength != 164)
+        if (responseLength != 164)
         {
-            throw new InvalidPayloadSizeException("Invalid payload size ("
-                    + msgLength + ").  Expected 164 bytes.");
+            throw new InvalidPayloadSizeException("Invalid response size ("
+                    + responseLength + ").  Expected 164 bytes.");
         }
 
         // read the rest of the message
-        byte[] response = dataChannel.recv(msgLength);
+        byte[] response = dataChannel.recv(responseLength);
 
         /* | Handshake request response packet.                            | */
         /* | ---------------------------------------------- | ------------ | */
@@ -179,7 +178,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // verify protocol version
         long protocolVersion = ByteUtil.ntohl(
                 Arrays.copyOfRange(response, 12, 16));
-        if (protocolVersion != 1L)
+        if (protocolVersion != PROTOCOL_VERSION)
         {
             throw new UnsupportedProtocolVersionException(
                     "Unsupported protocol version: " + protocolVersion);
@@ -188,7 +187,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // verify the crypto suite version
         long cryptoSuiteVersion = ByteUtil.ntohl(
                 Arrays.copyOfRange(response, 16, 20));
-        if (cryptoSuiteVersion != 1L)
+        if (cryptoSuiteVersion != CRYPTO_SUITE_VERSION)
         {
             throw new UnsupportedCryptoSuiteVersion(
                     "Unsupported crypto suite version: " + cryptoSuiteVersion);
@@ -236,7 +235,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         return serverChallengeNonce;
     }
 
-    private byte[] computeSharedSecret(EncryptionPrivateKey clientPrivateKey,
+    protected static byte[] computeSharedSecret(EncryptionPrivateKey clientPrivateKey,
           EncryptionPublicKey serverPublicKey, byte[] serverNonce,
           byte[] clientNonce)
     {
@@ -245,7 +244,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     }
 
 
-    private native byte[] computeSharedSecretNative(byte[] clientPrivateKey,
+    private static native byte[] computeSharedSecretNative(byte[] clientPrivateKey,
         byte[] serverPublicKey, byte[] serverNonce, byte[] clientNonce);
 
 
@@ -304,7 +303,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                             requestId);
         }
 
-        // validate status (byte 1)
+        // validate status
         long status = ByteUtil.ntohl(
                 Arrays.copyOfRange(decryptedPayload, 4, 8));
         if (status != 0)

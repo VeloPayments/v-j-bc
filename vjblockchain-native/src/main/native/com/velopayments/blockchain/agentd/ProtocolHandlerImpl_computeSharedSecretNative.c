@@ -17,7 +17,6 @@
 #include "../../../../java/lang/NullPointerException.h"
 #include "../init/init.h"
 
-
 /*
  * Class:     com_velopayments_blockchain_agentd_ProtocolHandlerImpl
  * Method:    computeSharedSecretNative
@@ -25,7 +24,7 @@
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretNative(
-        JNIEnv* env, jobject UNUSED(proto_handler), jbyteArray client_private_key,
+        JNIEnv* env, jclass UNUSED(proto_handler), jbyteArray client_private_key,
         jbyteArray server_public_key, jbyteArray server_nonce,
         jbyteArray client_nonce)
 {
