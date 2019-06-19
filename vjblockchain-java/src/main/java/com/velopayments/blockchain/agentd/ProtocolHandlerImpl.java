@@ -17,6 +17,9 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     private static final byte IPC_DATA_TYPE_DATA_PACKET   = 0x20;
 
+    private static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE = 0L;
+    private static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE = 1L;
+
     static {
         Initializer.init();
     }
@@ -127,7 +130,11 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // get the length of the rest of the message
         int msgLength = (int)ByteUtil.ntohl(
                 Arrays.copyOfRange(responseHeader, 1, 5));
-        // TODO: santity check size
+        if (msgLength != 164)
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                    + msgLength + ").  Expected 164 bytes.");
+        }
 
         // read the rest of the message
         byte[] response = dataChannel.recv(msgLength);
@@ -149,8 +156,25 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         /* |    server_cr_hmac                              |  32 bytes    | */
         /* | ---------------------------------------------- | ------------ | */
 
-        // TODO: verify type, offset, status
-        //UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE  = 0x00000000,
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+                Arrays.copyOfRange(response, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE)
+        {
+            throw new MessageVerificationException(
+                    "Invalid request ID in first round of handshake: " +
+                            requestId);
+        }
+
+        // validate status
+        long status = ByteUtil.ntohl(
+                Arrays.copyOfRange(response, 4, 8));
+        if (status != 0)
+        {
+            throw new MessageVerificationException(
+                    "Bad status code in first round of handshake: " + status);
+        }
+
 
         // verify protocol version
         long protocolVersion = ByteUtil.ntohl(
@@ -236,13 +260,13 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         dataChannel.send(outerEnvelopeWriter.getWrapped());
 
 
+        OuterEnvelopeReader outerEnvelopeReader =
+                new OuterEnvelopeReader(sharedSecret);
+
         // receive the header: type, size
         byte[] header = dataChannel.recv(5);
 
-        OuterEnvelopeReader outerEnvelopeReader =
-                new OuterEnvelopeReader(sharedSecret, header);
-
-        int payloadSize = outerEnvelopeReader.getPayloadSize();
+        int payloadSize = outerEnvelopeReader.decryptPayloadSize(header);
 
         if (payloadSize != 12) // 3 x 4 bytes
         {
@@ -270,15 +294,25 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] decryptedPayload =
                 outerEnvelopeReader.decryptPayload(encryptedPayload);
 
-        // verify message type
-        if (decryptedPayload[0] != 1) //UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+                Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE)
         {
-        //    throw new MessageVerificationException("Invalid message type in acknowledgement.");
+            throw new MessageVerificationException(
+                    "Invalid request ID in second round of handshake: " +
+                            requestId);
         }
 
-        // TODO: validate status (byte 1)
+        // validate status (byte 1)
+        long status = ByteUtil.ntohl(
+                Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0)
+        {
+            throw new MessageVerificationException(
+                    "Bad status code in second round of handshake: " + status);
+        }
 
-        // TODO: validate offset (byte 2)
     }
 
 

@@ -1,5 +1,5 @@
 /**
- * \file OuterEnvelopeReader_getPayloadSize.c
+ * \file OuterEnvelopeReader_decryptPayloadSize.c
  *
  * Decrypt the payload size from an encrypted response
  *
@@ -21,11 +21,11 @@
 
 /*
  * Class:     com_velopayments_blockchain_agentd_OuterEnvelopeReader
- * Method:    getPayloadSize
+ * Method:    decryptPayloadSize
  * Signature: ([B[B)I
  */
 JNIEXPORT jint JNICALL 
-Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_getPayloadSize(
+Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadSize(
         JNIEnv* env, jobject UNUSED(outer_env_reader), 
         jbyteArray shared_secret, jbyteArray header)
 {
