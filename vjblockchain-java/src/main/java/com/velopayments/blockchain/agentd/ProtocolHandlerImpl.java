@@ -31,18 +31,22 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private UUID agentId;
     private UUID entityId;
     private EncryptionPrivateKey entityPrivateEncKey;
+    private OuterEnvelopeReader outerEnvelopeReader;
     private SecureRandom random;
 
     private byte[] sharedSecret;
 
     public ProtocolHandlerImpl(
             DataChannel dataChannel, UUID agentId, UUID entityId,
-            EncryptionPrivateKey entityPrivateEncKey, SecureRandom random)
+            EncryptionPrivateKey entityPrivateEncKey,
+            OuterEnvelopeReader outerEnvelopeReader,
+            SecureRandom random)
     {
         this.dataChannel = dataChannel;
         this.agentId = agentId;
         this.entityId = entityId;
         this.entityPrivateEncKey = entityPrivateEncKey;
+        this.outerEnvelopeReader = outerEnvelopeReader;
         this.random = random;
     }
 
@@ -254,18 +258,15 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         HMAC hmac = new HMAC(sharedSecret);
 
         // send the data packet to the server
-        OuterEnvelopeWriter outerEnvelopeWriter = new OuterEnvelopeWriter(
-                sharedSecret, hmac.createHMACShort(serverChallengeNonce));
-        dataChannel.send(outerEnvelopeWriter.getWrapped());
+        OuterEnvelopeWriter outerEnvelopeWriter = new OuterEnvelopeWriter();
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+                sharedSecret, hmac.createHMACShort(serverChallengeNonce)));
 
-
-        OuterEnvelopeReader outerEnvelopeReader =
-                new OuterEnvelopeReader(sharedSecret);
 
         // receive the header: type, size
         byte[] header = dataChannel.recv(5);
-
-        int payloadSize = outerEnvelopeReader.decryptPayloadSize(header);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+                sharedSecret, header);
 
         if (payloadSize != 12) // 3 x 4 bytes
         {
@@ -290,8 +291,8 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         }
 
         // we have a valid encrypted payload, now to decrypt it
-        byte[] decryptedPayload =
-                outerEnvelopeReader.decryptPayload(encryptedPayload);
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+                sharedSecret, encryptedPayload);
 
         // verify request ID
         long requestId = ByteUtil.ntohl(

@@ -37,7 +37,8 @@ public class RemoteAgentConnection implements VelochainConnection {
                 config.getHost(), config.getPort(), socketFactory);
         this.protocolHandler = new ProtocolHandlerImpl(
                 dataChannel, config.getAgentId(), entityId,
-                entityPrivateEncKey, new SecureRandom());
+                entityPrivateEncKey, new OuterEnvelopeReader(),
+                new SecureRandom());
     }
 
     /**

@@ -1,7 +1,7 @@
 /**
- * \file OuterEnvelopeWriter_wrapPayload.c
+ * \file OuterEnvelopeWriter_encryptPayload.c
  *
- * Wrap the payload for an authenticated request.
+ * Encrypt the payload for an authenticated request.
  *
  * \copyright 2019 Velo Payments, Inc.  All rights reserved.
  */
@@ -21,11 +21,11 @@
 
 /*
  * Class:     com_velopayments_blockchain_agentd_OuterEnvelopeWriter
- * Method:    wrapPayload
+ * Method:    encryptPayloadNative
  * Signature: ()[B
  */
 JNIEXPORT jbyteArray JNICALL 
-Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_wrapPayload(
+Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative(
         JNIEnv* env, jobject UNUSED(outer_env), jbyteArray shared_secret,
         jbyteArray payload)
 {

@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 /**
  * Utility methods to wrap and unwrap inner envelopes.
+ * TODO: rework this to be consistent with OuterEnvelope*
  */
 public class InnerEnvelope {
 

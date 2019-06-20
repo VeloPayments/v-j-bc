@@ -4,27 +4,23 @@ import com.velopayments.blockchain.init.Initializer;
 
 public class OuterEnvelopeReader {
 
-    private byte[] key;
-
     static {
         Initializer.init();
     }
 
-    public OuterEnvelopeReader(byte[] key)
+    public int decryptHeader(byte[] key, byte[] header)
     {
-        this.key = key;
+        return decryptHeaderNative(key, header);
     }
 
-
-    public int decryptPayloadSize(byte[] header) {
-        return decryptPayloadSize(key, header);
+    public byte[] decryptPayload(byte[] key, byte[] payload)
+    {
+        return decryptPayloadNative(key, payload);
     }
 
-    public byte[] decryptPayload(byte[] payload) {
-        return decryptPayload(key, payload);
-    }
+    private native int decryptHeaderNative(
+            byte[] key, byte[] header);
 
-    private native int decryptPayloadSize(byte[] key, byte[] header);
-
-    private native byte[] decryptPayload(byte[] key, byte[] payload);
+    private native byte[] decryptPayloadNative(
+            byte[] key, byte[] payload);
 }

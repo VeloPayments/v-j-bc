@@ -1,7 +1,7 @@
 /**
- * \file OuterEnvelopeReader_decryptPayload.c
+ * \file OuterEnvelopeReader_decryptHeaderNative.c
  *
- * Decrypt the from an encrypted response
+ * Decrypt the payload size from an encrypted response header
  *
  * \copyright 2019 Velo Payments, Inc.  All rights reserved.
  */
@@ -21,31 +21,32 @@
 
 /*
  * Class:     com_velopayments_blockchain_agentd_OuterEnvelopeReader
- * Method:    decryptPayload
- * Signature: ([B)[B
+ * Method:    decryptHeaderNative
+ * Signature: ([B[B)I
  */
-JNIEXPORT jbyteArray JNICALL 
-Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayload(
+JNIEXPORT jint JNICALL 
+Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptHeaderNative(
         JNIEnv* env, jobject UNUSED(outer_env_reader), 
-        jbyteArray shared_secret, jbyteArray payload)
+        jbyteArray shared_secret, jbyteArray header)
 {
-    jbyteArray retval = NULL;
+    jint retval = -1;
     jbyte* shared_secret_bytes;
     vccrypt_buffer_t shared_secret_buffer;
-    jbyte* payload_bytes;
-    vccrypt_buffer_t payload_buffer;
+    jbyte* header_bytes;
+    vccrypt_buffer_t header_buffer;
+
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
     MODEL_ASSERT(NULL != shared_secret);
-    MODEL_ASSERT(NULL != payload);
+    MODEL_ASSERT(NULL != header);
 
     /* verify that the vjblockchain library has been initialized. */
     if (!vjblockchain_initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
-        return NULL;
+        goto done;
     }
 
     /* verify that the shared_secret parameter is not null. */
@@ -56,11 +57,20 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayload(
         goto done;
     }
 
-    /* verify that the payload parameter is not null. */
-    if (NULL == payload)
+    /* verify that the header parameter is not null. */
+    if (NULL == header)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "payload");
+                env, NullPointerException, "header");
+        goto done;
+    }
+
+    /* validate the header size.  The header should be 5 bytes. */
+    size_t header_size = (*env)->GetArrayLength(env, header);
+    if (header_size != 5)
+    {
+        (*env)->ThrowNew(env, IllegalStateException,
+                         "invalid header size");
         goto done;
     }
 
@@ -87,115 +97,107 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayload(
 
     /* copy the shared secret to the buffer. */
     MODEL_EXEMPT(
-        memcpy(shared_secret_buffer.data, shared_secret_bytes, 
-            shared_secret_size));
+        memcpy(shared_secret_buffer.data, shared_secret_bytes, shared_secret_size));
 
-    /* get the raw bytes of the payload */
-    payload_bytes = (*env)->GetByteArrayElements(env, payload, NULL);
-    if (NULL == payload_bytes)
+    /* get the raw bytes of the header */
+    header_bytes = (*env)->GetByteArrayElements(
+            env, header, NULL);
+    if (NULL == header_bytes)
     {
-        (*env)->ThrowNew(env, NullPointerException, "payload_bytes");
+        (*env)->ThrowNew(
+                env, NullPointerException, "header_bytes");
         goto shared_secret_buffer_dispose;
     }
 
-    /* create a buffer to hold the payload */
-    size_t payload_size = (*env)->GetArrayLength(env, payload);
+    /* create a buffer to hold the header */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&payload_buffer, &alloc_opts, payload_size))
+            vccrypt_buffer_init(&header_buffer, &alloc_opts, header_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
-                         "payload buffer create failure.");
-        goto payload_bytes_dispose;
+                         "header buffer create failure.");
+        goto header_bytes_dispose;
     }
 
-    /* copy the payload to the buffer. */
+    /* copy the header to the buffer. */
     MODEL_EXEMPT(
-        memcpy(payload_buffer.data, payload_bytes, payload_size));
+        memcpy(header_buffer.data, header_bytes, header_size));
 
-    /* attempt to allocate space for the decrypted payload. */
-    vccrypt_buffer_t dpayload_buffer;
+    /* attempt to allocate space for the decrypted header. */
+    vccrypt_buffer_t dheader_buffer;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&dpayload_buffer, &alloc_opts, payload_size))
+            vccrypt_buffer_init(&dheader_buffer, &alloc_opts, header_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
-                         "decrypted payload buffer create failure.");
-        goto payload_buffer_dispose;
+                         "decrypted header buffer create failure.");
+        goto header_buffer_dispose;
     }
+
+    /* create a pointer for convenience */
+    uint8_t* dheader = (uint8_t*)dheader_buffer.data;
 
     /* create a stream cipher */
     vccrypt_stream_context_t stream;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_stream_init(&crypto_suite, &stream, 
-                &shared_secret_buffer))
+            vccrypt_suite_stream_init(&crypto_suite, &stream, &shared_secret_buffer))
     {
-        (*env)->ThrowNew(
-            env, IllegalStateException, "stream context failure.");
-        goto dpayload_buffer_dispose;
+        (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
+        goto dheader_buffer_dispose;
     }
 
     /* start decryption of the stream. */
     uint64_t server_iv = 0x8000000000000001;
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_stream_continue_decryption(&stream, &server_iv, 
-                sizeof(server_iv), 5)) // TODO
+                sizeof(server_iv), 0))
     {
-        (*env)->ThrowNew(
-            env, IllegalStateException, "continue_decryption failure");
+        (*env)->ThrowNew(env, IllegalStateException, "continue_decryption failure");
         goto stream_cipher_dispose;
     }
 
-    /* decrypt the payload. */
+    /* decrypt enough of the header to determine the type and size. */
     size_t offset = 0;
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_stream_decrypt(
-                &stream, payload_buffer.data, payload_size, 
-                dpayload_buffer.data, &offset))
+                &stream, header_buffer.data, header_size, dheader_buffer.data, 
+                &offset))
     {
         (*env)->ThrowNew(env, IllegalStateException, "decryption failure");
         goto stream_cipher_dispose;
     }
 
-    /* create a byte array for the return value */
-    retval = (*env)->NewByteArray(env, dpayload_buffer.size);
-    if (NULL == retval)
+    /* verify that the type is IPC_DATA_TYPE_AUTHED_PACKET. */
+    uint8_t IPC_DATA_TYPE_AUTHED_PACKET = 0x30; 
+    if (IPC_DATA_TYPE_AUTHED_PACKET != dheader[0])
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array could not be allocated.");
-
+        (*env)->ThrowNew(env, IllegalStateException, "invalid packet type");
         goto stream_cipher_dispose;
     }
 
-    /* get the buffer of this array. */
-    jbyte* retval_bytes = (*env)->GetByteArrayElements(env, retval, NULL);
-    if (NULL == retval_bytes)
+    uint32_t nsize;
+    memcpy(&nsize, dheader + 1, sizeof(nsize));
+    uint32_t payload_size = ntohl(nsize);
+    if (payload_size > 10ULL * 1024ULL * 1024ULL /* 10 MB */)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array data could not be dereferenced.");
-
+        (*env)->ThrowNew(env, IllegalStateException, "invalid packet size");
         goto stream_cipher_dispose;
     }
 
-    /* copy the data to the buffer. */
-    MODEL_EXEMPT(
-            memcpy(retval_bytes, dpayload_buffer.data,
-                    dpayload_buffer.size));
-
-    /* commit data to the byte array. */
-    (*env)->ReleaseByteArrayElements(env, retval, retval_bytes, 0);
+    retval = payload_size;
 
     /* clean up resources and return */
+
 
 stream_cipher_dispose:
     dispose((disposable_t*)&stream);
 
-dpayload_buffer_dispose:
-    dispose((disposable_t*)&dpayload_buffer);
+dheader_buffer_dispose:
+    dispose((disposable_t*)&dheader_buffer);
 
-payload_buffer_dispose:
-    dispose((disposable_t*)&payload_buffer);
+header_buffer_dispose:
+    dispose((disposable_t*)&header_buffer);
 
-payload_bytes_dispose:
-    (*env)->ReleaseByteArrayElements(env, payload, payload_bytes, 0);
+header_bytes_dispose:
+    (*env)->ReleaseByteArrayElements(env, header, header_bytes, 0);
 
 shared_secret_buffer_dispose:
     dispose((disposable_t*)&shared_secret_buffer);
@@ -207,4 +209,3 @@ shared_secret_bytes_dispose:
 done:
     return retval;
 }
-
