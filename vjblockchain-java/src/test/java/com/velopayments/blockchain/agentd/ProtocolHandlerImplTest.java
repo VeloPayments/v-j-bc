@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import static com.velopayments.blockchain.agentd.ProtocolHandlerImpl.*;
 
 public class ProtocolHandlerImplTest {
 
@@ -49,7 +50,9 @@ public class ProtocolHandlerImplTest {
     @Test
     public void handshake_happyPath() throws Exception
     {
-        stubDataChannel(ProtocolHandlerImpl.IPC_DATA_TYPE_DATA_PACKET, agentId);
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1, agentId,
+                entityPrivateKey);
 
         // when the handshake is invoked
         protocolHandler.handshake();
@@ -69,53 +72,107 @@ public class ProtocolHandlerImplTest {
         // TODO: verify aspects of the requests
     }
 
-    @Test
-    public void initiateHandshake_ReceivedInvalidPacketType() throws Exception
+    @Test(expected = InvalidPacketTypeException.class)
+    public void initiateHandshakeResponse_InvalidPacketType() throws Exception
     {
         byte invalidPacketType = 0x01;
-        stubDataChannel(invalidPacketType, agentId);
+        stubDataChannel(invalidPacketType,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                agentId, entityPrivateKey);
 
-        // when the handshake is initiated
-        try {
-            protocolHandler.handshake();
-            Assert.fail();
-        } catch (InvalidPacketTypeException e) {
-            // good
-        }
-
+        protocolHandler.handshake();
     }
 
-    @Test
-    public void initiateHandshake_ReceivedIncorrectAgentId() throws Exception
+    @Test(expected = InvalidRequestIdException.class)
+    public void initiateHandshakeResponse_InvalidRequestId() throws Exception
+    {
+        long badRequestId = 99;
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                badRequestId,0, 1, 1,
+                agentId, entityPrivateKey);
+
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = ErrorStatusException.class)
+    public void initiateHandshakeResponse_UnsuccessfulStatus() throws Exception
+    {
+        int errorStatus = -1;
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, errorStatus, 1, 1,
+                agentId, entityPrivateKey);
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = UnsupportedProtocolVersionException.class)
+    public void initiateHandshakeResponse_InvalidProtocolVersion()
+            throws Exception
+    {
+        int wrongProto = 2;
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0, wrongProto, 1,
+                agentId, entityPrivateKey);
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = UnsupportedCryptoSuiteVersion.class)
+    public void initiateHandshakeResponse_InvalidCryptoSuiteVersion()
+            throws Exception
+    {
+        int wrongCrypto = 3;
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0, 1, wrongCrypto,
+                agentId, entityPrivateKey);
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = AgentVerificationException.class)
+    public void initiateHandshakeResponse_InvalidAgentId() throws Exception
     {
         UUID invalidAgentId = UUID.randomUUID();
-        stubDataChannel(ProtocolHandlerImpl.IPC_DATA_TYPE_DATA_PACKET,
-                invalidAgentId);
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                invalidAgentId, entityPrivateKey);
 
-        // when the handshake is initiated
-        try {
-            protocolHandler.handshake();
-            Assert.fail();
-        } catch (AgentVerificationException e) {
-            // good
-        }
+        protocolHandler.handshake();
     }
 
-    private void stubDataChannel(byte initResponsePacketType, UUID agentId)
-            throws IOException
+    @Test(expected = MessageVerificationException.class)
+    public void initiateHandshakeResponse_InvalidChallengeResponse()
+            throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                agentId, EncryptionKeyPair.generate().getPrivateKey());
+
+        protocolHandler.handshake();
+    }
+
+
+    /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
+
+    private void stubDataChannel(
+            byte packetType, long requestId, int status, int protocolVersion,
+            int cryptoSuiteVersion, UUID agentId,
+            EncryptionPrivateKey entityPrivateKey)
+        throws IOException
     {
         // stub the initiate handshake response header
         // and the ack response header
         byte[] ackResponseHeader = createAckHandshakeResponseHeader();
         when(dataChannel.recv(5))
                 .thenReturn(
-                        createInitiateHandshakeResponseHeader(
-                                initResponsePacketType))
+                        createInitiateHandshakeResponseHeader(packetType))
                 .thenReturn(ackResponseHeader);
 
 
         // stub the initiate handshake response body
         ByteArrayPair bap = createInitiateHandshakeResponse(
+                requestId, status, protocolVersion, cryptoSuiteVersion,
                 agentId, entityPrivateKey);
         byte[] sharedSecret = bap.e1;
         byte[] initHandshakeResponse = bap.e2;
@@ -182,17 +239,24 @@ public class ProtocolHandlerImplTest {
         byte[] e2;
     }
     private ByteArrayPair createInitiateHandshakeResponse(
-            UUID agentdId, EncryptionPrivateKey entityPrivateKey)
+            long requestId, int status, int proto, int crypto, UUID agentdId,
+            EncryptionPrivateKey entityPrivateKey)
     {
         SecureRandom sr = new SecureRandom();
 
         byte[] response = new byte[164];
 
-        // protocol version
-        System.arraycopy(ByteUtil.htonl(1), 0, response, 12,4);
+        // request ID
+        System.arraycopy(ByteUtil.htonl((int)requestId), 0, response, 0, 4);
 
-        // crypto version suite
-        System.arraycopy(ByteUtil.htonl(1), 0, response, 16, 4);
+        // status
+        System.arraycopy(ByteUtil.htonl(status), 0, response, 8, 4);
+
+        // protocol
+        System.arraycopy(ByteUtil.htonl(proto), 0, response, 12, 4);
+
+        // crypto version
+        System.arraycopy(ByteUtil.htonl(crypto), 0, response, 16, 4);
 
         // agentd ID
         System.arraycopy(UuidUtil.getBytesFromUUID(agentdId), 0, response,

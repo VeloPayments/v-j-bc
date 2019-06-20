@@ -164,17 +164,17 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 Arrays.copyOfRange(response, 0, 4));
         if (requestId != UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE)
         {
-            throw new MessageVerificationException(
+            throw new InvalidRequestIdException(
                     "Invalid request ID in first round of handshake: " +
                             requestId);
         }
 
         // validate status
         long status = ByteUtil.ntohl(
-                Arrays.copyOfRange(response, 4, 8));
+                Arrays.copyOfRange(response, 8, 12));
         if (status != 0)
         {
-            throw new MessageVerificationException(
+            throw new ErrorStatusException(
                     "Bad status code in first round of handshake: " + status);
         }
 
