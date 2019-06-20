@@ -15,13 +15,13 @@ import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
 
-    private static final long PROTOCOL_VERSION    = 1L;
-    private static final long CRYPTO_SUITE_VERSION = 1L;
+    public static final long PROTOCOL_VERSION    = 1L;
+    public static final long CRYPTO_SUITE_VERSION = 1L;
 
-    private static final byte IPC_DATA_TYPE_DATA_PACKET   = 0x20;
+    public static final byte IPC_DATA_TYPE_DATA_PACKET   = 0x20;
 
-    private static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE = 0L;
-    private static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE = 1L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE = 0L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE = 1L;
 
     static {
         Initializer.init();
@@ -127,7 +127,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // validate the message type
         if (responseHeader[0] != IPC_DATA_TYPE_DATA_PACKET)
         {
-            throw new MessageVerificationException("Incorrect message type");
+            throw new InvalidPacketTypeException("Incorrect message type");
         }
 
         // get the length of the rest of the response

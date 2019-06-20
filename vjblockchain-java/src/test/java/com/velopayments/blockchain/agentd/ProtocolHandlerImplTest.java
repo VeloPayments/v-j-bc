@@ -6,6 +6,7 @@ import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -46,17 +47,74 @@ public class ProtocolHandlerImplTest {
     }
 
     @Test
-    public void handshake_happyPath() throws Exception {
+    public void handshake_happyPath() throws Exception
+    {
+        stubDataChannel(ProtocolHandlerImpl.IPC_DATA_TYPE_DATA_PACKET, agentId);
 
-        // given a valid initiate handshake response header
-        // and a valid ack response header
+        // when the handshake is invoked
+        protocolHandler.handshake();
+
+        // then there should have been two round trips
+        verify(dataChannel, times(2)).send(Mockito.any());
+        // init and ack headers are 5 byte seach
+        verify(dataChannel, times(2)).recv(5);
+        // init response body
+        verify(dataChannel, times(1)).recv(164);
+        // ack HMAC
+        verify(dataChannel, times(1)).recv(32);
+        // ack response body
+        verify(dataChannel, times(1)).recv(12);
+        verifyNoMoreInteractions(dataChannel);
+
+        // TODO: verify aspects of the requests
+    }
+
+    @Test
+    public void initiateHandshake_ReceivedInvalidPacketType() throws Exception
+    {
+        byte invalidPacketType = 0x01;
+        stubDataChannel(invalidPacketType, agentId);
+
+        // when the handshake is initiated
+        try {
+            protocolHandler.handshake();
+            Assert.fail();
+        } catch (InvalidPacketTypeException e) {
+            // good
+        }
+
+    }
+
+    @Test
+    public void initiateHandshake_ReceivedIncorrectAgentId() throws Exception
+    {
+        UUID invalidAgentId = UUID.randomUUID();
+        stubDataChannel(ProtocolHandlerImpl.IPC_DATA_TYPE_DATA_PACKET,
+                invalidAgentId);
+
+        // when the handshake is initiated
+        try {
+            protocolHandler.handshake();
+            Assert.fail();
+        } catch (AgentVerificationException e) {
+            // good
+        }
+    }
+
+    private void stubDataChannel(byte initResponsePacketType, UUID agentId)
+            throws IOException
+    {
+        // stub the initiate handshake response header
+        // and the ack response header
         byte[] ackResponseHeader = createAckHandshakeResponseHeader();
         when(dataChannel.recv(5))
-                .thenReturn(createInitiateHandshakeResponseHeader())
+                .thenReturn(
+                        createInitiateHandshakeResponseHeader(
+                                initResponsePacketType))
                 .thenReturn(ackResponseHeader);
 
 
-        // and a valid initiate handshake response body
+        // stub the initiate handshake response body
         ByteArrayPair bap = createInitiateHandshakeResponse(
                 agentId, entityPrivateKey);
         byte[] sharedSecret = bap.e1;
@@ -64,7 +122,7 @@ public class ProtocolHandlerImplTest {
         when(dataChannel.recv(164)).thenReturn(initHandshakeResponse);
 
 
-        // and a valid ack response payload
+        // stub the ack response payload
         byte[] ackResponse = new byte[12];
         when(dataChannel.recv(12)).thenReturn(ackResponse);
 
@@ -73,7 +131,7 @@ public class ProtocolHandlerImplTest {
         when(outerEnvelopeReader.decryptHeader(any(), any()))
                 .thenReturn(12);
 
-        // and a valid HMAC in the ack response
+        // set up the HMAC in the ack response
         HMAC hmac = new HMAC(sharedSecret);
         byte[][] hmacParts = new byte[2][];
         hmacParts[0] = ackResponseHeader;
@@ -85,48 +143,15 @@ public class ProtocolHandlerImplTest {
         when(outerEnvelopeReader.decryptPayload(sharedSecret, ackResponse))
                 .thenReturn(createAckDecryptedPayload());
 
-
-        // when the handshake is invoked
-        protocolHandler.handshake();
-
-        // then there should have been two round trips
-        //verify(dataChannel, times(1)).send(Mockito.any());
-        //verify(dataChannel, times(1)).recv();
-        //verifyNoMoreInteractions(dataChannel);
-
-        // TODO: verify aspects of the requests
     }
 
-//    @Test
-//    public void initiateHandshake_IncorrectAgentId() throws Exception {
-//
-//        // given an response with an invalid agent ID
-//        byte[] response = TestUtil.createHandshakeResponse(UUID.randomUUID());
-//        Mockito.when(dataChannel.recv()).thenReturn(response);
-//
-//        // when the handshake is initiated
-//        try {
-//            protocolHandler.handshake();
-//            Assert.fail();
-//        } catch (AgentVerificationException e) {
-//            // good
-//        }
-//    }
-//
-//
 
-    private void verifyChannelInteractions(int numBytes) throws IOException {
-        verify(dataChannel, times(1)).send(Mockito.any());
-        verify(dataChannel, times(1)).recv(numBytes);
-        verifyNoMoreInteractions(dataChannel);
-    }
-
-    private byte[] createInitiateHandshakeResponseHeader()
+    private byte[] createInitiateHandshakeResponseHeader(byte packetType)
     {
         byte[] responseHeader = new byte[5];
 
         // response type
-        responseHeader[0] = 0x20; // IPC_DATA_TYPE_DATA_PACKET
+        responseHeader[0] = packetType;
 
         // response size
         System.arraycopy(ByteUtil.htonl(164), 0, responseHeader, 1, 4);
