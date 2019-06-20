@@ -30,6 +30,7 @@ public class ProtocolHandlerImplTest {
     UUID entityId;
     EncryptionPrivateKey entityPrivateKey;
     OuterEnvelopeReader outerEnvelopeReader;
+    OuterEnvelopeWriter outerEnvelopeWriter;
     SecureRandom random;
 
     byte[] clientKeyNonce;
@@ -43,10 +44,12 @@ public class ProtocolHandlerImplTest {
         entityId = UUID.randomUUID();
         entityPrivateKey = EncryptionKeyPair.generate().getPrivateKey();
         outerEnvelopeReader = mock(OuterEnvelopeReader.class);
+        outerEnvelopeWriter = mock(OuterEnvelopeWriter.class);
         random = mock(SecureRandom.class);
 
         protocolHandler = new ProtocolHandlerImpl(dataChannel, agentId,
-                entityId, entityPrivateKey, outerEnvelopeReader, random);
+                entityId, entityPrivateKey, outerEnvelopeReader,
+                outerEnvelopeWriter, random);
 
         // predetermine the random values and program the rng
         SecureRandom sr = new SecureRandom();
@@ -231,6 +234,82 @@ public class ProtocolHandlerImplTest {
         protocolHandler.handshake();
     }
 
+    @Test
+    public void ackRequest() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
+                agentId, entityPrivateKey);
+
+        // validate what is sent is what is produced by the writer
+        byte[] expectedRequest = new byte[] { 0, 1, 2, 3, 4 };
+
+        when(outerEnvelopeWriter.encryptPayload(any(), any()))
+                .thenReturn(expectedRequest);
+
+        protocolHandler.handshake();
+
+        verify(dataChannel).send(expectedRequest);
+    }
+
+    @Test(expected = InvalidPayloadSizeException.class)
+    public void ackHandshakeResponse_InvalidPayloadSize() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
+                agentId, entityPrivateKey);
+
+        int invalidPayloadSize = 999;
+        when(outerEnvelopeReader.decryptHeader(any(), any()))
+                .thenReturn(invalidPayloadSize);
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = MessageVerificationException.class)
+    public void ackHandshakeResponse_InvalidHMAC() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
+                agentId, entityPrivateKey);
+
+        byte[] ackResponseHMAC = new byte[32];
+        when(dataChannel.recv(32)).thenReturn(ackResponseHMAC);
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = InvalidRequestIdException.class)
+    public void ackHandshakeResponse_InvalidRequestId() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
+                agentId, entityPrivateKey);
+
+        int badAckRequestId = 999;
+        when(outerEnvelopeReader.decryptPayload(any(), any()))
+                .thenReturn(createAckDecryptedPayload(badAckRequestId, 0));
+
+        protocolHandler.handshake();
+    }
+
+    @Test(expected = ErrorStatusException.class)
+    public void ackHandshakeResponse_UnsuccessfulStatus() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
+                agentId, entityPrivateKey);
+
+        when(outerEnvelopeReader.decryptPayload(any(), any()))
+                .thenReturn(createAckDecryptedPayload(
+                        UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE, -1));
+
+        protocolHandler.handshake();
+    }
 
     /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
 
@@ -277,7 +356,9 @@ public class ProtocolHandlerImplTest {
 
         // stub the decryption of the ack payload
         when(outerEnvelopeReader.decryptPayload(sharedSecret, ackResponse))
-                .thenReturn(createAckDecryptedPayload());
+            .thenReturn(
+                    createAckDecryptedPayload(
+                            UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE, 0));
 
     }
 
@@ -384,12 +465,15 @@ public class ProtocolHandlerImplTest {
         return responseHeader;
     }
 
-    private byte[] createAckDecryptedPayload()
+    private byte[] createAckDecryptedPayload(long requestId, int status)
     {
         byte[] decryptedPayload = new byte[12];
 
         // set the request ID
-        System.arraycopy(ByteUtil.htonl(1), 0, decryptedPayload, 0, 4);
+        System.arraycopy(ByteUtil.htonl((int)requestId), 0, decryptedPayload, 0, 4);
+
+        // set the return status
+        System.arraycopy(ByteUtil.htonl(status), 0, decryptedPayload, 4, 4);
 
         return decryptedPayload;
     }

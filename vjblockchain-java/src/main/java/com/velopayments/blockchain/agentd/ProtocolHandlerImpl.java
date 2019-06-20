@@ -32,6 +32,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private UUID entityId;
     private EncryptionPrivateKey entityPrivateEncKey;
     private OuterEnvelopeReader outerEnvelopeReader;
+    private OuterEnvelopeWriter outerEnvelopeWriter;
     private SecureRandom random;
 
     private byte[] sharedSecret;
@@ -40,6 +41,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             DataChannel dataChannel, UUID agentId, UUID entityId,
             EncryptionPrivateKey entityPrivateEncKey,
             OuterEnvelopeReader outerEnvelopeReader,
+            OuterEnvelopeWriter outerEnvelopeWriter,
             SecureRandom random)
     {
         this.dataChannel = dataChannel;
@@ -47,6 +49,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         this.entityId = entityId;
         this.entityPrivateEncKey = entityPrivateEncKey;
         this.outerEnvelopeReader = outerEnvelopeReader;
+        this.outerEnvelopeWriter = outerEnvelopeWriter;
         this.random = random;
     }
 
@@ -258,7 +261,6 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         HMAC hmac = new HMAC(sharedSecret);
 
         // send the data packet to the server
-        OuterEnvelopeWriter outerEnvelopeWriter = new OuterEnvelopeWriter();
         dataChannel.send(outerEnvelopeWriter.encryptPayload(
                 sharedSecret, hmac.createHMACShort(serverChallengeNonce)));
 
@@ -299,7 +301,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 Arrays.copyOfRange(decryptedPayload, 0, 4));
         if (requestId != UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE)
         {
-            throw new MessageVerificationException(
+            throw new InvalidRequestIdException(
                     "Invalid request ID in second round of handshake: " +
                             requestId);
         }
@@ -309,7 +311,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 Arrays.copyOfRange(decryptedPayload, 4, 8));
         if (status != 0)
         {
-            throw new MessageVerificationException(
+            throw new ErrorStatusException(
                     "Bad status code in second round of handshake: " + status);
         }
 
