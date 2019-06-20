@@ -6,10 +6,11 @@ import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.crypt.HMAC;
 import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -17,8 +18,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 
 import static com.velopayments.blockchain.agentd.ProtocolHandlerImpl.*;
 
@@ -33,6 +32,9 @@ public class ProtocolHandlerImplTest {
     OuterEnvelopeReader outerEnvelopeReader;
     SecureRandom random;
 
+    byte[] clientKeyNonce;
+    byte[] clientChallengeNonce;
+
     @Before
     public void setup() {
 
@@ -45,14 +47,43 @@ public class ProtocolHandlerImplTest {
 
         protocolHandler = new ProtocolHandlerImpl(dataChannel, agentId,
                 entityId, entityPrivateKey, outerEnvelopeReader, random);
+
+        // predetermine the random values and program the rng
+        SecureRandom sr = new SecureRandom();
+        clientKeyNonce = new byte[32];
+        sr.nextBytes(clientKeyNonce);
+
+        clientChallengeNonce = new byte[32];
+        sr.nextBytes(clientChallengeNonce);
+
+        doAnswer(new Answer() {
+            private int count = 0;
+            @Override
+            public Object answer(InvocationOnMock invocation)
+            {
+                byte[] target = invocation.getArgument(0);
+                if (count++ == 0) {
+                    System.arraycopy(
+                            clientKeyNonce, 0, target, 0,
+                            target.length);
+                } else {
+                    System.arraycopy(
+                            clientChallengeNonce, 0, target, 0,
+                            target.length);
+                }
+                return null;
+            }
+        }).when(random).nextBytes(any(byte[].class));;
+
+
     }
 
     @Test
     public void handshake_happyPath() throws Exception
     {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1, agentId,
-                entityPrivateKey);
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId, entityPrivateKey);
 
         // when the handshake is invoked
         protocolHandler.handshake();
@@ -68,8 +99,49 @@ public class ProtocolHandlerImplTest {
         // ack response body
         verify(dataChannel, times(1)).recv(12);
         verifyNoMoreInteractions(dataChannel);
+    }
 
-        // TODO: verify aspects of the requests
+    @Test
+    public void initiateHandshakeRequest() throws Exception
+    {
+        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
+                entityPrivateKey);
+
+        protocolHandler.handshake();
+
+        byte[] expectedRequest = new byte[101];
+
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE      |  4 bytes     | */
+        /* | offset                                         |  4 bytes     | */
+        /* | record:                                        | 88 bytes     | */
+        /* |    protocol_version                            |  4 bytes     | */
+        /* |    crypto_suite                                |  4 bytes     | */
+        /* |    entity_id                                   | 16 bytes     | */
+        /* |    client key nonce                            | 32 bytes     | */
+        /* |    client challenge nonce                      | 32 bytes     | */
+        /* | ---------------------------------------------- | ------------ | */
+
+
+        expectedRequest[0] = IPC_DATA_TYPE_DATA_PACKET;
+        System.arraycopy(ByteUtil.htonl(96), 0, expectedRequest, 1, 4);
+        System.arraycopy(
+                ByteUtil.htonl((int)UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE),
+                0, expectedRequest, 5, 4);
+        System.arraycopy(ByteUtil.htonl((int)PROTOCOL_VERSION), 0,
+                expectedRequest, 13, 4);
+        System.arraycopy(ByteUtil.htonl((int)CRYPTO_SUITE_VERSION), 0,
+                expectedRequest, 17, 4);
+        System.arraycopy(UuidUtil.getBytesFromUUID(entityId), 0,
+                expectedRequest, 21, 16);
+        System.arraycopy(clientKeyNonce, 0, expectedRequest, 37, 32);
+        System.arraycopy(clientChallengeNonce, 0, expectedRequest, 69, 32);
+
+        verify(dataChannel).send(expectedRequest);
     }
 
     @Test(expected = InvalidPacketTypeException.class)
@@ -77,7 +149,8 @@ public class ProtocolHandlerImplTest {
     {
         byte invalidPacketType = 0x01;
         stubDataChannel(invalidPacketType,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey);
 
         protocolHandler.handshake();
@@ -88,7 +161,8 @@ public class ProtocolHandlerImplTest {
     {
         long badRequestId = 99;
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                badRequestId,0, 1, 1,
+                badRequestId,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey);
 
 
@@ -100,7 +174,8 @@ public class ProtocolHandlerImplTest {
     {
         int errorStatus = -1;
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, errorStatus, 1, 1,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, errorStatus,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey);
 
         protocolHandler.handshake();
@@ -112,7 +187,8 @@ public class ProtocolHandlerImplTest {
     {
         int wrongProto = 2;
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0, wrongProto, 1,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
+                wrongProto, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey);
 
         protocolHandler.handshake();
@@ -124,7 +200,8 @@ public class ProtocolHandlerImplTest {
     {
         int wrongCrypto = 3;
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0, 1, wrongCrypto,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
+                PROTOCOL_VERSION, wrongCrypto,
                 agentId, entityPrivateKey);
 
         protocolHandler.handshake();
@@ -135,7 +212,8 @@ public class ProtocolHandlerImplTest {
     {
         UUID invalidAgentId = UUID.randomUUID();
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 invalidAgentId, entityPrivateKey);
 
         protocolHandler.handshake();
@@ -146,7 +224,8 @@ public class ProtocolHandlerImplTest {
             throws Exception
     {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0, 1, 1,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, EncryptionKeyPair.generate().getPrivateKey());
 
         protocolHandler.handshake();
@@ -156,8 +235,8 @@ public class ProtocolHandlerImplTest {
     /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
 
     private void stubDataChannel(
-            byte packetType, long requestId, int status, int protocolVersion,
-            int cryptoSuiteVersion, UUID agentId,
+            byte packetType, long requestId, int status, long protocolVersion,
+            long cryptoSuiteVersion, UUID agentId,
             EncryptionPrivateKey entityPrivateKey)
         throws IOException
     {
@@ -239,7 +318,7 @@ public class ProtocolHandlerImplTest {
         byte[] e2;
     }
     private ByteArrayPair createInitiateHandshakeResponse(
-            long requestId, int status, int proto, int crypto, UUID agentdId,
+            long requestId, int status, long proto, long crypto, UUID agentdId,
             EncryptionPrivateKey entityPrivateKey)
     {
         SecureRandom sr = new SecureRandom();
@@ -253,10 +332,10 @@ public class ProtocolHandlerImplTest {
         System.arraycopy(ByteUtil.htonl(status), 0, response, 8, 4);
 
         // protocol
-        System.arraycopy(ByteUtil.htonl(proto), 0, response, 12, 4);
+        System.arraycopy(ByteUtil.htonl((int)proto), 0, response, 12, 4);
 
         // crypto version
-        System.arraycopy(ByteUtil.htonl(crypto), 0, response, 16, 4);
+        System.arraycopy(ByteUtil.htonl((int)crypto), 0, response, 16, 4);
 
         // agentd ID
         System.arraycopy(UuidUtil.getBytesFromUUID(agentdId), 0, response,
@@ -277,12 +356,12 @@ public class ProtocolHandlerImplTest {
         byte[] sharedSecret = ProtocolHandlerImpl.computeSharedSecret(entityPrivateKey,
                 new EncryptionPublicKey(serverPublicKey),
                 serverKeyNonce,
-                new byte[32]); // client key nonce generated using a mocked SecureRandom
+                clientKeyNonce);
 
         HMAC hmac = new HMAC(sharedSecret);
         byte[][] hmacParts = new byte[2][];
         hmacParts[0] = Arrays.copyOfRange(response, 0, 132);
-        hmacParts[1] = new byte[32];  // client challenge nonce
+        hmacParts[1] = clientChallengeNonce;
         byte[] computedHMAC = hmac.createHMACShort(hmacParts);
         System.arraycopy(computedHMAC, 0, response, 132,32);
 
