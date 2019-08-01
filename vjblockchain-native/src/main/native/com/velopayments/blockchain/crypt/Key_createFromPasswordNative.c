@@ -31,6 +31,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
 {
     jobject retval = NULL;
 
+    vccrypt_buffer_t password_buffer;
+    vccrypt_buffer_t salt_buffer;
     vccrypt_buffer_t key_buffer;
     vccrypt_key_derivation_context_t kd_ctx;
     vccrypt_key_derivation_options_t kd_options;
@@ -72,7 +74,7 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
 
     /* initialize key derivation instance */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_key_derivation_init(&kd_options, &kd_ctx))
+        vccrypt_key_derivation_init(&kd_ctx, &kd_options))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key derivation instance initialization failure.");
@@ -87,32 +89,61 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
         goto kd_dispose;
     }
 
+    /* initialize password crypto buffer */
+    size_t password_sz = (*env)->GetArrayLength(env, password);
+    if (VCCRYPT_STATUS_SUCCESS !=
+        vccrypt_buffer_init(&password_buffer, &alloc_opts, password_sz))
+    {
+        (*env)->ThrowNew(
+                env, IllegalStateException,
+                "could not initialize password crypto buffer.");
+        goto password_dispose; 
+    }
+
+    /* copy password into password crypto buffer. */
+    MODEL_EXEMPT(
+            memcpy(password_buffer.data, password_array, password_sz));
+
+
     /* get the buffer for the salt bytes */
     jbyte* salt_array = (*env)->GetByteArrayElements(env, salt, NULL);
     if (NULL == salt_array)
     {
         (*env)->ThrowNew(env, NullPointerException, "salt data read failure.");
-        goto password_dispose;
+        goto password_buffer_dispose;
     }
 
-    /* initialize key buffer. */
+    /* initialize salt crypto buffer */
+    size_t salt_sz = (*env)->GetArrayLength(env, salt);
+    if (VCCRYPT_STATUS_SUCCESS !=
+        vccrypt_buffer_init(&salt_buffer, &alloc_opts, salt_sz))
+    {
+        (*env)->ThrowNew(
+                env, IllegalStateException,
+                "could not initialize salt crypto buffer.");
+        goto salt_dispose; 
+    }
+
+    /* copy salt into salt crypto buffer. */
+    MODEL_EXEMPT(
+            memcpy(salt_buffer.data, salt_array, salt_sz));
+
+
+    /* initialize key crypto buffer. */
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_buffer_init(
                 &key_buffer, &alloc_opts, kd_options.hmac_digest_length))
     {
         (*env)->ThrowNew(
                 env, IllegalStateException,
-                "could not initialize a crypto buffer.");
-        goto salt_dispose;
+                "could not initialize key crypto buffer.");
+        goto salt_buffer_dispose;
     }
 
     /* derive the cryptographic key */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_key_derivation_derive_key(&kd_ctx,
-                (char*)password_array, (*env)->GetArrayLength(env, password),
-                (uint8_t*)salt_array, (*env)->GetArrayLength(env, salt),
-                key_buffer.data, key_buffer.size,
-                iterations))
+        vccrypt_key_derivation_derive_key(&key_buffer, &kd_ctx,
+                &password_buffer, &salt_buffer, iterations))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                 "key derivation failure.");
@@ -151,8 +182,14 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
 key_buffer_dispose:
     dispose((disposable_t*)&key_buffer);
 
+salt_buffer_dispose:
+    dispose((disposable_t*)&salt_buffer);
+
 salt_dispose:
     (*env)->ReleaseByteArrayElements(env, salt, salt_array, 0);
+
+password_buffer_dispose:
+    dispose((disposable_t*)&password_buffer);
 
 password_dispose:
     (*env)->ReleaseByteArrayElements(env, password, password_array, 0);
