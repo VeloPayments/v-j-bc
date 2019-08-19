@@ -16,8 +16,6 @@
 #include "../../../../java/lang/IllegalStateException.h"
 #include "../../../../java/lang/NullPointerException.h"
 
-/* TODO - use crypto suite for stream cipher.  See BLOC-163. */
-
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
  * Method:    createRandomNative

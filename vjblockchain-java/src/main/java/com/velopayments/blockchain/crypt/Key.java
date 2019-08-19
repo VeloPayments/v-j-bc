@@ -1,8 +1,6 @@
 package com.velopayments.blockchain.crypt;
 
 import com.velopayments.blockchain.init.Initializer;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 
 /**
  * Symmetric Cipher Key.  This key works with the VeloChain SDK symmetric
@@ -37,17 +35,27 @@ public class Key {
     public static Key createFromPassword(
                             byte[] salt, int iterations, String password) {
 
-        char[] chars = password.toCharArray();
-        PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 256);
-        try {
-            SecretKeyFactory skf =
-                SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            byte[] keyHash = skf.generateSecret(spec).getEncoded();
+        return new Key(createFromPasswordAsBytes(
+                salt, iterations, password, false));
+    }
 
-            return new Key(keyHash);
-        } catch (Exception e) {
-            throw new IllegalStateException("Wrongness.", e);
-        }
+    /**
+     * Generate a key from a password.
+     *
+     * @param salt The random salt to use for this password.  Must be unique per
+     *             password and should be stored as password metadata.
+     * @param iterations The number of iterations (e.g. 10000).
+     * @param password The password from which this key is derived.
+     * @param sha512 If true use HMAC-SHA-512 as the PRF, otherwise use
+     *               HMAC-SHA-512-256
+     *
+     * @return a byte array from this password and metadata.
+     */
+    public static byte[] createFromPasswordAsBytes(
+            byte[] salt, int iterations, String password, boolean sha512)
+    {
+        return createFromPasswordNative(
+                password.getBytes(), salt, iterations, sha512);
     }
 
     /**
@@ -78,6 +86,22 @@ public class Key {
      * Create a Key from a cryptographically random source.
      */
     private static native Key createRandomNative();
+
+
+    /**
+     * Generate a key from a password.
+     *
+     * @param salt The random salt to use for this password.  Must be unique per
+     *             password and should be stored as password metadata.
+     * @param iterations The number of iterations (e.g. 10000).
+     * @param password The password from which this key is derived.
+     * @param sha512 If true use HMAC-SHA-512 as the PRF, otherwise use
+     *               HMAC-SHA-512-256
+     *
+     * @return a byte array from this password and metadata.
+     */
+    private static native byte[] createFromPasswordNative(
+            byte[] password, byte[] salt, int iterations, boolean sha512);
 
     private byte[] key;
 }
