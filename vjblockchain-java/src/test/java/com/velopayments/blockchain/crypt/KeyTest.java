@@ -1,9 +1,12 @@
 package com.velopayments.blockchain.crypt;
 
 import org.junit.Test;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 public class KeyTest {
 
@@ -47,4 +50,56 @@ public class KeyTest {
         /* This succeeds. */
         Key key = new Key(CORRECTLY_SIZED_KEY);
     }
+
+    /**
+     * Test that the native function produces a key that  matches the Java impl
+     * using HMAC-SHA-512
+     */
+    @Test
+    public void sha512EquivalenceTest() throws Exception {
+
+        String password = "password";
+        String salt = "salt";
+
+        int iterations = 10000;
+        int keyLength = 64;
+
+        PBEKeySpec spec = new PBEKeySpec(
+                password.toCharArray(), salt.getBytes(), iterations,
+                keyLength * 8);
+
+        SecretKeyFactory skf =
+                SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        byte[] javaKey = skf.generateSecret(spec).getEncoded();
+        assertThat(javaKey.length, is(keyLength));
+
+        // now generate via native code
+        byte[] nativeKey = Key.createFromPasswordAsBytes(
+                salt.getBytes(), iterations, password, true);
+        assertThat(nativeKey, is(notNullValue()));
+
+        // the size should be 512 bits (64 bytes).
+        assertThat(nativeKey.length, is(keyLength));
+
+        // the byte arrays should be equal
+        assertThat(nativeKey, is(equalTo(javaKey)));
+    }
+
+    @Test
+    public void sha512_256Test() {
+
+        String password = "password";
+        String salt = "salt";
+
+        int iterations = 10000;
+        int keyLength = 32;
+
+        byte[] nativeKey = Key.createFromPasswordAsBytes(
+                salt.getBytes(), iterations, password, false);
+        assertThat(nativeKey, is(notNullValue()));
+
+        // the size should be 256 bits (32 bytes).
+        assertThat(nativeKey.length, is(keyLength));
+    }
+
 }
