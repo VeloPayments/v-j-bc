@@ -8,19 +8,30 @@ public class OuterEnvelopeReader {
         Initializer.init();
     }
 
+    public OuterEnvelopeReader() {
+        this.iv = 0x8000000000000001L;
+    }
+
     public int decryptHeader(byte[] key, byte[] header)
     {
-        return decryptHeaderNative(key, header);
+        return decryptHeaderNative(key, iv, header);
     }
 
     public byte[] decryptPayload(byte[] key, byte[] payload)
     {
-        return decryptPayloadNative(key, payload);
+        byte[] decryptedPayload = decryptPayloadNative(key, iv, payload);
+
+        //increment iv after decrypting payload.
+        ++iv;
+
+        return decryptedPayload;
     }
 
+    private long iv;
+
     private native int decryptHeaderNative(
-            byte[] key, byte[] header);
+            byte[] key, long iv, byte[] header);
 
     private native byte[] decryptPayloadNative(
-            byte[] key, byte[] payload);
+            byte[] key, long iv, byte[] payload);
 }

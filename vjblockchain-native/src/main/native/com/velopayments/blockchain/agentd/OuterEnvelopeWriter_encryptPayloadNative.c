@@ -27,7 +27,7 @@
 JNIEXPORT jbyteArray JNICALL 
 Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative(
         JNIEnv* env, jobject UNUSED(outer_env), jbyteArray shared_secret,
-        jbyteArray payload)
+        jlong iv, jbyteArray payload)
 {
     jbyteArray retval = NULL;
     jbyte* shared_secret_bytes;
@@ -139,7 +139,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
     }
 
     /* start the stream cipher. */
-    uint64_t client_iv = 0x0000000000000001;
+    uint64_t client_iv = (uint64_t)iv;
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_stream_continue_encryption(&stream, &client_iv, 
                 sizeof(client_iv), 0))

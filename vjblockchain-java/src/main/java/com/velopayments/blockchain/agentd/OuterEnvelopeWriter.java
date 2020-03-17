@@ -8,11 +8,23 @@ public class OuterEnvelopeWriter {
         Initializer.init();
     }
 
-    public byte[] encryptPayload(byte[] key, byte[] payload)
-    {
-        return encryptPayloadNative(key, payload);
+    public OuterEnvelopeWriter() {
+        this.iv = 0x0000000000000001L;
     }
 
-    private native byte[] encryptPayloadNative(byte[] key, byte[] payload);
+    public byte[] encryptPayload(byte[] key, byte[] payload)
+    {
+        //encrypt the payload
+        byte[] encryptedPayload = encryptPayloadNative(key, iv, payload);
+
+        //increment iv after encrypting payload
+        ++iv;
+
+        return encryptedPayload;
+    }
+
+    private long iv;
+    private native byte[] encryptPayloadNative(
+            byte[] key, long iv, byte[] payload);
 
 }
