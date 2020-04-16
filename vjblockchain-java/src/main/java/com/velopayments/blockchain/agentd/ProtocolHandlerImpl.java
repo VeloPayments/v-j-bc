@@ -294,7 +294,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         // we have a valid encrypted payload, now to decrypt it
         byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
-                sharedSecret, encryptedPayload);
+                sharedSecret, header, encryptedPayload);
 
         // verify request ID
         long requestId = ByteUtil.ntohl(

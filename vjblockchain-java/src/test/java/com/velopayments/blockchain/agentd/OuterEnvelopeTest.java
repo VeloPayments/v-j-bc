@@ -92,19 +92,51 @@ public class OuterEnvelopeTest {
 
         OuterEnvelopeReader reader = new OuterEnvelopeReader();
 
-        //TODO - the outer envelope reader should consume and confirm the entire
-        //envelope, and not just the payload.
+        assertThat(
+            reader.decryptPayload(
+                TEST_KEY,
+                Arrays.copyOfRange(INPUT_BYTES_01, 0, 5),
+                Arrays.copyOfRange(INPUT_BYTES_01, 5, INPUT_BYTES_01.length)),
+            equalTo(EXPECTED_PAYLOAD));
+        assertThat(
+            reader.decryptPayload(
+                TEST_KEY,
+                Arrays.copyOfRange(INPUT_BYTES_02, 0, 5),
+                Arrays.copyOfRange(INPUT_BYTES_02, 5, INPUT_BYTES_02.length)),
+            equalTo(EXPECTED_PAYLOAD));
+    }
 
-        assertThat(
-            reader.decryptPayload(
-                TEST_KEY,
-                Arrays.copyOfRange(INPUT_BYTES_01, 37, INPUT_BYTES_01.length)),
-            equalTo(EXPECTED_PAYLOAD));
-        assertThat(
-            reader.decryptPayload(
-                TEST_KEY,
-                Arrays.copyOfRange(INPUT_BYTES_02, 37, INPUT_BYTES_02.length)),
-            equalTo(EXPECTED_PAYLOAD));
+    /**
+     * When a packet has an invalid MAC, reader#decryptPayload() throws a
+     * MessageVerificationException.
+     */
+    @Test(expected = MessageVerificationException.class)
+    public void readerValidatesMAC() {
+        byte[] TEST_KEY = {
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f };
+        byte[] EXPECTED_PAYLOAD = {
+            1, 2, 3, 4, 5, 6 ,7, 8 };
+        byte[] BAD_INPUT_BYTES = {
+            (byte)0x7e, (byte)0x51, (byte)0xdf, (byte)0x6f, (byte)0x09,
+            (byte)0x01, (byte)0x27, (byte)0x90, (byte)0x51, (byte)0xe0,
+            /*(byte)0x70, (byte)0x4b, (byte)0x34, (byte)0xc8, (byte)0xef,*/
+            (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+            (byte)0x71, (byte)0x82, (byte)0xbc, (byte)0x88, (byte)0xd9,
+            (byte)0xea, (byte)0x2e, (byte)0x66, (byte)0xa6, (byte)0xc0,
+            (byte)0xd6, (byte)0xcb, (byte)0x57, (byte)0xf4, (byte)0xa0,
+            (byte)0x5e, (byte)0x04, (byte)0x07, (byte)0xd0, (byte)0xdf,
+            (byte)0x2c, (byte)0xb3, (byte)0xb2, (byte)0x9c, (byte)0x17,
+            (byte)0xad, (byte)0xe5, (byte)0xb1, (byte)0xcd, (byte)0x36 };
+
+        OuterEnvelopeReader reader = new OuterEnvelopeReader();
+
+        reader.decryptPayload(
+            TEST_KEY,
+            Arrays.copyOfRange(BAD_INPUT_BYTES, 0, 5),
+            Arrays.copyOfRange(BAD_INPUT_BYTES, 5, BAD_INPUT_BYTES.length));
     }
 
 }

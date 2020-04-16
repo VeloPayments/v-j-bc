@@ -17,9 +17,11 @@ public class OuterEnvelopeReader {
         return decryptHeaderNative(key, iv, header);
     }
 
-    public byte[] decryptPayload(byte[] key, byte[] payload)
+    public byte[] decryptPayload(byte[] key, byte[] header, byte[] payload)
+        throws MessageVerificationException
     {
-        byte[] decryptedPayload = decryptPayloadNative(key, iv, payload);
+        byte[] decryptedPayload =
+            decryptPayloadNative(key, iv, header, payload);
 
         //increment iv after decrypting payload.
         ++iv;
@@ -33,5 +35,6 @@ public class OuterEnvelopeReader {
             byte[] key, long iv, byte[] header);
 
     private native byte[] decryptPayloadNative(
-            byte[] key, long iv, byte[] payload);
+            byte[] key, long iv, byte[] header, byte[] payload)
+        throws MessageVerificationException;
 }

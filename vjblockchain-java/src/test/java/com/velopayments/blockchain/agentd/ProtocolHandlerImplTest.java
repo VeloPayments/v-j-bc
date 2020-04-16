@@ -290,7 +290,7 @@ public class ProtocolHandlerImplTest {
                 agentId, entityPrivateKey);
 
         int badAckRequestId = 999;
-        when(outerEnvelopeReader.decryptPayload(any(), any()))
+        when(outerEnvelopeReader.decryptPayload(any(), any(), any()))
                 .thenReturn(createAckDecryptedPayload(badAckRequestId, 0));
 
         protocolHandler.handshake();
@@ -304,7 +304,7 @@ public class ProtocolHandlerImplTest {
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey);
 
-        when(outerEnvelopeReader.decryptPayload(any(), any()))
+        when(outerEnvelopeReader.decryptPayload(any(), any(), any()))
                 .thenReturn(createAckDecryptedPayload(
                         UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE, -1));
 
@@ -355,7 +355,8 @@ public class ProtocolHandlerImplTest {
                 .thenReturn(hmac.createHMACShort(hmacParts));
 
         // stub the decryption of the ack payload
-        when(outerEnvelopeReader.decryptPayload(sharedSecret, ackResponse))
+        when(outerEnvelopeReader.decryptPayload(sharedSecret, ackResponseHeader,
+                                                ackResponse))
             .thenReturn(
                     createAckDecryptedPayload(
                             UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE, 0));

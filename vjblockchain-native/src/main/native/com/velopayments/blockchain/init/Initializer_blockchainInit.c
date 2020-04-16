@@ -13,6 +13,7 @@
 #include <com_velopayments_blockchain_init_Initializer.h>
 
 #include "init.h"
+#include "../../../../com/velopayments/blockchain/agentd/MessageVerificationException.h"
 #include "../../../../com/velopayments/blockchain/cert/AttestationException.h"
 #include "../../../../com/velopayments/blockchain/cert/Certificate.h"
 #include "../../../../com/velopayments/blockchain/cert/CertificateBuilder.h"
@@ -126,6 +127,8 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
                  InvalidKeySizeException_register(env));
     INIT_OR_FAIL("Message",
                  Message_register(env));
+    INIT_OR_FAIL("MessageVerificationException",
+                 MessageVerificationException_register(env));
     INIT_OR_FAIL("EntityReference",
                  EntityReference_register(env));
     INIT_OR_FAIL("HashMap",
