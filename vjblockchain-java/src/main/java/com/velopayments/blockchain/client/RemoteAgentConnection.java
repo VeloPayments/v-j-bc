@@ -68,15 +68,12 @@ public class RemoteAgentConnection implements VelochainConnection {
     public CompletableFuture<TransactionStatus> submit(Certificate transaction)
     throws IOException {
 
-        // TODO: BLOC-174
-        /*try {
+        try {
             protocolHandler.submit(transaction);
             return CompletableFuture.completedFuture(TransactionStatus.SUCCEEDED);
-        } catch (OperationFailureException e) {
+        } catch (Exception e) {
             return CompletableFuture.completedFuture(TransactionStatus.FAILED);
-        }*/
-        return null;
-
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.cert.Certificate;
 import java.io.IOException;
 
 /**
@@ -16,4 +17,8 @@ public interface ProtocolHandler {
      */
     void handshake() throws IOException;
 
+    /**
+     * Submit a certificate to the blockchain agent.
+     */
+    void submit(Certificate transaction) throws IOException;
 }

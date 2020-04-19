@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.cert.*;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
 import com.velopayments.blockchain.crypt.HMAC;
@@ -22,6 +23,9 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     public static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE = 0L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE = 1L;
+
+    public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT = 3L;
+
 
     static {
         Initializer.init();
@@ -57,6 +61,44 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     public void handshake() throws IOException {
         byte[] serverChallengeNonce = initiateHandshake();
         acknowledgeHandshake(serverChallengeNonce);
+    }
+
+    @Override
+    public void submit(Certificate transaction) throws IOException {
+        CertificateReader reader =
+            new CertificateReader(new CertificateParser(transaction));
+        UUID transactionId = null;
+        UUID artifactId = null;
+
+        //get the transaction id.
+        try {
+            transactionId = reader.getFirst(Field.CERTIFICATE_ID).asUUID();
+        } catch (MissingFieldException e) {
+            //TODO - we should bubble up this exception instead of masking it.
+            throw new IOException("Missing transaction id.");
+        } catch (FieldConversionException e) {
+            //TODO - we should bubble up this exception instead of masking it.
+            throw new IOException("Invalid transaction id.");
+        }
+
+        //get the artifact id.
+        try {
+            artifactId = reader.getFirst(Field.ARTIFACT_ID).asUUID();
+        } catch (MissingFieldException e) {
+            //TODO - we should bubble up this exception instead of masking it.
+            throw new IOException("Missing artifact id.");
+        } catch (FieldConversionException e) {
+            //TODO - we should bubble up this exception instead of masking it.
+            throw new IOException("Invalid artifact id.");
+        }
+
+        // write the submit request
+        writeSubmitRequest(transactionId, artifactId, transaction);
+
+        // read the submit response
+        long status = readSubmitResponse();
+
+        // TODO - send the status back to the caller
     }
 
     /**
@@ -265,7 +307,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 sharedSecret, hmac.createHMACShort(serverChallengeNonce)));
 
 
-        // receive the header: type, size, and MAC.
+        // receive the header: type, size
         byte[] header = dataChannel.recv(5);
         int payloadSize = outerEnvelopeReader.decryptHeader(
                 sharedSecret, header);
@@ -314,5 +356,103 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     }
 
+    private void writeSubmitRequest(
+                        UUID transactionId, UUID artifactId,
+                        Certificate transaction) throws IOException {
 
+        /* | Transaction submit request packet.                            | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT      |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | transaction_id                                 |  16 bytes    | */
+        /* | artifact_id                                    |  16 bytes    | */
+        /* | transaction certificate                        |   N bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] certificateBytes = transaction.toByteArray();
+        byte[] request = new byte[certificateBytes.length + 40];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT
+        byte[] reqBytes =
+            ByteUtil.htonl((int)UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-23: transaction id
+        byte[] transactionIdBytes = UuidUtil.getBytesFromUUID(transactionId);
+        System.arraycopy(transactionIdBytes, 0, request, 8, 16);
+
+        // bytes 24-39: artifact id
+        byte[] artifactIdBytes = UuidUtil.getBytesFromUUID(artifactId);
+        System.arraycopy(artifactIdBytes, 0, request, 24, 16);
+
+        // transaction certificate
+        System.arraycopy(
+            certificateBytes, 0, request, 40, certificateBytes.length);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private long readSubmitResponse() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+                sharedSecret, header);
+
+        if (payloadSize != 12) // 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected 12 bytes.");
+        }
+
+        byte[] responseHMAC = dataChannel.recv(32);
+
+        byte[] encryptedPayloadTail = dataChannel.recv(payloadSize);
+
+        //the payload is the MAC and the payload bytes.
+        byte[] encryptedPayload =
+            new byte[responseHMAC.length + encryptedPayloadTail.length];
+        System.arraycopy(
+            responseHMAC, 0, encryptedPayload, 0, responseHMAC.length);
+        System.arraycopy(
+            encryptedPayloadTail, 0, encryptedPayload, responseHMAC.length,
+            encryptedPayloadTail.length);
+
+        // we have a valid encrypted payload, now to decrypt it
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+                sharedSecret, header, encryptedPayload);
+
+        /* | Transaction submit response packet.                           | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT      |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+                Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT)
+        {
+            throw new InvalidRequestIdException(
+                    "Invalid request ID in second round of handshake: " +
+                            requestId);
+        }
+
+        // get status.
+        long status = ByteUtil.ntohl(
+                Arrays.copyOfRange(decryptedPayload, 4, 8));
+
+        return status;
+    }
 }

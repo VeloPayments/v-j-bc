@@ -1,5 +1,6 @@
 package com.velopayments.blockchain.agentd;
 
+import com.velopayments.blockchain.cert.*;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
@@ -35,6 +36,13 @@ public class ProtocolHandlerImplTest {
 
     byte[] clientKeyNonce;
     byte[] clientChallengeNonce;
+
+    private final UUID DUMMY_CERTIFICATE_TYPE =
+        UUID.fromString("1f55c307-2252-49a0-8b36-9aca10eca50c");
+    private final UUID DUMMY_CERTIFICATE_ID =
+        UUID.fromString("78776753-7b30-499b-9128-0f7b58dbdcaa");
+    private final UUID DUMMY_ARTIFACT_ID =
+        UUID.fromString("f113cac5-f112-49c8-ae66-208df9dbc4f1");
 
     @Before
     public void setup() {
@@ -84,7 +92,7 @@ public class ProtocolHandlerImplTest {
     @Test
     public void handshake_happyPath() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
                 entityPrivateKey, null);
@@ -108,7 +116,7 @@ public class ProtocolHandlerImplTest {
     @Test
     public void initiateHandshakeRequest() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
                 entityPrivateKey, null);
@@ -152,7 +160,7 @@ public class ProtocolHandlerImplTest {
     public void initiateHandshakeResponse_InvalidPacketType() throws Exception
     {
         byte invalidPacketType = 0x01;
-        stubDataChannel(invalidPacketType,
+        stubDataChannelForHandshake(invalidPacketType,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -164,7 +172,7 @@ public class ProtocolHandlerImplTest {
     public void initiateHandshakeResponse_InvalidRequestId() throws Exception
     {
         long badRequestId = 99;
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 badRequestId,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -177,7 +185,7 @@ public class ProtocolHandlerImplTest {
     public void initiateHandshakeResponse_UnsuccessfulStatus() throws Exception
     {
         int errorStatus = -1;
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, errorStatus,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -190,7 +198,7 @@ public class ProtocolHandlerImplTest {
             throws Exception
     {
         int wrongProto = 2;
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
                 wrongProto, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -203,7 +211,7 @@ public class ProtocolHandlerImplTest {
             throws Exception
     {
         int wrongCrypto = 3;
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
                 PROTOCOL_VERSION, wrongCrypto,
                 agentId, entityPrivateKey, null);
@@ -215,7 +223,7 @@ public class ProtocolHandlerImplTest {
     public void initiateHandshakeResponse_InvalidAgentId() throws Exception
     {
         UUID invalidAgentId = UUID.randomUUID();
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 invalidAgentId, entityPrivateKey, null);
@@ -227,7 +235,7 @@ public class ProtocolHandlerImplTest {
     public void initiateHandshakeResponse_InvalidChallengeResponse()
             throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, EncryptionKeyPair.generate().getPrivateKey(), null);
@@ -238,7 +246,7 @@ public class ProtocolHandlerImplTest {
     @Test
     public void ackRequest() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -257,7 +265,7 @@ public class ProtocolHandlerImplTest {
     @Test(expected = InvalidPayloadSizeException.class)
     public void ackHandshakeResponse_InvalidPayloadSize() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -271,7 +279,7 @@ public class ProtocolHandlerImplTest {
     @Test(expected = InvalidRequestIdException.class)
     public void ackHandshakeResponse_InvalidRequestId() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -286,7 +294,7 @@ public class ProtocolHandlerImplTest {
     @Test(expected = ErrorStatusException.class)
     public void ackHandshakeResponse_UnsuccessfulStatus() throws Exception
     {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
                 agentId, entityPrivateKey, null);
@@ -298,9 +306,67 @@ public class ProtocolHandlerImplTest {
         protocolHandler.handshake();
     }
 
+    @Test(expected = IOException.class)
+    public void submit_missingTransactionId() throws Exception {
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(DUMMY_CERTIFICATE_TYPE);
+        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
+
+        Certificate dummyCertificate = builder.emit();
+
+        protocolHandler.submit(dummyCertificate);
+    }
+
+    @Test(expected = IOException.class)
+    public void submit_missingArtifactId() throws Exception {
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(DUMMY_CERTIFICATE_TYPE);
+        builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
+
+        Certificate dummyCertificate = builder.emit();
+
+        protocolHandler.submit(dummyCertificate);
+    }
+
+    @Test
+    public void submit_happyPath() throws Exception {
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
+                entityPrivateKey, null);
+
+        // when the handshake is invoked
+        protocolHandler.handshake();
+
+        byte[] sharedSecret ={ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 };
+        stubDataChannel((int)UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT, 0, 0, null,
+                        sharedSecret, null);
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(DUMMY_CERTIFICATE_TYPE);
+        builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
+        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
+
+        protocolHandler.submit(builder.emit());
+
+        // then there should have been three round trips
+        verify(dataChannel, times(3)).send(Mockito.any());
+        // headers are 5 byte seach
+        verify(dataChannel, times(3)).recv(5);
+        // init response body
+        verify(dataChannel, times(1)).recv(164);
+        // ack and submit HMAC
+        verify(dataChannel, times(2)).recv(32);
+        // ack and submit response bodies
+        verify(dataChannel, times(2)).recv(12);
+        verifyNoMoreInteractions(dataChannel);
+
+    }
+
     /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
 
-    private void stubDataChannel(
+    private void stubDataChannelForHandshake(
             byte packetType, long requestId, int status, long protocolVersion,
             long cryptoSuiteVersion, UUID agentId,
             EncryptionPrivateKey entityPrivateKey, byte[] hmacOverride)
@@ -363,6 +429,109 @@ public class ProtocolHandlerImplTest {
 
     }
 
+    private void stubDataChannel(
+            int requestId, int status, int offset, byte[] payload,
+            byte[] sharedSecret, byte[] hmacOverride)
+        throws IOException
+    {
+        int payloadLength = 0;
+        if (null != payload)
+            payloadLength = payload.length;
+
+        // return the response header
+        byte[] authedResponseHeader =
+            createAuthedResponseHeader(sharedSecret, payloadLength + 12);
+        when(dataChannel.recv(5))
+                .thenReturn(authedResponseHeader);
+
+        // build the payload
+        byte[] authedResponsePayload =
+            createAuthedResponsePayload(
+                sharedSecret, requestId, status, offset, payload);
+        when(dataChannel.recv(authedResponsePayload.length))
+            .thenReturn(authedResponsePayload);
+
+        // compute the MAC.
+        byte[] MAC = null;
+        if (null == hmacOverride) {
+            MAC = createMAC(sharedSecret, authedResponseHeader,
+                            authedResponsePayload);
+        } else {
+            MAC = hmacOverride;
+        }
+
+        // compute the combined MAC and payload.
+        byte[] combinedMacPayload =
+            new byte[MAC.length + authedResponsePayload.length];
+        System.arraycopy(MAC, 0, combinedMacPayload, 0, MAC.length);
+        System.arraycopy(
+            authedResponsePayload, 0, combinedMacPayload, MAC.length,
+            authedResponsePayload.length);
+
+        // return the MAC
+        when(dataChannel.recv(32))
+            .thenReturn(MAC);
+
+        // stub the decryption for the ack header
+        when(outerEnvelopeReader.decryptHeader(any(), any()))
+                .thenReturn(12);
+
+        // stub the decryption of the payload
+        when(outerEnvelopeReader.decryptPayload(
+                    any(), eq(authedResponseHeader), eq(combinedMacPayload)))
+            .thenReturn(
+                    createUnencryptedPayload(
+                        requestId, status, offset, payload));
+
+    }
+
+    private byte[] createUnencryptedPayload(
+                int requestId, int status, int offset, byte[] payload) {
+
+        // compute payload length
+        int payloadLength = 0;
+        if (null != payload) {
+            payloadLength = payload.length;
+        }
+
+        //create unencrypted payload.
+        byte[] pl = new byte[12 + payloadLength];
+        System.arraycopy(ByteUtil.htonl(requestId), 0, pl, 0, 4);
+        System.arraycopy(ByteUtil.htonl(status), 0, pl, 4, 4);
+        System.arraycopy(ByteUtil.htonl(offset), 0, pl, 8, 4);
+        if (null != payload) {
+            System.arraycopy(payload, 0, pl, 12, payload.length);
+        }
+
+        return pl;
+    }
+
+    private byte[] createUnencryptedHeader(int length) {
+        byte[] hdr = new byte[5];
+        hdr[0] = 0x30; // IPC_DATA_TYPE_AUTHED_PACKET
+
+        // response size
+        System.arraycopy(ByteUtil.htonl(length), 0, hdr, 1, 4);
+
+        return hdr;
+    }
+
+    private byte[] createMAC(byte[] sharedSecret, byte[] authedResponseHeader,
+                             byte[] authedResponsePayload) {
+
+        return new byte[32];
+    }
+
+    private byte[] createAuthedResponseHeader(byte[] sharedSecret, int length) {
+        return createUnencryptedHeader(length);
+    }
+
+    private byte[] createAuthedResponsePayload(
+                byte[] sharedSecret, int requestId, int status, int offset,
+                byte[] payload) {
+
+        return createUnencryptedPayload(requestId, status, offset, payload);
+    }
 
     private byte[] createInitiateHandshakeResponseHeader(byte packetType)
     {
