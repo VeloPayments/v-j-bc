@@ -86,7 +86,8 @@ public class ProtocolHandlerImplTest {
     {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
-                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId, entityPrivateKey);
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
+                entityPrivateKey, null);
 
         // when the handshake is invoked
         protocolHandler.handshake();
@@ -110,7 +111,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
-                entityPrivateKey);
+                entityPrivateKey, null);
 
         protocolHandler.handshake();
 
@@ -154,7 +155,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(invalidPacketType,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         protocolHandler.handshake();
     }
@@ -166,7 +167,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 badRequestId,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
 
         protocolHandler.handshake();
@@ -179,7 +180,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, errorStatus,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         protocolHandler.handshake();
     }
@@ -192,7 +193,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
                 wrongProto, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         protocolHandler.handshake();
     }
@@ -205,7 +206,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE, 0,
                 PROTOCOL_VERSION, wrongCrypto,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         protocolHandler.handshake();
     }
@@ -217,7 +218,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                invalidAgentId, entityPrivateKey);
+                invalidAgentId, entityPrivateKey, null);
 
         protocolHandler.handshake();
     }
@@ -229,7 +230,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, EncryptionKeyPair.generate().getPrivateKey());
+                agentId, EncryptionKeyPair.generate().getPrivateKey(), null);
 
         protocolHandler.handshake();
     }
@@ -240,7 +241,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         // validate what is sent is what is produced by the writer
         byte[] expectedRequest = new byte[] { 0, 1, 2, 3, 4 };
@@ -259,25 +260,11 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         int invalidPayloadSize = 999;
         when(outerEnvelopeReader.decryptHeader(any(), any()))
                 .thenReturn(invalidPayloadSize);
-        protocolHandler.handshake();
-    }
-
-    @Test(expected = MessageVerificationException.class)
-    public void ackHandshakeResponse_InvalidHMAC() throws Exception
-    {
-        stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
-                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
-                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
-
-        byte[] ackResponseHMAC = new byte[32];
-        when(dataChannel.recv(32)).thenReturn(ackResponseHMAC);
-
         protocolHandler.handshake();
     }
 
@@ -287,7 +274,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         int badAckRequestId = 999;
         when(outerEnvelopeReader.decryptPayload(any(), any(), any()))
@@ -302,7 +289,7 @@ public class ProtocolHandlerImplTest {
         stubDataChannel(IPC_DATA_TYPE_DATA_PACKET,
                 UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
                 PROTOCOL_VERSION, CRYPTO_SUITE_VERSION,
-                agentId, entityPrivateKey);
+                agentId, entityPrivateKey, null);
 
         when(outerEnvelopeReader.decryptPayload(any(), any(), any()))
                 .thenReturn(createAckDecryptedPayload(
@@ -316,7 +303,7 @@ public class ProtocolHandlerImplTest {
     private void stubDataChannel(
             byte packetType, long requestId, int status, long protocolVersion,
             long cryptoSuiteVersion, UUID agentId,
-            EncryptionPrivateKey entityPrivateKey)
+            EncryptionPrivateKey entityPrivateKey, byte[] hmacOverride)
         throws IOException
     {
         // stub the initiate handshake response header
@@ -338,8 +325,8 @@ public class ProtocolHandlerImplTest {
 
 
         // stub the ack response payload
-        byte[] ackResponse = new byte[12];
-        when(dataChannel.recv(12)).thenReturn(ackResponse);
+        byte[] ackResponseTail = new byte[12];
+        when(dataChannel.recv(12)).thenReturn(ackResponseTail);
 
 
         // stub the decryption for the ack header
@@ -347,12 +334,25 @@ public class ProtocolHandlerImplTest {
                 .thenReturn(12);
 
         // set up the HMAC in the ack response
-        HMAC hmac = new HMAC(sharedSecret);
-        byte[][] hmacParts = new byte[2][];
-        hmacParts[0] = ackResponseHeader;
-        hmacParts[1] = ackResponse;
+        byte[] hmacVal = null;
+
+        if (null == hmacOverride) {
+            HMAC hmac = new HMAC(sharedSecret);
+            byte[][] hmacParts = new byte[2][];
+            hmacParts[0] = ackResponseHeader;
+            hmacParts[1] = ackResponseTail;
+            hmacVal = hmac.createHMACShort(hmacParts);
+        } else {
+            hmacVal = hmacOverride;
+        }
+
         when(dataChannel.recv(32))
-                .thenReturn(hmac.createHMACShort(hmacParts));
+            .thenReturn(hmacVal);
+
+        byte[] ackResponse = new byte[hmacVal.length + ackResponseTail.length];
+        System.arraycopy(hmacVal, 0, ackResponse, 0, hmacVal.length);
+        System.arraycopy(
+            ackResponseTail, 0, ackResponse, hmacVal.length, ackResponseTail.length);
 
         // stub the decryption of the ack payload
         when(outerEnvelopeReader.decryptPayload(sharedSecret, ackResponseHeader,

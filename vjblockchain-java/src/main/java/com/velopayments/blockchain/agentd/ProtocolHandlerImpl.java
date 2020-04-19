@@ -265,7 +265,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 sharedSecret, hmac.createHMACShort(serverChallengeNonce)));
 
 
-        // receive the header: type, size
+        // receive the header: type, size, and MAC.
         byte[] header = dataChannel.recv(5);
         int payloadSize = outerEnvelopeReader.decryptHeader(
                 sharedSecret, header);
@@ -278,19 +278,16 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
         byte[] responseHMAC = dataChannel.recv(32);
 
-        byte[] encryptedPayload = dataChannel.recv(payloadSize);
+        byte[] encryptedPayloadTail = dataChannel.recv(payloadSize);
 
-        // verify HMAC
-        byte[][] hmacParts = new byte[2][];
-        hmacParts[0] = header;
-        hmacParts[1] = encryptedPayload;
-        byte[] computedHMAC = hmac.createHMACShort(hmacParts);
-
-        if (!EqualsUtil.constantTimeEqual(responseHMAC, computedHMAC))
-        {
-            throw new MessageVerificationException(
-                    "Invalid HMAC in second round of handshake.");
-        }
+        //the payload is the MAC and the payload bytes.
+        byte[] encryptedPayload =
+            new byte[responseHMAC.length + encryptedPayloadTail.length];
+        System.arraycopy(
+            responseHMAC, 0, encryptedPayload, 0, responseHMAC.length);
+        System.arraycopy(
+            encryptedPayloadTail, 0, encryptedPayload, responseHMAC.length,
+            encryptedPayloadTail.length);
 
         // we have a valid encrypted payload, now to decrypt it
         byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(

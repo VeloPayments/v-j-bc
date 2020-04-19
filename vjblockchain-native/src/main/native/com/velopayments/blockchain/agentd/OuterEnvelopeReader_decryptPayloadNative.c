@@ -46,6 +46,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
     MODEL_ASSERT(NULL != shared_secret);
+    MODEL_ASSERT(NULL != header);
     MODEL_ASSERT(NULL != payload);
 
     /* verify that the vjblockchain library has been initialized. */
@@ -53,7 +54,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
-        return NULL;
+        goto done;
     }
 
     /* verify that the shared_secret parameter is not null. */
