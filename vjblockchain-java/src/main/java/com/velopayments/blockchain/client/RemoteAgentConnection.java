@@ -80,8 +80,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public UUID getLatestBlockId()
     throws IOException {
 
-        //return protocolHandler.getLatestBlockId();
-        return null;
+        return protocolHandler.getLatestBlockId();
     }
 
     @Override

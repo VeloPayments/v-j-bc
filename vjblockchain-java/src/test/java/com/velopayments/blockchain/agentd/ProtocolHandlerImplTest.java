@@ -9,6 +9,7 @@ import com.velopayments.blockchain.util.ByteUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -43,6 +44,8 @@ public class ProtocolHandlerImplTest {
         UUID.fromString("78776753-7b30-499b-9128-0f7b58dbdcaa");
     private final UUID DUMMY_ARTIFACT_ID =
         UUID.fromString("f113cac5-f112-49c8-ae66-208df9dbc4f1");
+    private final UUID LATEST_BLOCK_UUID =
+        UUID.fromString("59665c03-fa18-454c-864d-862b92c7035d");
 
     @Before
     public void setup() {
@@ -352,7 +355,7 @@ public class ProtocolHandlerImplTest {
 
         // then there should have been three round trips
         verify(dataChannel, times(3)).send(Mockito.any());
-        // headers are 5 byte seach
+        // headers are 5 bytes each
         verify(dataChannel, times(3)).recv(5);
         // init response body
         verify(dataChannel, times(1)).recv(164);
@@ -362,6 +365,42 @@ public class ProtocolHandlerImplTest {
         verify(dataChannel, times(2)).recv(12);
         verifyNoMoreInteractions(dataChannel);
 
+    }
+
+    @Test
+    public void getLatestBlockId_happyPath() throws Exception {
+        stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
+                UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_INITIATE,0,
+                PROTOCOL_VERSION, CRYPTO_SUITE_VERSION, agentId,
+                entityPrivateKey, null);
+
+        // when the handshake is invoked
+        protocolHandler.handshake();
+
+        byte[] sharedSecret ={ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 };
+        stubDataChannelWithMacPayload(
+            (int)UNAUTH_PROTOCOL_REQ_ID_LATEST_BLOCK_ID_GET, 0, 0,
+            UuidUtil.getBytesFromUUID(LATEST_BLOCK_UUID), sharedSecret, null);
+
+        UUID id = protocolHandler.getLatestBlockId();
+
+        // the returned UUID matches the payload.
+        assertEquals(id, LATEST_BLOCK_UUID);
+
+        // then there should have been three round trips
+        verify(dataChannel, times(3)).send(Mockito.any());
+        // headers are 5 bytes each
+        verify(dataChannel, times(3)).recv(5);
+        // init response body
+        verify(dataChannel, times(1)).recv(164);
+        // ack HMAC
+        verify(dataChannel, times(1)).recv(32);
+        // ack response body
+        verify(dataChannel, times(1)).recv(12);
+        // latest id response body
+        verify(dataChannel, times(1)).recv(12 + 16 + 32);
+        verifyNoMoreInteractions(dataChannel);
     }
 
     /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
@@ -475,6 +514,60 @@ public class ProtocolHandlerImplTest {
         // stub the decryption for the ack header
         when(outerEnvelopeReader.decryptHeader(any(), any()))
                 .thenReturn(12);
+
+        // stub the decryption of the payload
+        when(outerEnvelopeReader.decryptPayload(
+                    any(), eq(authedResponseHeader), eq(combinedMacPayload)))
+            .thenReturn(
+                    createUnencryptedPayload(
+                        requestId, status, offset, payload));
+
+    }
+
+    private void stubDataChannelWithMacPayload(
+            int requestId, int status, int offset, byte[] payload,
+            byte[] sharedSecret, byte[] hmacOverride)
+        throws IOException
+    {
+        int payloadLength = 0;
+        if (null != payload)
+            payloadLength = payload.length;
+
+        // return the response header
+        byte[] authedResponseHeader =
+            createAuthedResponseHeader(sharedSecret, payloadLength + 12);
+        when(dataChannel.recv(5))
+                .thenReturn(authedResponseHeader);
+
+        // build the payload
+        byte[] authedResponsePayload =
+            createAuthedResponsePayload(
+                sharedSecret, requestId, status, offset, payload);
+
+        // compute the MAC.
+        byte[] MAC = null;
+        if (null == hmacOverride) {
+            MAC = createMAC(sharedSecret, authedResponseHeader,
+                            authedResponsePayload);
+        } else {
+            MAC = hmacOverride;
+        }
+
+        // compute the combined MAC and payload.
+        byte[] combinedMacPayload =
+            new byte[MAC.length + authedResponsePayload.length];
+        System.arraycopy(MAC, 0, combinedMacPayload, 0, MAC.length);
+        System.arraycopy(
+            authedResponsePayload, 0, combinedMacPayload, MAC.length,
+            authedResponsePayload.length);
+
+        // return the combined MAC payload
+        when(dataChannel.recv(12 + payload.length + 32))
+            .thenReturn(combinedMacPayload);
+
+        // stub the decryption for the ack header
+        when(outerEnvelopeReader.decryptHeader(any(), any()))
+                .thenReturn(12 + payload.length);
 
         // stub the decryption of the payload
         when(outerEnvelopeReader.decryptPayload(

@@ -57,9 +57,17 @@ public class RemoteAgentIT {
         try {
             conn.connect();
             System.out.println("handshake success!");
+            UUID firstId = conn.getLatestBlockId();
+            System.out.println("Initial Block UUID: " + firstId);
             conn.submit(txn);
             System.out.println("submit success!");
+            System.out.println("Sleeping for 10 seconds...");
+            Thread.sleep(10000);
+            UUID nextId = conn.getLatestBlockId();
+            System.out.println("New Block UUID: " + nextId);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             try {
