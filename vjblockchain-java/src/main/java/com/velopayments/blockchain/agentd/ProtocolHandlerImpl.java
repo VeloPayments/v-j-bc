@@ -648,7 +648,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // get certificate
         byte[] certificate = Arrays.copyOfRange(
             decryptedPayload, payloadHeaderSize,
-            payloadSize - payloadHeaderSize);
+            payloadSize);
         return Optional.of(Certificate.fromByteArray(certificate));
     }
 }

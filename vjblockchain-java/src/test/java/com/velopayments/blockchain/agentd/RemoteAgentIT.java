@@ -98,13 +98,6 @@ public class RemoteAgentIT {
             new CertificateReader(
                 new CertificateParser(cert));
 
-        byte[] certBytes = cert.toByteArray();
-
-        for (byte b : certBytes) {
-            System.out.print(Byte.valueOf(b) + " ");
-        }
-        System.out.println();
-
         System.out.println(
             "Found " +
             Integer.valueOf(reader.count(Field.WRAPPED_TRANSACTION_TUPLE)) +
