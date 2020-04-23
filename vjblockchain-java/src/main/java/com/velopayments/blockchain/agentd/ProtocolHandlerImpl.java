@@ -12,6 +12,7 @@ import com.velopayments.blockchain.util.UuidUtil;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ProtocolHandlerImpl implements ProtocolHandler {
@@ -25,6 +26,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     public static final long UNAUTH_PROTOCOL_REQ_ID_HANDSHAKE_ACKNOWLEDGE =  1L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_LATEST_BLOCK_ID_GET   =  2L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_SUBMIT    =  3L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET       =  4L;
 
     static {
         Initializer.init();
@@ -105,6 +107,13 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         writeGetLatestBlockIdRequest();
 
         return readGetLatestBlockIdResponse();
+    }
+
+    @Override
+    public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
+        writeGetBlockByIdRequest(blockId);
+
+        return readGetBlockByIdResponse();
     }
 
     /**
@@ -542,5 +551,104 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] uuidBytes = new byte[16];
         System.arraycopy(decryptedPayload, 12, uuidBytes, 0, 16);
         return UuidUtil.getUUIDFromBytes(uuidBytes);
+    }
+
+
+    private void writeGetBlockByIdRequest(UUID blockId) throws IOException {
+
+        /* | Get Block by ID request packet.                               | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | block_id                                       |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[24];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET
+        byte[] reqBytes =
+            ByteUtil.htonl((int)UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-23: block id
+        byte[] blockIdBytes = UuidUtil.getBytesFromUUID(blockId);
+        System.arraycopy(blockIdBytes, 0, request, 8, 16);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private Optional<Certificate>
+    readGetBlockByIdResponse() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Block by ID response packet.                              | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET         |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | BLOCK_UUID                                     |  16 bytes    | */
+        /* | PREVIOUS_BLOCK_UUID                            |  16 bytes    | */
+        /* | NEXT_BLOCK_UUID                                |  16 bytes    | */
+        /* | FIRST_TRANSACTION_ID                           |  16 bytes    | */
+        /* | NET_BLOCK_HEIGHT                               |   8 bytes    | */
+        /* | NET_CERT_SIZE                                  |   8 bytes    | */
+        /* | block certificate                              |   N bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            /* TODO - there might be a different error than not found. */
+            return Optional.empty();
+        }
+
+        // check size
+        int payloadHeaderSize =
+            3 * 4 + 16 * 4 + 8 * 2;
+        if (payloadSize <= payloadHeaderSize) {
+            return Optional.empty();
+        }
+
+        // get certificate
+        byte[] certificate = Arrays.copyOfRange(
+            decryptedPayload, payloadHeaderSize,
+            payloadSize - payloadHeaderSize);
+        return Optional.of(Certificate.fromByteArray(certificate));
     }
 }

@@ -111,9 +111,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public Optional<Certificate> getBlockById(UUID blockId)
     throws IOException {
 
-        // TODO: BLOC-173
-        //return protocolHandler.getBlockById(blockId);
-        return null;
+        return protocolHandler.getBlockById(blockId);
     }
 
     @Override

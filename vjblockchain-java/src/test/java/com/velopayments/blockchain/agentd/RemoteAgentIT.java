@@ -7,6 +7,7 @@ import com.velopayments.blockchain.crypt.*;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -65,9 +66,20 @@ public class RemoteAgentIT {
             Thread.sleep(10000);
             UUID nextId = conn.getLatestBlockId();
             System.out.println("New Block UUID: " + nextId);
+            if (nextId.compareTo(firstId) != 0) {
+                Optional<Certificate> blockCert = conn.getBlockById(nextId);
+                if (blockCert.isPresent()) {
+                    System.out.println("Read block " + nextId + " from agentd");
+                    readBlockCert(blockCert.get());
+                } else {
+                    System.out.println("Could not retrieve block " + nextId);
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Throwable e) {
             e.printStackTrace();
         } finally {
             try {
@@ -77,8 +89,51 @@ public class RemoteAgentIT {
             }
         }
 
-
         System.out.println("execution complete.");
     }
 
+    private static void readBlockCert(Certificate cert) {
+
+        CertificateReader reader =
+            new CertificateReader(
+                new CertificateParser(cert));
+
+        byte[] certBytes = cert.toByteArray();
+
+        for (byte b : certBytes) {
+            System.out.print(Byte.valueOf(b) + " ");
+        }
+        System.out.println();
+
+        System.out.println(
+            "Found " +
+            Integer.valueOf(reader.count(Field.WRAPPED_TRANSACTION_TUPLE)) +
+            " transactions in cert.");
+
+        for (int i = 0; i < reader.count(Field.WRAPPED_TRANSACTION_TUPLE); ++i)
+        {
+            try {
+                readTransaction(
+                    reader.get(
+                        Field.WRAPPED_TRANSACTION_TUPLE, i).asByteArray());
+            } catch (MissingFieldException e) {
+                System.out.println("Missing transaction " + Integer.valueOf(i));
+            }
+        }
+    }
+
+    private static void readTransaction(byte[] txn) {
+        try {
+            CertificateReader reader =
+                new CertificateReader(
+                    new CertificateParser(
+                        Certificate.fromByteArray(txn)));
+
+            UUID transactionID = reader.getFirst(Field.CERTIFICATE_ID).asUUID();
+
+            System.out.println("    Parsed transaction " + transactionID);
+        } catch (Throwable e) {
+            System.out.println("Could not parse transaction.");
+        }
+    }
 }

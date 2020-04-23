@@ -2,6 +2,7 @@ package com.velopayments.blockchain.agentd;
 
 import com.velopayments.blockchain.cert.Certificate;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -27,4 +28,11 @@ public interface ProtocolHandler {
      * Get the latest block id from the blockchain agent.
      */
     UUID getLatestBlockId() throws IOException;
+
+    /**
+     * Get a block by UUID.
+     *
+     * @param blockId The block id to get.
+     */
+    Optional<Certificate> getBlockById(UUID blockId) throws IOException;
 }
