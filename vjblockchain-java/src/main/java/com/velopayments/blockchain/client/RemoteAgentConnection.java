@@ -87,16 +87,14 @@ public class RemoteAgentConnection implements VelochainConnection {
     public Optional<UUID> getNextBlockId(UUID blockId)
     throws IOException {
 
-        //return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_NEXT_BLOCK_ID, blockId);
-        return null;
+        return protocolHandler.getNextBlockId(blockId);
     }
 
     @Override
     public Optional<UUID> getPrevBlockId(UUID blockId)
     throws IOException {
 
-        //return protocolHandler.sendAndReceiveUUID(ApiMethod.GET_PREV_BLOCK_ID, blockId);
-        return null;
+        return protocolHandler.getPrevBlockId(blockId);
     }
 
     @Override

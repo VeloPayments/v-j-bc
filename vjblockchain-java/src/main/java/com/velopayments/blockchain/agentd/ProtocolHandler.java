@@ -35,4 +35,18 @@ public interface ProtocolHandler {
      * @param blockId The block id to get.
      */
     Optional<Certificate> getBlockById(UUID blockId) throws IOException;
+
+    /**
+     * Given a block id, get the next block id if possible.
+     *
+     * @param blockId The block id.
+     */
+    Optional<UUID> getNextBlockId(UUID blockId) throws IOException;
+
+    /**
+     * Given a block id, get the previous block id if possible.
+     *
+     * @param blockId The block id.
+     */
+    Optional<UUID> getPrevBlockId(UUID blockId) throws IOException;
 }

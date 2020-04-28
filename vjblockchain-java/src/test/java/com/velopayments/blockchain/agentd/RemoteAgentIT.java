@@ -32,24 +32,6 @@ public class RemoteAgentIT {
                 (byte)0xb1, (byte)0x77, (byte)0xfb, (byte)0xa5, (byte)0x1d, (byte)0xb9, (byte)0x2c, (byte)0x2a };
 
         SigningKeyPair signPair = SigningKeyPair.generate();
-        SigningPublicKey signPublic = signPair.getPublicKey();
-        SigningPrivateKey signPrivate = signPair.getPrivateKey();
-
-        UUID DUMMY_TXN_TYPE =
-            UUID.fromString("bc91987a-d2bd-46d7-bccb-a8d94ff49906");
-        UUID DUMMY_CERTIFICATE_ID = UUID.randomUUID();
-        UUID DUMMY_ARTIFACT_ID = UUID.randomUUID();
-        UUID ZERO_UUID = new UUID(0, 0);
-
-        CertificateBuilder builder =
-            CertificateBuilder.createCertificateBuilder(DUMMY_TXN_TYPE);
-        builder.addUUID(Field.PREVIOUS_CERTIFICATE_ID, ZERO_UUID);
-        builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
-        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
-        builder.addInt(Field.PREVIOUS_ARTIFACT_STATE, -1);
-        builder.addInt(Field.NEW_ARTIFACT_STATE, 0x00000000);
-        builder.addString(0x405, "An Example String");
-        Certificate txn = builder.sign(entityId, signPrivate);
 
         RemoteAgentConnection conn = new RemoteAgentConnection(
                 config, SocketFactory.getDefault(),
@@ -60,19 +42,32 @@ public class RemoteAgentIT {
             System.out.println("handshake success!");
             UUID firstId = conn.getLatestBlockId();
             System.out.println("Initial Block UUID: " + firstId);
-            conn.submit(txn);
+            for (int i = 0; i < 2000; ++i) {
+                System.out.println("Submitting txn: " + i);
+                Certificate txn = makeTransactionCertificate(signPair, entityId);
+                conn.submit(txn);
+            }
             System.out.println("submit success!");
             System.out.println("Sleeping for 10 seconds...");
             Thread.sleep(10000);
-            UUID nextId = conn.getLatestBlockId();
-            System.out.println("New Block UUID: " + nextId);
-            if (nextId.compareTo(firstId) != 0) {
-                Optional<Certificate> blockCert = conn.getBlockById(nextId);
-                if (blockCert.isPresent()) {
-                    System.out.println("Read block " + nextId + " from agentd");
-                    readBlockCert(blockCert.get());
-                } else {
-                    System.out.println("Could not retrieve block " + nextId);
+            Optional<UUID> prevIdMaybe = Optional.of(conn.getLatestBlockId());
+
+            while (prevIdMaybe.isPresent()) {
+                UUID prevId = prevIdMaybe.get();
+                System.out.println("New Block UUID: " + prevId);
+                if (prevId.compareTo(firstId) != 0) {
+                    Optional<Certificate> blockCert = conn.getBlockById(prevId);
+                    if (blockCert.isPresent()) {
+                        System.out.println("Read block " + prevId + " from agentd");
+                        readBlockCert(blockCert.get());
+                    } else {
+                        System.out.println("Could not retrieve block " + prevId);
+                    }
+                }
+
+                prevIdMaybe = conn.getPrevBlockId(prevId);
+                if (!prevIdMaybe.isPresent()) {
+                    System.out.println("No other block IDs found.");
                 }
             }
         } catch (IOException e) {
@@ -128,5 +123,26 @@ public class RemoteAgentIT {
         } catch (Throwable e) {
             System.out.println("Could not parse transaction.");
         }
+    }
+
+    private static UUID DUMMY_TXN_TYPE =
+        UUID.fromString("bc91987a-d2bd-46d7-bccb-a8d94ff49906");
+
+    private static Certificate makeTransactionCertificate(
+                                    SigningKeyPair signPair, UUID entityId) {
+
+        UUID DUMMY_CERTIFICATE_ID = UUID.randomUUID();
+        UUID DUMMY_ARTIFACT_ID = UUID.randomUUID();
+        UUID ZERO_UUID = new UUID(0, 0);
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(DUMMY_TXN_TYPE);
+        builder.addUUID(Field.PREVIOUS_CERTIFICATE_ID, ZERO_UUID);
+        builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
+        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
+        builder.addInt(Field.PREVIOUS_ARTIFACT_STATE, -1);
+        builder.addInt(Field.NEW_ARTIFACT_STATE, 0x00000000);
+        builder.addString(0x405, "An Example String");
+        return builder.sign(entityId, signPair.getPrivateKey());
     }
 }
