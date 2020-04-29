@@ -44,10 +44,21 @@ public class RemoteAgentIT {
             System.out.println("Initial Block UUID: " + firstId);
             for (int i = 0; i < 2000; ++i) {
                 System.out.println("Submitting txn: " + i);
-                Certificate txn = makeTransactionCertificate(signPair, entityId);
+                Certificate txn =
+                    makeTransactionCertificate(
+                        signPair, entityId, UUID.randomUUID());
                 conn.submit(txn);
             }
-            System.out.println("submit success!");
+            System.out.println("batch submit success!");
+
+            /* make txn we can query later. */
+            UUID certId = UUID.randomUUID();
+            Certificate txn =
+                makeTransactionCertificate(
+                    signPair, entityId, certId);
+            conn.submit(txn);
+            System.out.println("individual submit success!");
+
             System.out.println("Sleeping for 10 seconds...");
             Thread.sleep(10000);
             Optional<UUID> prevIdMaybe = Optional.of(conn.getLatestBlockId());
@@ -69,6 +80,14 @@ public class RemoteAgentIT {
                 if (!prevIdMaybe.isPresent()) {
                     System.out.println("No other block IDs found.");
                 }
+            }
+
+            /* query our single transaction. */
+            Optional<Certificate> singleCert = conn.getTransactionById(certId);
+            if (singleCert.isPresent()) {
+                System.out.println("Query for " + certId + " successful!");
+            } else {
+                System.out.println("*** Query for " + certId + " FAILED!");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -129,9 +148,10 @@ public class RemoteAgentIT {
         UUID.fromString("bc91987a-d2bd-46d7-bccb-a8d94ff49906");
 
     private static Certificate makeTransactionCertificate(
-                                    SigningKeyPair signPair, UUID entityId) {
+                                    SigningKeyPair signPair, UUID entityId,
+                                    UUID certificateUuid) {
 
-        UUID DUMMY_CERTIFICATE_ID = UUID.randomUUID();
+        UUID DUMMY_CERTIFICATE_ID = certificateUuid;
         UUID DUMMY_ARTIFACT_ID = UUID.randomUUID();
         UUID ZERO_UUID = new UUID(0, 0);
 

@@ -29,6 +29,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET       =  4L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_GET_NEXT     =  5L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_GET_PREV     =  6L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET = 16L;
 
     static {
         Initializer.init();
@@ -130,6 +131,14 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         writeGetPrevBlockIdRequest(blockId);
 
         return readGetPrevBlockIdResponse();
+    }
+
+    @Override
+    public Optional<Certificate>
+    getTransactionById(UUID txnId) throws IOException {
+        writeGetTransactionByIdRequest(txnId);
+
+        return readGetTransactionByIdResponse();
     }
 
     /**
@@ -848,5 +857,107 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] prevBlockIdBytes = Arrays.copyOfRange(
             decryptedPayload, 3 * 4, 3 * 4 + 16);
         return Optional.of(UuidUtil.getUUIDFromBytes(prevBlockIdBytes));
+    }
+
+    private void writeGetTransactionByIdRequest(UUID txnId)
+    throws IOException {
+
+        /* | Get Transaction by ID request packet.                         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET   |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | txn_id                                         |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[24];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET
+        byte[] reqBytes =
+            ByteUtil.htonl((int)UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-23: txn id
+        byte[] txnIdBytes = UuidUtil.getBytesFromUUID(txnId);
+        System.arraycopy(txnIdBytes, 0, request, 8, 16);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private Optional<Certificate>
+    readGetTransactionByIdResponse() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Transaction by ID response packet.                        | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET   |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | TXN_UUID                                       |  16 bytes    | */
+        /* | PREVIOUS_TXN_UUID                              |  16 bytes    | */
+        /* | NEXT_TXN_UUID                                  |  16 bytes    | */
+        /* | ARTIFACT_ID                                    |  16 bytes    | */
+        /* | BLOCK_ID                                       |  16 bytes    | */
+        /* | NET_CERT_SIZE                                  |   8 bytes    | */
+        /* | NET_TXN_STATE                                  |   4 bytes    | */
+        /* | txn certificate                                |   N bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            System.out.println("*** received status " + status);
+            /* TODO - there might be a different error than not found. */
+            return Optional.empty();
+        }
+
+        // check size
+        int payloadHeaderSize =
+            3 * 4 + 16 * 5 + 8 * 1 + 4 * 1;
+        if (payloadSize <= payloadHeaderSize) {
+            System.out.println("*** payload size too small");
+            return Optional.empty();
+        }
+
+        // get certificate
+        byte[] certificate = Arrays.copyOfRange(
+            decryptedPayload, payloadHeaderSize,
+            payloadSize);
+        return Optional.of(Certificate.fromByteArray(certificate));
     }
 }

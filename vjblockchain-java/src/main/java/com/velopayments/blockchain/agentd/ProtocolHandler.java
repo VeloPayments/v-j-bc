@@ -49,4 +49,11 @@ public interface ProtocolHandler {
      * @param blockId The block id.
      */
     Optional<UUID> getPrevBlockId(UUID blockId) throws IOException;
+
+    /**
+     * Get a transaction by UUID.
+     *
+     * @param txnId The transaction id to get.
+     */
+    Optional<Certificate> getTransactionById(UUID txnId) throws IOException;
 }

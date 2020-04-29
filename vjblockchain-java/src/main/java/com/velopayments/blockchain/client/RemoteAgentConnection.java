@@ -124,9 +124,8 @@ public class RemoteAgentConnection implements VelochainConnection {
     @Override
     public Optional<Certificate> getTransactionById(UUID txnId)
     throws IOException {
-        // TODO: BLOC-252
-        //return protocolHandler.getTransactionById(txnId);
-        return null;
+
+        return protocolHandler.getTransactionById(txnId);
     }
 
     @Override
