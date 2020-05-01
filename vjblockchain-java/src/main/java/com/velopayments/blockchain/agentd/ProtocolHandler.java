@@ -53,7 +53,28 @@ public interface ProtocolHandler {
     /**
      * Get a transaction by UUID.
      *
-     * @param txnId The transaction id to get.
+     * @param txnId The transaction id.
      */
     Optional<Certificate> getTransactionById(UUID txnId) throws IOException;
+
+    /**
+     * Get the next transaction id given a transaction id.
+     *
+     * @param txnId The transaction id.
+     */
+    Optional<UUID> getTransactionNextId(UUID txnId) throws IOException;
+
+    /**
+     * Get the previous transaction id given a transaction id.
+     *
+     * @param txnId The transaction id.
+     */
+    Optional<UUID> getTransactionPreviousId(UUID txnId) throws IOException;
+
+    /**
+     * Get the block id of a transaction.
+     *
+     * @param txnId The transaction id.
+     */
+    Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException;
 }
