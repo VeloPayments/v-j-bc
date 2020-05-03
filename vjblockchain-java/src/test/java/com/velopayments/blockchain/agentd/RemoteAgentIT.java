@@ -46,16 +46,18 @@ public class RemoteAgentIT {
                 System.out.println("Submitting txn: " + i);
                 Certificate txn =
                     makeTransactionCertificate(
-                        signPair, entityId, UUID.randomUUID());
+                        signPair, entityId, UUID.randomUUID(),
+                        UUID.randomUUID());
                 conn.submit(txn);
             }
             System.out.println("batch submit success!");
 
             /* make txn we can query later. */
             UUID certId = UUID.randomUUID();
+            UUID artifactId = UUID.randomUUID();
             Certificate txn =
                 makeTransactionCertificate(
-                    signPair, entityId, certId);
+                    signPair, entityId, artifactId, certId);
             conn.submit(txn);
             System.out.println("individual submit success!");
 
@@ -89,6 +91,53 @@ public class RemoteAgentIT {
             } else {
                 System.out.println("*** Query for " + certId + " FAILED!");
             }
+
+            /* there is no next transaction id. */
+            Optional<UUID> nextId =
+                conn.getNextTransactionIdForTransactionById(certId);
+            if (nextId.isPresent()) {
+                System.out.println("*** Txn Next Id FAIL.");
+            } else {
+                System.out.println("    Next is not found as expected.");
+            }
+
+            /* there is no prev transaction id. */
+            Optional<UUID> prevId =
+                conn.getPreviousTransactionIdForTransactionById(certId);
+            if (prevId.isPresent()) {
+                System.out.println("*** Txn Prev Id FAIL.");
+            } else {
+                System.out.println("    Prev is not found as expected.");
+            }
+
+            /* there is a block id. */
+            Optional<UUID> blockId = conn.getTransactionBlockId(certId);
+            if (blockId.isPresent()) {
+                System.out.println("    Block ID found: " + blockId.get());
+            } else {
+                System.out.println("*** Txn Block Id FAIL.");
+            }
+
+            /* get the first txn id for the artifact id. */
+            Optional<UUID> firstTxnId =
+                conn.getFirstTransactionIdForArtifactById(artifactId);
+            if (firstTxnId.isPresent()) {
+                System.out.println(
+                    "    First Txn ID found: " + firstTxnId.get());
+            } else {
+                System.out.println("*** First Txn Id FAIL.");
+            }
+
+            /* get the last txn id for the artifact id. */
+            Optional<UUID> lastTxnId =
+                conn.getLastTransactionIdForArtifactById(artifactId);
+            if (lastTxnId.isPresent()) {
+                System.out.println(
+                    "    Last Txn ID found: " + lastTxnId.get());
+            } else {
+                System.out.println("*** Last Txn Id FAIL.");
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -149,17 +198,17 @@ public class RemoteAgentIT {
 
     private static Certificate makeTransactionCertificate(
                                     SigningKeyPair signPair, UUID entityId,
+                                    UUID artifactId,
                                     UUID certificateUuid) {
 
         UUID DUMMY_CERTIFICATE_ID = certificateUuid;
-        UUID DUMMY_ARTIFACT_ID = UUID.randomUUID();
         UUID ZERO_UUID = new UUID(0, 0);
 
         CertificateBuilder builder =
             CertificateBuilder.createCertificateBuilder(DUMMY_TXN_TYPE);
         builder.addUUID(Field.PREVIOUS_CERTIFICATE_ID, ZERO_UUID);
         builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
-        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
+        builder.addUUID(Field.ARTIFACT_ID, artifactId);
         builder.addInt(Field.PREVIOUS_ARTIFACT_STATE, -1);
         builder.addInt(Field.NEW_ARTIFACT_STATE, 0x00000000);
         builder.addString(0x405, "An Example String");

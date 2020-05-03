@@ -77,4 +77,19 @@ public interface ProtocolHandler {
      * @param txnId The transaction id.
      */
     Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException;
+
+    /**
+     * Get the first transaction id of an artifact.
+     *
+     * @param artifactId The artifact id.
+     */
+    Optional<UUID> getArtifactFirstTxnId(UUID artifactId) throws IOException;
+
+    /**
+     * Get the last transaction id of an artifact.
+     *
+     * @param artifactId The artifact id.
+     */
+    Optional<UUID> getArtifactLastTxnId(UUID artifactId) throws IOException;
+
 }

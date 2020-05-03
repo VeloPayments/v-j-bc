@@ -130,21 +130,15 @@ public class RemoteAgentConnection implements VelochainConnection {
     @Override
     public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
     throws IOException {
-        // TODO: BLOC-253
-        /*return protocolHandler.sendAndReceiveUUID(
-                ApiMethod.GET_FIRST_TXN_ID_FOR_ARTIFACT_BY_ID,
-                artifactId);*/
-        return null;
+
+        return protocolHandler.getArtifactFirstTxnId(artifactId);
     }
 
     @Override
     public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
     throws IOException {
-        // TODO: BLOC-254
-        /*return protocolHandler.sendAndReceiveUUID(
-                ApiMethod.GET_LAST_TXN_ID_FOR_ARTIFACT_BY_ID,
-                artifactId);*/
-        return null;
+
+        return protocolHandler.getArtifactLastTxnId(artifactId);
     }
 
     @Override

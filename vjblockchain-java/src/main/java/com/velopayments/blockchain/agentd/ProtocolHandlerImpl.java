@@ -36,6 +36,10 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                                                                           = 18L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_ID_GET_BLOCK_ID
                                                                           = 19L;
+    public static final long
+        UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET               = 32L;
+    public static final long
+        UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET                = 33L;
 
     static {
         Initializer.init();
@@ -167,6 +171,22 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         writeGetTransactionBlockIdRequest(txnId);
 
         return readGetTransactionBlockIdResponse();
+    }
+
+    @Override
+    public Optional<UUID>
+    getArtifactFirstTxnId(UUID artifactId) throws IOException {
+        writeGetArtifactFirstTxnIdRequest(artifactId);
+
+        return readGetArtifactGetFirstTxnIdRequest();
+    }
+
+    @Override
+    public Optional<UUID>
+    getArtifactLastTxnId(UUID artifactId) throws IOException {
+        writeGetArtifactLastTxnIdRequest(artifactId);
+
+        return readGetArtifactGetLastTxnIdRequest();
     }
 
     /**
@@ -1262,5 +1282,191 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         byte[] blockTxnIdBytes = Arrays.copyOfRange(
             decryptedPayload, 3 * 4, 3 * 4 + 16);
         return Optional.of(UuidUtil.getUUIDFromBytes(blockTxnIdBytes));
+    }
+
+    private void writeGetArtifactFirstTxnIdRequest(UUID artifactId)
+    throws IOException {
+
+        /* | Get Artifact first transaction ID request packet.             | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET | 4 bytes | */
+        /* | offset                                         |   4 bytes    | */
+        /* | artifact_id                                    |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[24];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET
+        byte[] reqBytes =
+            ByteUtil.htonl(
+                (int)UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-23: artifact id
+        byte[] artifactIdBytes = UuidUtil.getBytesFromUUID(artifactId);
+        System.arraycopy(artifactIdBytes, 0, request, 8, 16);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private Optional<UUID>
+    readGetArtifactGetFirstTxnIdRequest() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Artifact First Transaction ID response packet.            | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET | 4 bytes | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | FIRST_TXN_ID                                   |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            /* TODO - there might be a different error than not found. */
+            return Optional.empty();
+        }
+
+        // check size
+        int payloadHeaderSize =
+            3 * 4 + 16 * 1;
+        if (payloadSize < payloadHeaderSize) {
+            return Optional.empty();
+        }
+
+        // get uuid
+        byte[] firstTxnIdBytes = Arrays.copyOfRange(
+            decryptedPayload, 3 * 4, 3 * 4 + 16);
+        return Optional.of(UuidUtil.getUUIDFromBytes(firstTxnIdBytes));
+    }
+
+    private void writeGetArtifactLastTxnIdRequest(UUID artifactId)
+    throws IOException {
+
+        /* | Get Artifact first transaction ID request packet.             | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET | 4 bytes  | */
+        /* | offset                                         |   4 bytes    | */
+        /* | artifact_id                                    |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[24];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET
+        byte[] reqBytes =
+            ByteUtil.htonl(
+                (int)UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-23: artifact id
+        byte[] artifactIdBytes = UuidUtil.getBytesFromUUID(artifactId);
+        System.arraycopy(artifactIdBytes, 0, request, 8, 16);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private Optional<UUID>
+    readGetArtifactGetLastTxnIdRequest() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Artifact Last Transaction ID response packet.             | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET | 4 bytes  | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | LAST_TXN_ID                                    |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            /* TODO - there might be a different error than not found. */
+            return Optional.empty();
+        }
+
+        // check size
+        int payloadHeaderSize =
+            3 * 4 + 16 * 1;
+        if (payloadSize < payloadHeaderSize) {
+            return Optional.empty();
+        }
+
+        // get uuid
+        byte[] lastTxnIdBytes = Arrays.copyOfRange(
+            decryptedPayload, 3 * 4, 3 * 4 + 16);
+        return Optional.of(UuidUtil.getUUIDFromBytes(lastTxnIdBytes));
     }
 }
