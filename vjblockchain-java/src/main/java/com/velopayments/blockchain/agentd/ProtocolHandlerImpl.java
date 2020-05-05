@@ -29,6 +29,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_BY_ID_GET       =  4L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_GET_NEXT     =  5L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_GET_PREV     =  6L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET=  7L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_BY_ID_GET = 16L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_TRANSACTION_ID_GET_NEXT
                                                                           = 17L;
@@ -187,6 +188,14 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         writeGetArtifactLastTxnIdRequest(artifactId);
 
         return readGetArtifactGetLastTxnIdRequest();
+    }
+
+    @Override
+    public Optional<UUID>
+    getBlockIdByBlockHeight(long height) throws IOException {
+        writeGetBlockIdByBlockHeight(height);
+
+        return readGetBlockIdByBlockHeight();
     }
 
     /**
@@ -1469,4 +1478,97 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
             decryptedPayload, 3 * 4, 3 * 4 + 16);
         return Optional.of(UuidUtil.getUUIDFromBytes(lastTxnIdBytes));
     }
+
+    private void writeGetBlockIdByBlockHeight(long height) throws IOException {
+
+        /* | Get Block ID by Block Height request packet.                  | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET  |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | block_height                                   |   8 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[16];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET
+        byte[] reqBytes =
+            ByteUtil.htonl(
+                (int)UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // bytes 8-15: block height
+        byte[] blockHeightBytes = ByteUtil.htonll(height);
+        System.arraycopy(blockHeightBytes, 0, request, 8, 8);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private Optional<UUID>
+    readGetBlockIdByBlockHeight() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Block ID by Block Height response packet.                 | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET  |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | BLOCK_ID                                       |  16 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_BLOCK_ID_BY_HEIGHT_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            /* TODO - there might be a different error than not found. */
+            return Optional.empty();
+        }
+
+        // check size
+        int payloadHeaderSize =
+            3 * 4 + 16 * 1;
+        if (payloadSize < payloadHeaderSize) {
+            return Optional.empty();
+        }
+
+        // get uuid
+        byte[] blockIdBytes = Arrays.copyOfRange(
+            decryptedPayload, 3 * 4, 3 * 4 + 16);
+        return Optional.of(UuidUtil.getUUIDFromBytes(blockIdBytes));
+    }
+
 }

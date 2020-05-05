@@ -138,6 +138,15 @@ public class RemoteAgentIT {
                 System.out.println("*** Last Txn Id FAIL.");
             }
 
+            /* get the block ID by block height. */
+            Optional<UUID> heightId =
+                conn.getBlockIdByBlockHeight(1);
+            if (heightId.isPresent()) {
+                System.out.println("Block ID at height 1: " + heightId.get());
+            } else {
+                System.out.println("*** Get Block ID By Height FAIL.");
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

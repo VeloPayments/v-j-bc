@@ -92,4 +92,10 @@ public interface ProtocolHandler {
      */
     Optional<UUID> getArtifactLastTxnId(UUID artifactId) throws IOException;
 
+    /**
+     * Given a block height, get the block id if possible.
+     *
+     * @param height The block height.
+     */
+    Optional<UUID> getBlockIdByBlockHeight(long height) throws IOException;
 }

@@ -115,9 +115,7 @@ public class RemoteAgentConnection implements VelochainConnection {
     public Optional<UUID> getBlockIdByBlockHeight(long height)
     throws IOException {
 
-        // TODO: BLOC-251
-        //return protocolHandler.getBlockIdByBlockHeight(height);
-        return null;
+        return protocolHandler.getBlockIdByBlockHeight(height);
     }
 
     @Override
