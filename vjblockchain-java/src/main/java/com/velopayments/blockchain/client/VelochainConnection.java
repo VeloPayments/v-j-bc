@@ -132,19 +132,6 @@ public interface VelochainConnection {
 
 
     /**
-     * Get the last block UUID containing a transaction for a given artifact
-     * UUID.
-     *
-     * @param artifactId The artifact ID to look up.
-     *
-     * @return the last block id containing a transaction for a given artifact
-     * id.
-     */
-    Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
-            throws IOException;
-
-
-    /**
      * Get the previous transaction ID associated with the given transaction ID.
      *
      * @param txnId The transaction ID to look up.

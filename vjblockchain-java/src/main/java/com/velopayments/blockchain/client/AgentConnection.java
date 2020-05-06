@@ -242,22 +242,6 @@ public class AgentConnection implements VelochainConnection {
     }
 
     /**
-     * Get the last block UUID containing a transaction for a given artifact
-     * UUID.
-     *
-     * @param artifactId The artifact ID to look up.
-     *
-     * @return the last block id containing a transaction for a given artifact
-     * id.
-     */
-    @Override
-    public Optional<UUID> getLastBlockIdForArtifactById(UUID artifactId)
-            throws IOException {
-
-        return getLastBlockIdForArtifactByIdNative(artifactId);
-    }
-
-    /**
      * Get the previous transaction ID associated with the given transaction ID.
      *
      * @param txnId The transaction ID to look up.
@@ -406,18 +390,6 @@ public class AgentConnection implements VelochainConnection {
     private native Optional<UUID>
     getLastTransactionIdForArtifactByIdNative(UUID artifactId)
     throws IOException;
-
-    /**
-     * Get the last block UUID containing a transaction for a given artifact
-     * UUID.
-     *
-     * @param artifactId The artifact ID to look up.
-     *
-     * @return the last block id containing a transaction for a given artifact
-     * id.
-     */
-    private native Optional<UUID>
-    getLastBlockIdForArtifactByIdNative(UUID artifactId) throws IOException;
 
     /**
      * Get the previous transaction ID associated with the given transaction ID.
