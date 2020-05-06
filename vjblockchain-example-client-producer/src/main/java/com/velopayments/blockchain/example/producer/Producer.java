@@ -1,7 +1,7 @@
 package com.velopayments.blockchain.example.producer;
 
 import com.velopayments.blockchain.cert.*;
-import com.velopayments.blockchain.client.AgentConnection;
+import com.velopayments.blockchain.client.VelochainConnection;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import java.io.*;
 import java.nio.file.*;
@@ -10,6 +10,7 @@ import java.util.UUID;
 public class Producer implements Runnable {
 
     public void run() {
+        /*
         AgentConnection conn = null;
 
         try {
@@ -33,6 +34,7 @@ public class Producer implements Runnable {
                 System.out.println("Got IOException closing Agent Connection");
             }
         }
+        */
     }
 
     /**
@@ -54,7 +56,7 @@ public class Producer implements Runnable {
     /**
      * Write certificates to blockchain.
      */
-    private void writeCerts(AgentConnection conn) throws IOException {
+    private void writeCerts(VelochainConnection conn) throws IOException {
         for (int i = 0; i < 1000; ++i) {
             CertificateBuilder builder =
                 CertificateBuilder.createCertificateBuilder(
@@ -80,8 +82,6 @@ public class Producer implements Runnable {
             } catch (InterruptedException e) {
             }
         }
-
-        conn.commitTransactions();
     }
 
     private static final UUID EXAMPLE_TRANSACTION_TYPE =

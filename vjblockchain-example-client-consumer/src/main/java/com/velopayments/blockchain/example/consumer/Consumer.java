@@ -10,7 +10,7 @@ import java.util.*;
 public class Consumer implements Runnable {
 
     public void run() {
-        AgentConnection conn = null;
+        /*AgentConnection conn = null;
 
         try {
             createDirectoryIfMissing();
@@ -31,7 +31,7 @@ public class Consumer implements Runnable {
             } catch (IOException e) {
                 System.out.println("Got IOException closing Agent Connection");
             }
-        }
+        }*/
     }
 
     /**
@@ -53,7 +53,7 @@ public class Consumer implements Runnable {
     /**
      * Read certificates from blockchain.
      */
-    private void readCerts(AgentConnection conn) throws IOException {
+    private void readCerts(VelochainConnection conn) throws IOException {
         UUID lastBlockId = ROOT_UUID;
 
         for (;;) {
@@ -74,7 +74,7 @@ public class Consumer implements Runnable {
      * Read the provided block.
      */
     private void
-    readBlock(AgentConnection conn, UUID blockId) throws IOException {
+    readBlock(VelochainConnection conn, UUID blockId) throws IOException {
         Certificate cert =
             conn.getBlockById(blockId).orElseThrow(
                 () -> new IOException("Could not read block " + blockId));
