@@ -10,6 +10,7 @@ import com.velopayments.blockchain.util.EqualsUtil;
 import com.velopayments.blockchain.util.UuidUtil;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Optional;
@@ -80,6 +81,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public void submit(Certificate transaction) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         CertificateReader reader =
             new CertificateReader(new CertificateParser(transaction));
         UUID transactionId = null;
@@ -118,6 +125,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public UUID getLatestBlockId() throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetLatestBlockIdRequest();
 
         return readGetLatestBlockIdResponse();
@@ -125,6 +138,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public Optional<Certificate> getBlockById(UUID blockId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetBlockByIdRequest(blockId);
 
         return readGetBlockByIdResponse();
@@ -132,6 +151,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public Optional<UUID> getNextBlockId(UUID blockId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetNextBlockIdRequest(blockId);
 
         return readGetNextBlockIdResponse();
@@ -139,6 +164,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public Optional<UUID> getPrevBlockId(UUID blockId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetPrevBlockIdRequest(blockId);
 
         return readGetPrevBlockIdResponse();
@@ -147,6 +178,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     @Override
     public Optional<Certificate>
     getTransactionById(UUID txnId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetTransactionByIdRequest(txnId);
 
         return readGetTransactionByIdResponse();
@@ -154,6 +191,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public Optional<UUID> getTransactionNextId(UUID txnId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetTransactionNextIdRequest(txnId);
 
         return readGetTransactionNextIdResponse();
@@ -162,6 +205,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     @Override
     public Optional<UUID> getTransactionPreviousId(UUID txnId)
     throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetTransactionPreviousIdRequest(txnId);
 
         return readGetTransactionPreviousIdResponse();
@@ -169,6 +218,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     @Override
     public Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetTransactionBlockIdRequest(txnId);
 
         return readGetTransactionBlockIdResponse();
@@ -177,6 +232,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     @Override
     public Optional<UUID>
     getArtifactFirstTxnId(UUID artifactId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetArtifactFirstTxnIdRequest(artifactId);
 
         return readGetArtifactGetFirstTxnIdRequest();
@@ -185,6 +246,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     @Override
     public Optional<UUID>
     getArtifactLastTxnId(UUID artifactId) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetArtifactLastTxnIdRequest(artifactId);
 
         return readGetArtifactGetLastTxnIdRequest();
@@ -193,6 +260,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     @Override
     public Optional<UUID>
     getBlockIdByBlockHeight(long height) throws IOException {
+
+        /* sharedSecret is populated when connect() successfully completes. */
+        if (sharedSecret == null) {
+            throw new ConnectException("Not connected. Call connect() first.");
+        }
+
         writeGetBlockIdByBlockHeight(height);
 
         return readGetBlockIdByBlockHeight();

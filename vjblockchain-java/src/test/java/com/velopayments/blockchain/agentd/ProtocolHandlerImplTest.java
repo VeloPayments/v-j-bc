@@ -14,9 +14,11 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.net.ConnectException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -367,6 +369,17 @@ public class ProtocolHandlerImplTest {
 
     }
 
+    @Test(expected = ConnectException.class)
+    public void submit_noConnection() throws Exception {
+
+        CertificateBuilder builder =
+            CertificateBuilder.createCertificateBuilder(DUMMY_CERTIFICATE_TYPE);
+        builder.addUUID(Field.CERTIFICATE_ID, DUMMY_CERTIFICATE_ID);
+        builder.addUUID(Field.ARTIFACT_ID, DUMMY_ARTIFACT_ID);
+
+        protocolHandler.submit(builder.emit());
+    }
+
     @Test
     public void getLatestBlockId_happyPath() throws Exception {
         stubDataChannelForHandshake(IPC_DATA_TYPE_DATA_PACKET,
@@ -401,6 +414,111 @@ public class ProtocolHandlerImplTest {
         // latest id response body
         verify(dataChannel, times(1)).recv(12 + 16 + 32);
         verifyNoMoreInteractions(dataChannel);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getLatestBlockId_noConnection() throws Exception {
+        protocolHandler.getLatestBlockId();
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getBlockById_noConnection() throws Exception {
+        UUID EXPECTED_BLOCK_ID = 
+            UUID.fromString("1649a0e4-5360-48a5-9915-c1ceac7bc88d");
+
+        Optional<Certificate> blockCert =
+            protocolHandler.getBlockById(EXPECTED_BLOCK_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getNextBlockId_noConnection() throws Exception {
+        UUID EXPECTED_BLOCK_ID = 
+            UUID.fromString("2ea35d68-ae58-41bf-95fb-26b284ec6825");
+
+        Optional<UUID> nextId =
+            protocolHandler.getNextBlockId(EXPECTED_BLOCK_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getPrevBlockId_noConnection() throws Exception {
+        UUID EXPECTED_BLOCK_ID = 
+            UUID.fromString("29ed5398-6fbd-48d4-910d-cc65c2e265a6");
+
+        Optional<UUID> prevId =
+            protocolHandler.getPrevBlockId(EXPECTED_BLOCK_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getTransactionById_noConnection() throws Exception {
+        UUID EXPECTED_TXN_ID = 
+            UUID.fromString("a2643f7a-9eca-4f07-9732-f8fe3c86d011");
+
+        Optional<Certificate> txnCert =
+            protocolHandler.getTransactionById(EXPECTED_TXN_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getTransactionNextId_noConnection() throws Exception {
+        UUID EXPECTED_TXN_ID = 
+            UUID.fromString("5d91a253-9367-4de1-94d2-7ea406511b6c");
+
+        Optional<UUID> nextId =
+            protocolHandler.getTransactionNextId(EXPECTED_TXN_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getTransactionPreviousId_noConnection() throws Exception {
+        UUID EXPECTED_TXN_ID = 
+            UUID.fromString("eb80d8f5-079c-4969-af3c-8689667ba415");
+
+        Optional<UUID> prevId =
+            protocolHandler.getTransactionPreviousId(EXPECTED_TXN_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getTransactionBlockId_noConnection() throws Exception {
+        UUID EXPECTED_TXN_ID = 
+            UUID.fromString("1b061f2b-668f-44e6-ab93-8d949b66dea0");
+
+        Optional<UUID> blockId =
+            protocolHandler.getTransactionBlockId(EXPECTED_TXN_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getArtifactFirstTxnId_noConnection() throws Exception {
+        UUID EXPECTED_ARTIFACT_ID = 
+            UUID.fromString("71f9ad6c-726f-4db7-addb-615a8c98b0b4");
+
+        Optional<UUID> txnId =
+            protocolHandler.getArtifactFirstTxnId(EXPECTED_ARTIFACT_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getArtifactLastTxnId_noConnection() throws Exception {
+        UUID EXPECTED_ARTIFACT_ID = 
+            UUID.fromString("b2b6ba4e-c438-4819-b917-0ca8d314a73d");
+
+        Optional<UUID> txnId =
+            protocolHandler.getArtifactLastTxnId(EXPECTED_ARTIFACT_ID);
+    }
+
+    /* Throw a ConnectException if not connected. */
+    @Test(expected = ConnectException.class)
+    public void getBlockIdByBlockHeight_noConnection() throws Exception {
+        long EXPECTED_HEIGHT = 117;
+
+        Optional<UUID> blockId =
+            protocolHandler.getBlockIdByBlockHeight(EXPECTED_HEIGHT);
     }
 
     /* HELPER METHODS AND UTILITIES BELOW THIS LINE */
