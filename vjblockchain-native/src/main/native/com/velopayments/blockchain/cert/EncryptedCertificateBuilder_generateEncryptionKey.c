@@ -3,7 +3,7 @@
  *
  * Generate an encryption key using the Velo crypto suite.
  *
- * \copyright 2018 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2018-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -34,21 +34,21 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_generateEncryp
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(env, IllegalStateException, "vjblockchain not initialized.");
         return NULL;
     }
 
     /* initialize key buffer. */
-    if (0 != vccrypt_buffer_init(&randomKey, &alloc_opts, 32))
+    if (0 != vccrypt_buffer_init(&randomKey, &native_inst->alloc_opts, 32))
     {
         (*env)->ThrowNew(env, IllegalStateException, "bad vccrypt buffer.");
         return NULL;
     }
 
     /* initialize prng. */
-    if (0 != vccrypt_suite_prng_init(&crypto_suite, &prng))
+    if (0 != vccrypt_suite_prng_init(&native_inst->crypto_suite, &prng))
     {
         (*env)->ThrowNew(env, IllegalStateException, "bad vccrypt prng.");
         goto dispose_randomKey;

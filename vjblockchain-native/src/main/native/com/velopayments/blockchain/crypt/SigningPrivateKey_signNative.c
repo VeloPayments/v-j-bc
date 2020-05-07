@@ -3,7 +3,7 @@
  *
  * Sign a Message using a private key.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -34,7 +34,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     MODEL_ASSERT(NULL != message);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -61,7 +61,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
 
     /* get the size of this private key. */
     jsize private_key_size = (*env)->GetArrayLength(env, private_key);
-    if ((size_t)private_key_size != crypto_suite.sign_opts.private_key_size)
+    if ((size_t)private_key_size !=
+            native_inst->crypto_suite.sign_opts.private_key_size)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "private_key_size");
@@ -71,8 +72,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     /* create key buffer. */
     vccrypt_buffer_t privkey;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_buffer_init_for_signature_private_key(
-                &crypto_suite, &privkey))
+            vccrypt_suite_buffer_init_for_signature_private_key(
+                    &native_inst->crypto_suite, &privkey))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "privkey");
@@ -95,8 +96,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     /* create the signature context. */
     vccrypt_digital_signature_context_t sign;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_digital_signature_init(
-                    &crypto_suite, &sign))
+            vccrypt_suite_digital_signature_init(
+                    &native_inst->crypto_suite, &sign))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "signature_init");
@@ -129,8 +130,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     /* create the signature buffer. */
     vccrypt_buffer_t signature;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_buffer_init_for_signature(
-                &crypto_suite, &signature))
+            vccrypt_suite_buffer_init_for_signature(
+                    &native_inst->crypto_suite, &signature))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "signature");
@@ -167,7 +168,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     }
 
     /* copy the raw bytes of the signature into this byte buffer. */
-    memcpy(sign_out_bytes, signature.data, signature.size);
+    MODEL_EXEMPT(
+        memcpy(sign_out_bytes, signature.data, signature.size));
 
     /* complete the array write. */
     (*env)->ReleaseByteArrayElements(env, sign_out, sign_out_bytes, 0);

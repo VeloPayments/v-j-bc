@@ -3,7 +3,7 @@
  *
  * Generate a key from a password using the Velo crypto suite.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -41,7 +41,7 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -63,9 +63,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
 
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_key_derivation_options_init(
-                &kd_options, &alloc_opts,
-                VCCRYPT_KEY_DERIVATION_ALGORITHM_PBKDF2,
-                hmac_alg))
+                    &kd_options, &native_inst->alloc_opts,
+                    VCCRYPT_KEY_DERIVATION_ALGORITHM_PBKDF2, hmac_alg))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key derivation options initialization failure.");
@@ -92,7 +91,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     /* initialize password crypto buffer */
     size_t password_sz = (*env)->GetArrayLength(env, password);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(&password_buffer, &alloc_opts, password_sz))
+            vccrypt_buffer_init(
+                    &password_buffer, &native_inst->alloc_opts, password_sz))
     {
         (*env)->ThrowNew(
                 env, IllegalStateException,
@@ -116,7 +116,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     /* initialize salt crypto buffer */
     size_t salt_sz = (*env)->GetArrayLength(env, salt);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(&salt_buffer, &alloc_opts, salt_sz))
+            vccrypt_buffer_init(
+                    &salt_buffer, &native_inst->alloc_opts, salt_sz))
     {
         (*env)->ThrowNew(
                 env, IllegalStateException,
@@ -132,7 +133,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     /* initialize key crypto buffer. */
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_buffer_init(
-                &key_buffer, &alloc_opts, kd_options.hmac_digest_length))
+                    &key_buffer, &native_inst->alloc_opts,
+                    kd_options.hmac_digest_length))
     {
         (*env)->ThrowNew(
                 env, IllegalStateException,

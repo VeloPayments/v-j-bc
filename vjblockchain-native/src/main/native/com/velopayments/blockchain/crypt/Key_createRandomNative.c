@@ -3,7 +3,7 @@
  *
  * Generate a random symmetric key using the Velo crypto suite.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -34,7 +34,7 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -44,7 +44,8 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     /* initialize key buffer. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &keyBuffer, &alloc_opts, crypto_suite.stream_cipher_opts.key_size))
+                    &keyBuffer, &native_inst->alloc_opts,
+                    native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(
             env, IllegalStateException,
@@ -54,7 +55,8 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
 
     /* create a prng instance for generating the key. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_prng_init(&crypto_suite, &prng))
+            vccrypt_suite_prng_init(
+                    &native_inst->crypto_suite, &prng))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "prng instance creation failure.");

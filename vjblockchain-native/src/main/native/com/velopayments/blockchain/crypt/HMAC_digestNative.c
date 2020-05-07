@@ -3,7 +3,7 @@
  *
  * HMAC the message using key
  *
- * \copyright 2018 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2018-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -43,7 +43,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     MODEL_ASSERT(NULL != message);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -79,7 +79,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     size_t key_size = (*env)->GetArrayLength(env, key);
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &key_buffer, &alloc_opts, key_size))
+                    &key_buffer, &native_inst->alloc_opts, key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer creation failure.");
@@ -90,14 +90,27 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     memcpy(key_buffer.data, key_bytes, key_size);
 
     /* initialize HMAC */
-    if (VCCRYPT_STATUS_SUCCESS !=
-            hmacShort ?
-               vccrypt_suite_mac_short_init(&crypto_suite, &mac, &key_buffer)
-               : vccrypt_suite_mac_init(&crypto_suite, &mac, &key_buffer))
+    if (hmacShort)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not initialize mac.");
-        goto key_buffer_dispose;
+        if (VCCRYPT_STATUS_SUCCESS !=
+                    vccrypt_suite_mac_short_init(
+                            &native_inst->crypto_suite, &mac, &key_buffer))
+        {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not initialize short mac.");
+            goto key_buffer_dispose;
+        }
+    }
+    else
+    {
+        if (VCCRYPT_STATUS_SUCCESS !=
+                    vccrypt_suite_mac_init(
+                            &native_inst->crypto_suite, &mac, &key_buffer))
+        {
+            (*env)->ThrowNew(env, IllegalStateException,
+                             "could not initialize mac.");
+            goto key_buffer_dispose;
+        }
     }
 
     /* get the raw bytes of the  message */
@@ -122,7 +135,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     /* create a buffer to receive the MAC */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_suite_buffer_init_for_mac_authentication_code(
-                    &crypto_suite,&mac_buffer,(bool)hmacShort))
+                    &native_inst->crypto_suite,&mac_buffer,(bool)hmacShort))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "could not finalize.");

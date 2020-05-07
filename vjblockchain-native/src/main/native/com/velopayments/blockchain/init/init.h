@@ -3,7 +3,7 @@
  *
  * Reference to init flag and Velo C related control structures.
  *
- * \copyright 2017-2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #ifndef  PRIVATE_INIT_HEADER_GUARD
@@ -21,10 +21,18 @@
 extern "C" {
 #endif /*__cplusplus*/
 
-extern volatile bool vjblockchain_initialized;
-extern allocator_options_t alloc_opts;
-extern vccrypt_suite_options_t crypto_suite;
-extern vccert_builder_options_t builder_opts;
+struct vjblockchain_native_instance;
+typedef struct vjblockchain_native_instance vjblockchain_native_instance;
+
+struct vjblockchain_native_instance
+{
+    bool initialized;
+    allocator_options_t alloc_opts;
+    vccrypt_suite_options_t crypto_suite;
+    vccert_builder_options_t builder_opts;
+};
+
+extern vjblockchain_native_instance* native_inst;
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

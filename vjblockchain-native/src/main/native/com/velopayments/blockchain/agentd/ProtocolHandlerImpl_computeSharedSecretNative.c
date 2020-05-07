@@ -3,7 +3,7 @@
  *
  * Compute the shared secret for the handshake request.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -48,7 +48,7 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     MODEL_ASSERT(NULL != client_nonce);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -101,9 +101,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     size_t client_private_key_size = (*env)->GetArrayLength(
             env, client_private_key);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(
-                &client_private_key_buffer, &alloc_opts,
-                client_private_key_size))
+            vccrypt_buffer_init(
+                    &client_private_key_buffer, &native_inst->alloc_opts,
+                    client_private_key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "client private key buffer creation failure.");
@@ -113,7 +113,6 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     /* copy the client private key data to the buffer. */
     memcpy(client_private_key_buffer.data, client_private_key_bytes,
             client_private_key_size);
-
 
     /* get the raw bytes of the server public key */
     server_public_key_bytes = (*env)->GetByteArrayElements(
@@ -129,9 +128,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     size_t server_public_key_size = (*env)->GetArrayLength(
             env, server_public_key);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(
-                &server_public_key_buffer, &alloc_opts,
-                server_public_key_size))
+            vccrypt_buffer_init(
+                    &server_public_key_buffer, &native_inst->alloc_opts,
+                    server_public_key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "server public key buffer creation failure.");
@@ -155,9 +154,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     size_t server_nonce_size = (*env)->GetArrayLength(
             env, server_nonce);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(
-                &server_nonce_buffer, &alloc_opts,
-                server_nonce_size))
+            vccrypt_buffer_init(
+                    &server_nonce_buffer, &native_inst->alloc_opts,
+                    server_nonce_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "server nonce buffer creation failure.");
@@ -180,9 +179,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     size_t client_nonce_size = (*env)->GetArrayLength(
             env, client_nonce);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(
-                &client_nonce_buffer, &alloc_opts,
-                client_nonce_size))
+            vccrypt_buffer_init(
+                    &client_nonce_buffer, &native_inst->alloc_opts,
+                    client_nonce_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "client nonce buffer creation failure.");
@@ -193,15 +192,17 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     memcpy(client_nonce_buffer.data, client_nonce_bytes, client_nonce_size);
 
     /* create buffer for shared secret */
-    if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret(
-            &crypto_suite, &shared_secret_buffer))
+    if (0 !=
+            vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret(
+                    &native_inst->crypto_suite, &shared_secret_buffer))
     {
         goto client_nonce_buffer_dispose;
     }
 
     /* create the key agreement instance. */
-    if (0 != vccrypt_suite_cipher_key_agreement_init(
-                    &crypto_suite, &agreement))
+    if (0 !=
+            vccrypt_suite_cipher_key_agreement_init(
+                    &native_inst->crypto_suite, &agreement))
     {
         goto shared_secret_buffer_dispose;
     }

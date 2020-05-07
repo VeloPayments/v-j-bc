@@ -3,7 +3,7 @@
  *
  * Encrypt the payload for an authenticated request.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <arpa/inet.h>
@@ -44,7 +44,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
     MODEL_ASSERT(NULL != payload);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -67,18 +67,17 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
         return NULL;
     }
 
-
     /* create a buffer for holding the digest */
     const size_t MAC_SIZE    =  32U;
     vccrypt_buffer_t digest;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&digest, &alloc_opts, MAC_SIZE))
+            vccrypt_buffer_init(
+                    &digest, &native_inst->alloc_opts, MAC_SIZE))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "digest buffer create failure.");
         goto done;
     }
-
 
     /* create a packet buffer */
     uint32_t nsize = htonl(payload_size);
@@ -87,7 +86,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
 
     vccrypt_buffer_t packet;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&packet, &alloc_opts, packet_size))
+            vccrypt_buffer_init(
+                    &packet, &native_inst->alloc_opts, packet_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "packet buffer create failure.");
@@ -107,8 +107,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
     /* create a buffer to hold the shared secret */
     size_t shared_secret_size = (*env)->GetArrayLength(env, shared_secret);
     if (VCCRYPT_STATUS_SUCCESS != 
-            vccrypt_buffer_init(&shared_secret_buffer, &alloc_opts, 
-                shared_secret_size))
+            vccrypt_buffer_init(
+                    &shared_secret_buffer, &native_inst->alloc_opts, 
+                    shared_secret_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "shared secret buffer create failure.");
@@ -122,7 +123,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
     /* create a stream cipher */
     vccrypt_stream_context_t stream;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_stream_init(&crypto_suite, &stream, &shared_secret_buffer))
+            vccrypt_suite_stream_init(
+                    &native_inst->crypto_suite, &stream, &shared_secret_buffer))
     {
         (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
         goto shared_secret_buffer_dispose;
@@ -131,8 +133,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
     /* create a mac instance for building the packet authentication code. */
     vccrypt_mac_context_t mac;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_mac_short_init(&crypto_suite, &mac, 
-                &shared_secret_buffer))
+            vccrypt_suite_mac_short_init(
+                    &native_inst->crypto_suite, &mac, &shared_secret_buffer))
     {
         (*env)->ThrowNew(env, IllegalStateException, "mac init failure.");
         goto stream_cipher_dispose;
@@ -184,7 +186,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
 
     /* create a buffer to hold the payload */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&payload_buffer, &alloc_opts, payload_size))
+            vccrypt_buffer_init(
+                    &payload_buffer, &native_inst->alloc_opts, payload_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "payload buffer create failure.");
@@ -256,7 +259,6 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
 
     /* commit data to the byte array. */
     (*env)->ReleaseByteArrayElements(env, retval, retval_bytes, 0);
-
 
     /* clean up resources and return */
 payload_buffer_dispose:

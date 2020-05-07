@@ -3,7 +3,7 @@
  *
  * Verify the size of the key, throwing an exception if the key size is invalid.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -31,7 +31,7 @@ Java_com_velopayments_blockchain_crypt_Key_verifyKeySizeNative(
     MODEL_ASSERT(NULL != that);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -42,7 +42,7 @@ Java_com_velopayments_blockchain_crypt_Key_verifyKeySizeNative(
     jbyteArray key = (*env)->GetObjectField(env, that, Key_key);
     jint keyLen = (*env)->GetArrayLength(env, key);
 
-    if ((size_t)keyLen != crypto_suite.stream_cipher_opts.key_size)
+    if ((size_t)keyLen != native_inst->crypto_suite.stream_cipher_opts.key_size)
     {
         (*env)->ThrowNew(
             env, InvalidKeySizeException, "Invalid Key Size.");

@@ -3,7 +3,7 @@
  *
  * Encrypt and MAC the key for the encrypted data.
  *
- * \copyright 2018 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2018-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -48,7 +48,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     MODEL_ASSERT(NULL != key);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -110,7 +110,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
 
     /* create a vccrypt buffer for this private key data. */
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_private_key(
-                    &crypto_suite, &privateKeyBuffer))
+                    &native_inst->crypto_suite, &privateKeyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "private key buffer creation failure.");
@@ -143,7 +143,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
 
     /* create a vccrypt buffer for this public key data. */
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_public_key(
-                    &crypto_suite, &publicKeyBuffer))
+                    &native_inst->crypto_suite, &publicKeyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "public key buffer creation failure.");
@@ -156,7 +156,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
 
     /* create a vccrypt buffer for the long term shared secret. */
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret(
-                    &crypto_suite, &keyBuffer))
+                    &native_inst->crypto_suite, &keyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "public key buffer creation failure.");
@@ -164,7 +164,8 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     }
 
     /* create the key agreement instance. */
-    if (0 != vccrypt_suite_cipher_key_agreement_init(&crypto_suite, &ka))
+    if (0 != vccrypt_suite_cipher_key_agreement_init(
+                    &native_inst->crypto_suite, &ka))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key agreement context creation failure.");
@@ -181,7 +182,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     }
 
     /* create a prng instance for generating the nonce. */
-    if (0 != vccrypt_suite_prng_init(&crypto_suite, &prng))
+    if (0 != vccrypt_suite_prng_init(&native_inst->crypto_suite, &prng))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "prng instance creation failure.");
@@ -189,7 +190,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     }
 
     /* create a buffer for the iv. */
-    if (0 != vccrypt_buffer_init(&ivBuffer, &alloc_opts, IV_SIZE))
+    if (0 != vccrypt_buffer_init(&ivBuffer, &native_inst->alloc_opts, IV_SIZE))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "iv buffer creation failure.");
@@ -230,8 +231,8 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateBuilder_encryptKey(
     }
 
     /* create the block cipher instance. */
-    if (0 != vccrypt_suite_block_init(&crypto_suite, &block, &keyBuffer,
-            true))
+    if (0 != vccrypt_suite_block_init(
+                    &native_inst->crypto_suite, &block, &keyBuffer, true))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "block cipher creation failure.");

@@ -3,7 +3,7 @@
  *
  * Generate an encryption keypair using the Velo crypto suite.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -36,7 +36,7 @@ Java_com_velopayments_blockchain_crypt_EncryptionKeyPair_generateNative(
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -44,7 +44,8 @@ Java_com_velopayments_blockchain_crypt_EncryptionKeyPair_generateNative(
     }
 
     /* initialize key agreement impl. */
-    if (0 != vccrypt_suite_cipher_key_agreement_init(&crypto_suite, &ka))
+    if (0 != vccrypt_suite_cipher_key_agreement_init(
+                    &native_inst->crypto_suite, &ka))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "cipher key agreement could not be initialized.");
@@ -55,7 +56,7 @@ Java_com_velopayments_blockchain_crypt_EncryptionKeyPair_generateNative(
 
     /* initialize private key buffer. */
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_private_key(
-                &crypto_suite, &priv))
+                    &native_inst->crypto_suite, &priv))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "private key buffer could not be initialized.");
@@ -67,7 +68,7 @@ Java_com_velopayments_blockchain_crypt_EncryptionKeyPair_generateNative(
 
     /* initialize public key buffer. */
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_public_key(
-                &crypto_suite, &pub))
+                    &native_inst->crypto_suite, &pub))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "public key buffer could not be initialized.");

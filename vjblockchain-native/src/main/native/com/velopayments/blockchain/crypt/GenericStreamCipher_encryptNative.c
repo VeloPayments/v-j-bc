@@ -3,7 +3,7 @@
  *
  * Generate a digital signature keypair using the Velo crypto suite.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -39,7 +39,7 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_encryptNative(
     MODEL_ASSERT(NULL != input);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -72,7 +72,7 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_encryptNative(
 
     /* verify the secret key size */
     size_t key_size = (*env)->GetArrayLength(env, key);
-    if (key_size != crypto_suite.stream_cipher_opts.key_size)
+    if (key_size != native_inst->crypto_suite.stream_cipher_opts.key_size)
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "Invalid key size.");
@@ -80,7 +80,8 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_encryptNative(
     }
 
     /* create buffer to hold the key. */
-    if (0 != vccrypt_buffer_init(&keyBuffer, &alloc_opts, key_size))
+    if (0 != vccrypt_buffer_init(
+                    &keyBuffer, &native_inst->alloc_opts, key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer create failure.");
@@ -119,7 +120,8 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_encryptNative(
     }
 
     /* create the stream cipher instance. */
-    if (0 != vccrypt_suite_stream_init(&crypto_suite, &stream, &keyBuffer))
+    if (0 != vccrypt_suite_stream_init(
+                    &native_inst->crypto_suite, &stream, &keyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
         goto inputArrayData_dispose;

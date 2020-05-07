@@ -3,7 +3,7 @@
  *
  * Decrypt and verify data using a stream cipher and an HMAC.
  *
- * \copyright 2018 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2018-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -39,7 +39,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptNative(
     MODEL_ASSERT(NULL != input);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException,"vjblockchain not initialized.");
@@ -63,7 +63,7 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptNative(
     }
 
     /* create buffer to hold the key. */
-    if (0 != vccrypt_buffer_init(&keyBuffer, &alloc_opts, 32))
+    if (0 != vccrypt_buffer_init(&keyBuffer, &native_inst->alloc_opts, 32))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer create failure.");
@@ -94,7 +94,8 @@ Java_com_velopayments_blockchain_cert_EncryptedCertificateReader_decryptNative(
     }
 
     /* create the stream cipher instance. */
-    if (0 != vccrypt_suite_stream_init(&crypto_suite, &stream, &keyBuffer))
+    if (0 != vccrypt_suite_stream_init(
+                    &native_inst->crypto_suite, &stream, &keyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
         goto inputArrayData_dispose;

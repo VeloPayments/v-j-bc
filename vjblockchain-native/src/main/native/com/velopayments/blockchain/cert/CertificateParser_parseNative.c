@@ -3,7 +3,7 @@
  *
  * Parse the certificate and build a map to return to Java.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -51,7 +51,7 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     MODEL_ASSERT(0 <= size);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -68,9 +68,10 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
 
     /* create the parser options structure for this parse. */
     if (0 != vccert_parser_options_init(
-                &parser_options, &alloc_opts, &crypto_suite,
-                &dummy_txn_resolver, &dummy_artifact_state_resolver,
-                &dummy_contract_resolver, &dummy_entity_key_resolver, NULL))
+                    &parser_options, &native_inst->alloc_opts,
+                    &native_inst->crypto_suite, &dummy_txn_resolver,
+                    &dummy_artifact_state_resolver, &dummy_contract_resolver,
+                    &dummy_entity_key_resolver, NULL))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vccert could not be initialized.");

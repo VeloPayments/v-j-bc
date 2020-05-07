@@ -3,7 +3,7 @@
  *
  * Perform certificate attestation.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -50,6 +50,7 @@ typedef struct parser_user_context
     JNIEnv* env;
     jobject parser;
     jobject delegate;
+    vjblockchain_native_instance* native_inst;
 } parser_user_context_t;
 
 /*
@@ -72,7 +73,7 @@ Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
     MODEL_ASSERT(0 <= height);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -92,13 +93,15 @@ Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
     user_context.env = env;
     user_context.parser = that;
     user_context.delegate = delegate;
+    user_context.native_inst = native_inst;
 
     /* create the parser options structure for attestation. */
     if (0 != vccert_parser_options_init(
-                &parser_options, &alloc_opts, &crypto_suite,
-                &attest_txn_resolver, &attest_artifact_state_resolver,
-                &attest_contract_resolver, &attest_entity_key_resolver,
-                &user_context))
+                    &parser_options, &native_inst->alloc_opts,
+                    &native_inst->crypto_suite,
+                    &attest_txn_resolver, &attest_artifact_state_resolver,
+                    &attest_contract_resolver, &attest_entity_key_resolver,
+                    &user_context))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vccert could not be initialized.");
@@ -321,7 +324,8 @@ static bool attest_entity_key_resolver(
     jsize arrayLen = (*ctx->env)->GetArrayLength(ctx->env, array);
 
     /* create an output buffer large enough to hold the entity encryption key */
-    if (0 != vccrypt_buffer_init(pubenckey_buffer, &alloc_opts, arrayLen))
+    if (0 != vccrypt_buffer_init(
+                    pubenckey_buffer, &ctx->native_inst->alloc_opts, arrayLen))
     {
         (*ctx->env)->ThrowNew(ctx->env, AttestationException, "general error.");
         return false;
@@ -344,7 +348,8 @@ static bool attest_entity_key_resolver(
     arrayLen = (*ctx->env)->GetArrayLength(ctx->env, array);
 
     /* create an output buffer large enough to hold the entity signing key */
-    if (0 != vccrypt_buffer_init(pubsignkey_buffer, &alloc_opts, arrayLen))
+    if (0 != vccrypt_buffer_init(
+                    pubsignkey_buffer, &ctx->native_inst->alloc_opts, arrayLen))
     {
         (*ctx->env)->ThrowNew(ctx->env, AttestationException, "general error.");
         return false;

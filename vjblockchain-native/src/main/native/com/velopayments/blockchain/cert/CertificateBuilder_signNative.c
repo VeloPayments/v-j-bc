@@ -3,7 +3,7 @@
  *
  * Sign the certificate and emit it as a byte array.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -39,7 +39,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     MODEL_ASSERT(NULL != private_key);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -94,11 +94,12 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
 
     /* calculate the signature size and add this to the cert size */
     cert_size += FIELD_TYPE_SIZE*2 + FIELD_SIZE_SIZE*2 + 16 +
-                 crypto_suite.sign_opts.signature_size;
+                 native_inst->crypto_suite.sign_opts.signature_size;
 
     /* create builder context */
     vccert_builder_context_t builder;
-    if (0 != vccert_builder_init(&builder_opts, &builder, cert_size))
+    if (0 != vccert_builder_init(
+                    &native_inst->builder_opts, &builder, cert_size))
     {
         (*env)->ThrowNew(env, IllegalStateException, "general error.");
         return NULL;
@@ -139,7 +140,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     /* create a buffer for the private key */
     vccrypt_buffer_t priv;
     if (0 != vccrypt_suite_buffer_init_for_signature_private_key(
-                &crypto_suite, &priv))
+                &native_inst->crypto_suite, &priv))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "Couldn't create private key buffer");

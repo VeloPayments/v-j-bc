@@ -3,7 +3,7 @@
  *
  * Encrypt a byte array.
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -53,7 +53,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     MODEL_ASSERT(NULL != input);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -108,8 +108,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     /* create a vccrypt_buffer for managing these key bytes. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &keyBuffer, &alloc_opts,
-                crypto_suite.stream_cipher_opts.key_size))
+                    &keyBuffer, &native_inst->alloc_opts,
+                    native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "key buffer creation failure.");
@@ -117,8 +117,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     }
 
     /* copy the key data to the key buffer. */
-    memcpy(keyBuffer.data, keyBytesData,
-            crypto_suite.stream_cipher_opts.key_size);
+    MODEL_EXEMPT(
+        memcpy(keyBuffer.data, keyBytesData,
+               native_inst->crypto_suite.stream_cipher_opts.key_size));
 
     /* calculate space for output buffer. */
     size_t input_size = (*env)->GetArrayLength(env, input);
@@ -145,7 +146,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
 
     /* create PRNG instance. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_prng_init(&crypto_suite, &prng))
+            vccrypt_suite_prng_init(&native_inst->crypto_suite, &prng))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "prng instance creation failure.");
@@ -155,8 +156,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     /* create a buffer for the session key. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &sessionKeyBuffer, &alloc_opts,
-                crypto_suite.stream_cipher_opts.key_size))
+                    &sessionKeyBuffer, &native_inst->alloc_opts,
+                    native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "session key buffer create failure.");
@@ -166,7 +167,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     /* create a key IV buffer for the session key iv. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &sessionIVBuffer, &alloc_opts, 16))
+                    &sessionIVBuffer, &native_inst->alloc_opts, 16))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "session iv buffer create failure.");
@@ -176,7 +177,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     /* create a stream IV buffer for the stream IV. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &streamIVBuffer, &alloc_opts, 8))
+                    &streamIVBuffer, &native_inst->alloc_opts, 8))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "stream iv buffer create failure.");
@@ -212,7 +213,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
 
     /* create the HMAC instance for this. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_mac_init(&crypto_suite, &mac, &sessionKeyBuffer))
+            vccrypt_suite_mac_init(
+                    &native_inst->crypto_suite, &mac, &sessionKeyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "mac init failure.");
@@ -221,7 +223,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
 
     /* create block cipher instance for this. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_block_init(&crypto_suite, &block, &keyBuffer, true))
+            vccrypt_suite_block_init(
+                    &native_inst->crypto_suite, &block, &keyBuffer, true))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "block cipher init failure.");
@@ -263,7 +266,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
 
     /* create the stream cipher. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_stream_init(&crypto_suite, &stream, &sessionKeyBuffer))
+            vccrypt_suite_stream_init(
+                    &native_inst->crypto_suite, &stream, &sessionKeyBuffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "stream cipher init failure.");
@@ -306,7 +310,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     /* create buffer for receiving the MAC. */
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_suite_buffer_init_for_mac_authentication_code(
-                &crypto_suite, &macBuffer, false))
+                    &native_inst->crypto_suite, &macBuffer, false))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "mac buffer init failure.");
@@ -322,7 +326,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_encryptNative(
     }
 
     /* copy the mac to the output buffer. */
-    memcpy(out, macBuffer.data, macBuffer.size);
+    MODEL_EXEMPT(
+        memcpy(out, macBuffer.data, macBuffer.size));
 
     /* success. */
     retval = outputArray;

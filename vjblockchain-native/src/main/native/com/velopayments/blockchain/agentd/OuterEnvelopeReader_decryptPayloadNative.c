@@ -3,7 +3,7 @@
  *
  * Decrypt the from an encrypted response
  *
- * \copyright 2019 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2019-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <arpa/inet.h>
@@ -50,7 +50,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     MODEL_ASSERT(NULL != payload);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
                 env, IllegalStateException, "vjblockchain not initialized.");
@@ -94,8 +94,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* create a buffer to hold the shared secret */
     size_t shared_secret_size = (*env)->GetArrayLength(env, shared_secret);
     if (VCCRYPT_STATUS_SUCCESS != 
-            vccrypt_buffer_init(&shared_secret_buffer, &alloc_opts, 
-                shared_secret_size))
+            vccrypt_buffer_init(
+                    &shared_secret_buffer, &native_inst->alloc_opts, 
+                    shared_secret_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "shared secret buffer create failure.");
@@ -118,7 +119,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* create a buffer to hold the header. */
     size_t header_size = (*env)->GetArrayLength(env, header);
     if (VCCRYPT_STATUS_SUCCESS != 
-            vccrypt_buffer_init(&header_buffer, &alloc_opts, header_size))
+            vccrypt_buffer_init(
+                    &header_buffer, &native_inst->alloc_opts, header_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "header buffer create failure.");
@@ -139,7 +141,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* create a buffer to hold the payload */
     size_t payload_size = (*env)->GetArrayLength(env, payload);
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&payload_buffer, &alloc_opts, payload_size))
+            vccrypt_buffer_init(
+                    &payload_buffer, &native_inst->alloc_opts, payload_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "payload buffer create failure.");
@@ -151,7 +154,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
         memcpy(payload_buffer.data, payload_bytes, payload_size));
 
     /* verify that the payload size is at least large enough for the HMAC. */
-    size_t mac_size = crypto_suite.mac_short_opts.mac_size;
+    size_t mac_size = native_inst->crypto_suite.mac_short_opts.mac_size;
     if (payload_size < mac_size)
     {
         (*env)->ThrowNew(env, MessageVerificationException,
@@ -167,7 +170,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     vccrypt_mac_context_t mac;
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_suite_mac_short_init(
-                &crypto_suite, &mac, &shared_secret_buffer))
+                    &native_inst->crypto_suite, &mac, &shared_secret_buffer))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "MAC instance create failure.");
@@ -177,7 +180,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* create a buffer to hold the hmac. */
     /* TODO - use suite method for this. */
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_buffer_init(&digest_buffer, &alloc_opts, mac_size))
+            vccrypt_buffer_init(
+                    &digest_buffer, &native_inst->alloc_opts, mac_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "digest buffer create failure.");
@@ -214,7 +218,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     vccrypt_buffer_t dpayload_buffer;
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_buffer_init(
-                &dpayload_buffer, &alloc_opts, payload_size - mac_size))
+                    &dpayload_buffer, &native_inst->alloc_opts,
+                    payload_size - mac_size))
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "decrypted payload buffer create failure.");
@@ -224,8 +229,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     /* create a stream cipher */
     vccrypt_stream_context_t stream;
     if (VCCRYPT_STATUS_SUCCESS !=
-            vccrypt_suite_stream_init(&crypto_suite, &stream, 
-                &shared_secret_buffer))
+            vccrypt_suite_stream_init(
+                    &native_inst->crypto_suite, &stream, &shared_secret_buffer))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "stream context failure.");

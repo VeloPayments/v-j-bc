@@ -3,7 +3,7 @@
  *
  * Emit the certificate as a byte array.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -35,7 +35,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     MODEL_ASSERT(NULL != that);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(env, IllegalStateException,
                          "vjblockchain not initialized.");
@@ -74,7 +74,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
 
     /* create builder context */
     vccert_builder_context_t builder;
-    if (0 != vccert_builder_init(&builder_opts, &builder, cert_size))
+    if (0 != vccert_builder_init(
+                    &native_inst->builder_opts, &builder, cert_size))
     {
         (*env)->ThrowNew(env, IllegalStateException, "general error.");
         return NULL;

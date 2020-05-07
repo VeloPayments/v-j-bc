@@ -3,7 +3,7 @@
  *
  * Sign a Message using a private key.
  *
- * \copyright 2017 Velo Payments, Inc.  All rights reserved.
+ * \copyright 2017-2020 Velo Payments, Inc.  All rights reserved.
  */
 
 #include <cbmc/model_assert.h>
@@ -35,7 +35,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     MODEL_ASSERT(NULL != message);
 
     /* verify that the vjblockchain library has been initialized. */
-    if (!vjblockchain_initialized)
+    if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "vjblockchain not initialized.");
@@ -70,7 +70,8 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
 
     /* get the size of this public key. */
     jsize public_key_size = (*env)->GetArrayLength(env, public_key);
-    if ((size_t)public_key_size != crypto_suite.sign_opts.public_key_size)
+    if ((size_t)public_key_size !=
+                native_inst->crypto_suite.sign_opts.public_key_size)
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "public_key_size");
@@ -81,7 +82,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     vccrypt_buffer_t pubkey;
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_suite_buffer_init_for_signature_public_key(
-                &crypto_suite, &pubkey))
+                &native_inst->crypto_suite, &pubkey))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "pubkey");
@@ -105,7 +106,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     vccrypt_digital_signature_context_t sign;
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_suite_digital_signature_init(
-                    &crypto_suite, &sign))
+                    &native_inst->crypto_suite, &sign))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "signature_init");
@@ -139,7 +140,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     vccrypt_buffer_t sign_buf;
     if (VCCRYPT_STATUS_SUCCESS !=
         vccrypt_suite_buffer_init_for_signature(
-                &crypto_suite, &sign_buf))
+                    &native_inst->crypto_suite, &sign_buf))
     {
         (*env)->ThrowNew(
             env, IllegalStateException, "sign_buf");
@@ -159,7 +160,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     /* get the size of this signature. */
     jsize signature_array_size = (*env)->GetArrayLength(env, signature_array);
     if ((size_t)signature_array_size !=
-            crypto_suite.sign_opts.signature_size)
+                native_inst->crypto_suite.sign_opts.signature_size)
     {
         /* the signature obviously can't match if there is a size mismatch. */
         retval = JNI_FALSE;
