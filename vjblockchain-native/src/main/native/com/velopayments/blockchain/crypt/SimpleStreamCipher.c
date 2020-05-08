@@ -10,27 +10,19 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "SimpleStreamCipher.h"
 
-jclass SimpleStreamCipher = NULL;
-jmethodID SimpleStreamCipher_init = NULL;
-jmethodID SimpleStreamCipher_getKey = NULL;
-jmethodID SimpleStreamCipher_encrypt = NULL;
-jmethodID SimpleStreamCipher_decrypt = NULL;
-jfieldID SimpleStreamCipher_field_key = NULL;
-
-static volatile bool SimpleStreamCipher_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: SimpleStreamCipher globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != SimpleStreamCipher \
-     && NULL != SimpleStreamCipher_init \
-     && NULL != SimpleStreamCipher_getKey \
-     && NULL != SimpleStreamCipher_encrypt \
-     && NULL != SimpleStreamCipher_decrypt \
-     && NULL != SimpleStreamCipher_field_key)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->SimpleStreamCipher.classid \
+     && NULL != inst->SimpleStreamCipher.init \
+     && NULL != inst->SimpleStreamCipher.getKey \
+     && NULL != inst->SimpleStreamCipher.encrypt \
+     && NULL != inst->SimpleStreamCipher.decrypt \
+     && NULL != inst->SimpleStreamCipher.field_key)
 
 /**
  * Register the following SimpleStreamCipher references and make them global.
@@ -40,24 +32,19 @@ static volatile bool SimpleStreamCipher_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SimpleStreamCipher_register(JNIEnv* env)
+int
+SimpleStreamCipher_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register SimpleStreamCipher once. */
-    if (SimpleStreamCipher_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register SimpleStreamCipher class */
     tempClassID = (*env)->FindClass(env,
@@ -66,51 +53,55 @@ int SimpleStreamCipher_register(JNIEnv* env)
         return 1;
 
     /* create global reference to SimpleStreamCipher. */
-    SimpleStreamCipher = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == SimpleStreamCipher)
+    inst->SimpleStreamCipher.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->SimpleStreamCipher.classid)
         return 1;
 
     /* delete local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register constructor method. */
-    SimpleStreamCipher_init =
-        (*env)->GetMethodID(env, SimpleStreamCipher, "<init>",
-        "(Lcom/velopayments/blockchain/crypt/Key;)V");
-    if (NULL == SimpleStreamCipher_init)
+    inst->SimpleStreamCipher.init =
+        (*env)->GetMethodID(
+            env, inst->SimpleStreamCipher.classid, "<init>",
+            "(Lcom/velopayments/blockchain/crypt/Key;)V");
+    if (NULL == inst->SimpleStreamCipher.init)
         return 1;
 
     /* register getKey method. */
-    SimpleStreamCipher_getKey =
-        (*env)->GetMethodID(env, SimpleStreamCipher, "getKey",
-        "()Lcom/velopayments/blockchain/crypt/Key;");
-    if (NULL == SimpleStreamCipher_getKey)
+    inst->SimpleStreamCipher.getKey =
+        (*env)->GetMethodID(
+            env, inst->SimpleStreamCipher.classid, "getKey",
+            "()Lcom/velopayments/blockchain/crypt/Key;");
+    if (NULL == inst->SimpleStreamCipher.getKey)
         return 1;
 
     /* register encrypt method. */
-    SimpleStreamCipher_encrypt =
-        (*env)->GetMethodID(env, SimpleStreamCipher, "encrypt", "([B)[B");
-    if (NULL == SimpleStreamCipher_encrypt)
+    inst->SimpleStreamCipher.encrypt =
+        (*env)->GetMethodID(
+            env, inst->SimpleStreamCipher.classid, "encrypt", "([B)[B");
+    if (NULL == inst->SimpleStreamCipher.encrypt)
         return 1;
 
     /* register decrypt method. */
-    SimpleStreamCipher_decrypt =
-        (*env)->GetMethodID(env, SimpleStreamCipher, "decrypt", "([B)[B");
-    if (NULL == SimpleStreamCipher_decrypt)
+    inst->SimpleStreamCipher.decrypt =
+        (*env)->GetMethodID(
+            env, inst->SimpleStreamCipher.classid, "decrypt", "([B)[B");
+    if (NULL == inst->SimpleStreamCipher.decrypt)
         return 1;
 
     /* register key field */
-    SimpleStreamCipher_field_key =
+    inst->SimpleStreamCipher.field_key =
         (*env)->GetFieldID(
-            env, SimpleStreamCipher, "key",
+            env, inst->SimpleStreamCipher.classid, "key",
             "Lcom/velopayments/blockchain/crypt/Key;");
-    if (NULL == SimpleStreamCipher_field_key)
+    if (NULL == inst->SimpleStreamCipher.field_key)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    SimpleStreamCipher_registered = true;
     return 0;
 }

@@ -13,10 +13,16 @@
 
 #include <jni.h>
 
+#include "../../com/velopayments/blockchain/init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct IllegalArgumentException_JavaVars
+IllegalArgumentException_JavaVars;
 
 /**
  * Register the following IllegalArgumentException references and make them
@@ -27,36 +33,50 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int IllegalArgumentException_register(JNIEnv* env);
+int
+IllegalArgumentException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class java.lang.IllegalArgumentException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for IllegalArgumentException.
  */
-extern jclass IllegalArgumentException;
+struct IllegalArgumentException_JavaVars
+{
+    /* public class java.lang.IllegalArgumentException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public java.lang.IllegalArgumentException();
- * descriptor: ()V
- */
-extern jmethodID IllegalArgumentException_init;
+    /* public java.lang.IllegalArgumentException();
+     * descriptor: ()V
+     */
+    jmethodID init;
 
-/* public java.lang.IllegalArgumentException(java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID IllegalArgumentException_String;
+    /* public java.lang.IllegalArgumentException(java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* public java.lang.IllegalArgumentException(
- *          java.lang.String, java.lang.Throwable);
- * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
- */
-extern jmethodID IllegalArgumentException_String_Throwable;
+    /* public java.lang.IllegalArgumentException(
+     *          java.lang.String, java.lang.Throwable);
+     * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
+     */
+    jmethodID init_String_Throwable;
 
-/* public java.lang.IllegalArgumentException(java.lang.Throwable);
- * descriptor: (Ljava/lang/Throwable;)V
- */
-extern jmethodID IllegalArgumentException_Throwable;
+    /* public java.lang.IllegalArgumentException(java.lang.Throwable);
+     * descriptor: (Ljava/lang/Throwable;)V
+     */
+    jmethodID init_Throwable;
+};
+
+/* helper macro. */
+#define ILLEGAL_ARGUMENT_EXCEPTION_JAVA_VARS() \
+    IllegalArgumentException_JavaVars IllegalArgumentException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

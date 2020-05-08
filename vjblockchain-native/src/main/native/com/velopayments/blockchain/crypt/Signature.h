@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct Signature_JavaVars
+Signature_JavaVars;
 
 /**
  * Register the following Signature references and make them global.
@@ -28,21 +34,34 @@ extern "C" {
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Signature_register(JNIEnv* env);
+int
+Signature_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.Signature {
+/**
+ * \brief Java variables for Signature.
  */
-extern jclass Signature;
+struct Signature_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.Signature {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.Signature(byte[]);
- * descriptor: ([B)V
- */
-extern jmethodID Signature_init;
+    /* public com.velopayments.blockchain.crypt.Signature(byte[]);
+     * descriptor: ([B)V
+     */
+    jmethodID init;
 
-/* public byte[] getSignatureBytes();
- * descriptor: ()[B
- */
-extern jmethodID Signature_getSignatureBytes;
+    /* public byte[] getSignatureBytes();
+     * descriptor: ()[B
+     */
+    jmethodID getSignatureBytes;
+};
+
+/* helper macro. */
+#define SIGNATURE_JAVA_VARS() \
+    Signature_JavaVars Signature
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

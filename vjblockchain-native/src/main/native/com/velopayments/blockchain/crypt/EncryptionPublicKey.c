@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "EncryptionPublicKey.h"
 
-jclass EncryptionPublicKey;
-jmethodID EncryptionPublicKey_init;
-jmethodID EncryptionPublicKey_getRawBytes;
-
-static volatile bool EncryptionPublicKey_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: EncryptionPublicKey globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != EncryptionPublicKey \
-     && NULL != EncryptionPublicKey_init \
-     && NULL != EncryptionPublicKey_getRawBytes)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->EncryptionPublicKey.classid \
+     && NULL != inst->EncryptionPublicKey.init \
+     && NULL != inst->EncryptionPublicKey.getRawBytes)
 
 /**
  * Register the following EncryptionPublicKey references and make them global.
@@ -32,24 +27,19 @@ static volatile bool EncryptionPublicKey_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EncryptionPublicKey_register(JNIEnv* env)
+int
+EncryptionPublicKey_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register EncryptionPublicKey once. */
-    if (EncryptionPublicKey_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register EncryptionPublicKey class */
     tempClassID = (*env)->FindClass(env,
@@ -58,33 +48,31 @@ int EncryptionPublicKey_register(JNIEnv* env)
         return 1;
 
     /* register EncryptionPublicKey class */
-    EncryptionPublicKey = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == EncryptionPublicKey)
+    inst->EncryptionPublicKey.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->EncryptionPublicKey.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    EncryptionPublicKey_init =
+    inst->EncryptionPublicKey.init =
         (*env)->GetMethodID(
-            env, EncryptionPublicKey, "<init>",
-            "([B)V");
-    if (NULL == EncryptionPublicKey_init)
+            env, inst->EncryptionPublicKey.classid, "<init>", "([B)V");
+    if (NULL == inst->EncryptionPublicKey.init)
         return 1;
 
     /* register getRawBytes method */
-    EncryptionPublicKey_getRawBytes =
+    inst->EncryptionPublicKey.getRawBytes =
         (*env)->GetMethodID(
-            env, EncryptionPublicKey, "getRawBytes",
-            "()[B");
-    if (NULL == EncryptionPublicKey_getRawBytes)
+            env, inst->EncryptionPublicKey.classid, "getRawBytes", "()[B");
+    if (NULL == inst->EncryptionPublicKey.getRawBytes)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    EncryptionPublicKey_registered = true;
     return 0;
 }

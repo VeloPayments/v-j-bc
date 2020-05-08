@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "Integer.h"
 
-jclass Integer = NULL;
-jmethodID Integer_valueOf = NULL;
-jmethodID Integer_intValue = NULL;
-
-static volatile bool Integer_registered = false;
+#include "../../com/velopayments/blockchain/init/init.h"
 
 /**
  * Property: Integer globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != Integer \
-     && NULL != Integer_valueOf \
-     && NULL != Integer_intValue)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->Integer.classid \
+     && NULL != inst->Integer.valueOf \
+     && NULL != inst->Integer.intValue)
 
 /**
  * Register the following Integer references and make them global.
@@ -32,24 +27,19 @@ static volatile bool Integer_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Integer_register(JNIEnv* env)
+int
+Integer_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register java.lang.Integer once. */
-    if (Integer_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register Integer class */
     tempClassID = (*env)->FindClass(env, "java/lang/Integer");
@@ -57,31 +47,30 @@ int Integer_register(JNIEnv* env)
         return 1;
 
     /* create a global reference for this class */
-    Integer = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == Integer)
+    inst->Integer.classid = (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->Integer.classid)
         return 1;
 
     /* we don't need this local reference anymore. */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register valueOf method */
-    Integer_valueOf =
+    inst->Integer.valueOf =
         (*env)->GetStaticMethodID(
-            env, Integer, "valueOf", "(I)Ljava/lang/Integer;");
-    if (NULL == Integer_valueOf)
+            env, inst->Integer.classid, "valueOf", "(I)Ljava/lang/Integer;");
+    if (NULL == inst->Integer.valueOf)
         return 1;
 
     /* register intValue method */
-    Integer_intValue =
+    inst->Integer.intValue =
         (*env)->GetMethodID(
-            env, Integer, "intValue", "()I");
-    if (NULL == Integer_intValue)
+            env, inst->Integer.classid, "intValue", "()I");
+    if (NULL == inst->Integer.intValue)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    Integer_registered = true;
     return 0;
 }

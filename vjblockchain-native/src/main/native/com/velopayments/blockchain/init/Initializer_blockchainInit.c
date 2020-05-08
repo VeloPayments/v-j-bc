@@ -14,46 +14,13 @@
 #include <vpr/parameters.h>
 
 #include "init.h"
-#include "../../../../com/velopayments/blockchain/agentd/MessageVerificationException.h"
-#include "../../../../com/velopayments/blockchain/cert/AttestationException.h"
-#include "../../../../com/velopayments/blockchain/cert/Certificate.h"
-#include "../../../../com/velopayments/blockchain/cert/CertificateBuilder.h"
-#include "../../../../com/velopayments/blockchain/cert/CertificateContract.h"
-#include "../../../../com/velopayments/blockchain/cert/EntityReference.h"
-#include "../../../../com/velopayments/blockchain/cert/CertificateParser.h"
-#include "../../../../com/velopayments/blockchain/cert/CertificateParserDelegate.h"
-#include "../../../../com/velopayments/blockchain/cert/UnknownArtifactException.h"
-#include "../../../../com/velopayments/blockchain/cert/UnknownArtifactTypeException.h"
-#include "../../../../com/velopayments/blockchain/cert/UnknownEntityException.h"
-#include "../../../../com/velopayments/blockchain/client/TransactionStatus.h"
-#include "../../../../com/velopayments/blockchain/crypt/EncryptionKeyPair.h"
-#include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
-#include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
-#include "../../../../com/velopayments/blockchain/crypt/InvalidKeySizeException.h"
-#include "../../../../com/velopayments/blockchain/crypt/Key.h"
-#include "../../../../com/velopayments/blockchain/crypt/Message.h"
-#include "../../../../com/velopayments/blockchain/crypt/MessageAuthenticationException.h"
-#include "../../../../com/velopayments/blockchain/crypt/Signature.h"
-#include "../../../../com/velopayments/blockchain/crypt/SigningKeyPair.h"
-#include "../../../../com/velopayments/blockchain/crypt/SigningPrivateKey.h"
-#include "../../../../com/velopayments/blockchain/crypt/SigningPublicKey.h"
-#include "../../../../com/velopayments/blockchain/crypt/SimpleStreamCipher.h"
-#include "../../../../java/lang/IllegalArgumentException.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/Integer.h"
-#include "../../../../java/lang/NullPointerException.h"
-#include "../../../../java/util/AbstractMap_SimpleEntry.h"
-#include "../../../../java/util/HashMap.h"
-#include "../../../../java/util/LinkedList.h"
-#include "../../../../java/util/Optional.h"
-#include "../../../../java/util/UUID.h"
 
 vjblockchain_native_instance* native_inst = NULL;
 
 #define INIT_OR_FAIL(text, invocation) \
     if (0 != (invocation)) \
     { \
-        (*env)->ThrowNew(env, IllegalStateException, \
+        (*env)->ThrowNew(env, native_inst->IllegalStateException.classid, \
                          text " not initialized."); \
         return false; \
     } \
@@ -71,14 +38,6 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
-    /* we need IllegalStateException further on.  If this registration fails,
-     * we're dead in the water.
-     */
-    if (0 != IllegalStateException_register(env))
-    {
-        return false;
-    }
-
     /* register crypto suite */
     vccrypt_suite_register_velo_v1();
 
@@ -87,6 +46,16 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
         (vjblockchain_native_instance*)
         malloc(sizeof(vjblockchain_native_instance));
     memset(native_inst, 0, sizeof(*native_inst));
+
+    /* we need IllegalStateException further on.  If this registration fails,
+     * we're dead in the water.
+     */
+    if (0 != IllegalStateException_register(env, native_inst))
+    {
+        free(native_inst);
+
+        return false;
+    }
 
     /* create allocator used by vjblockchain C methods. */
     malloc_allocator_options_init(&native_inst->alloc_opts);
@@ -110,69 +79,69 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
 
     /* register Java classes used by vjblockchain. */
     INIT_OR_FAIL("AttestationException",
-                 AttestationException_register(env));
+                 AttestationException_register(env, native_inst));
     INIT_OR_FAIL("Certificate",
-                 Certificate_register(env));
+                 Certificate_register(env, native_inst));
     INIT_OR_FAIL("CertificateBuilder",
-                 CertificateBuilder_register(env));
+                 CertificateBuilder_register(env, native_inst));
     INIT_OR_FAIL("CertificateContract",
-                 CertificateContract_register(env));
+                 CertificateContract_register(env, native_inst));
     INIT_OR_FAIL("CertificateParser",
-                 CertificateParser_register(env));
+                 CertificateParser_register(env, native_inst));
     INIT_OR_FAIL("CertificateParserDelegate",
-                 CertificateParserDelegate_register(env));
+                 CertificateParserDelegate_register(env, native_inst));
     INIT_OR_FAIL("EncryptionKeyPair",
-                 EncryptionKeyPair_register(env));
+                 EncryptionKeyPair_register(env, native_inst));
     INIT_OR_FAIL("EncryptionPrivateKey",
-                 EncryptionPrivateKey_register(env));
+                 EncryptionPrivateKey_register(env, native_inst));
     INIT_OR_FAIL("EncryptionPublicKey",
-                 EncryptionPublicKey_register(env));
+                 EncryptionPublicKey_register(env, native_inst));
     INIT_OR_FAIL("InvalidKeySizeException",
-                 InvalidKeySizeException_register(env));
+                 InvalidKeySizeException_register(env, native_inst));
     INIT_OR_FAIL("Message",
-                 Message_register(env));
+                 Message_register(env, native_inst));
     INIT_OR_FAIL("MessageVerificationException",
-                 MessageVerificationException_register(env));
+                 MessageVerificationException_register(env, native_inst));
     INIT_OR_FAIL("EntityReference",
-                 EntityReference_register(env));
+                 EntityReference_register(env, native_inst));
     INIT_OR_FAIL("HashMap",
-                 HashMap_register(env));
+                 HashMap_register(env, native_inst));
     INIT_OR_FAIL("IllegalArgumentException",
-                 IllegalArgumentException_register(env));
+                 IllegalArgumentException_register(env, native_inst));
     INIT_OR_FAIL("Integer",
-                 Integer_register(env));
+                 Integer_register(env, native_inst));
     INIT_OR_FAIL("Key",
-                 Key_register(env));
-    INIT_OR_FAIL("NullPointerException",
-                 NullPointerException_register(env));
+                 Key_register(env, native_inst));
     INIT_OR_FAIL("LinkedList",
-                 LinkedList_register(env));
+                 LinkedList_register(env, native_inst));
     INIT_OR_FAIL("MessageAuthenticationException",
-                 MessageAuthenticationException_register(env));
+                 MessageAuthenticationException_register(env, native_inst));
+    INIT_OR_FAIL("NullPointerException",
+                 NullPointerException_register(env, native_inst));
     INIT_OR_FAIL("Optional",
-                 Optional_register(env));
+                 Optional_register(env, native_inst));
     INIT_OR_FAIL("SimpleEntry",
-                 SimpleEntry_register(env));
+                 SimpleEntry_register(env, native_inst));
     INIT_OR_FAIL("Signature",
-                 Signature_register(env));
+                 Signature_register(env, native_inst));
     INIT_OR_FAIL("SigningKeyPair",
-                 SigningKeyPair_register(env));
+                 SigningKeyPair_register(env, native_inst));
     INIT_OR_FAIL("SigningPrivateKey",
-                 SigningPrivateKey_register(env));
+                 SigningPrivateKey_register(env, native_inst));
     INIT_OR_FAIL("SigningPublicKey",
-                 SigningPublicKey_register(env));
+                 SigningPublicKey_register(env, native_inst));
     INIT_OR_FAIL("SimpleStreamCipher",
-                 SimpleStreamCipher_register(env));
+                 SimpleStreamCipher_register(env, native_inst));
     INIT_OR_FAIL("TransactionStatus",
-                 TransactionStatus_register(env));
+                 TransactionStatus_register(env, native_inst));
     INIT_OR_FAIL("UnknownArtifactException",
-                 UnknownArtifactException_register(env));
+                 UnknownArtifactException_register(env, native_inst));
     INIT_OR_FAIL("UnknownArtifactTypeException",
-                 UnknownArtifactTypeException_register(env));
+                 UnknownArtifactTypeException_register(env, native_inst));
     INIT_OR_FAIL("UnknownEntityException",
-                 UnknownEntityException_register(env));
+                 UnknownEntityException_register(env, native_inst));
     INIT_OR_FAIL("UUID",
-                 UUID_register(env));
+                 UUID_register(env, native_inst));
 
     /* we are now initialized */
     native_inst->initialized = true;

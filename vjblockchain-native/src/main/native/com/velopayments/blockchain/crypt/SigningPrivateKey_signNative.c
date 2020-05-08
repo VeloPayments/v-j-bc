@@ -11,12 +11,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "Message.h"
-#include "SigningPrivateKey.h"
-#include "Signature.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_SigningPrivateKey
@@ -37,7 +32,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
     
@@ -45,17 +41,19 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == message)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message");
+            env, native_inst->NullPointerException.classid, "message");
         return NULL;
     }
 
     /* get the raw bytes for this private key. */
     jobject private_key =
-        (*env)->CallObjectMethod(env, that, SigningPrivateKey_getRawBytes);
+        (*env)->CallObjectMethod(
+            env, that, native_inst->SigningPrivateKey.getRawBytes);
     if (NULL == private_key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "this.getRawBytes()");
+            env, native_inst->NullPointerException.classid,
+            "this.getRawBytes()");
         return NULL;
     }
 
@@ -65,7 +63,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
             native_inst->crypto_suite.sign_opts.private_key_size)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "private_key_size");
+            env, native_inst->IllegalStateException.classid,
+            "private_key_size");
         goto cleanup_private_key;
     }
 
@@ -76,7 +75,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
                     &native_inst->crypto_suite, &privkey))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "privkey");
+            env, native_inst->IllegalStateException.classid,
+            "privkey");
         goto cleanup_private_key;
     }
 
@@ -86,7 +86,8 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == private_key_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "private_key_bytes");
+            env, native_inst->NullPointerException.classid,
+            "private_key_bytes");
         goto cleanup_privkey;
     }
 
@@ -100,17 +101,20 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
                     &native_inst->crypto_suite, &sign))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "signature_init");
+            env, native_inst->IllegalStateException.classid,
+            "signature_init");
         goto cleanup_private_key_bytes;
     }
 
     /* get the raw array for the message. */
     jobject message_array =
-        (*env)->CallObjectMethod(env, message, Message_getRawBytes);
+        (*env)->CallObjectMethod(
+            env, message, native_inst->Message.getRawBytes);
     if (NULL == message_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message.getRawBytes()");
+            env, native_inst->NullPointerException.classid,
+            "message.getRawBytes()");
         goto cleanup_sign;
     }
 
@@ -123,7 +127,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == message_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message_bytes");
+            env, native_inst->NullPointerException.classid, "message_bytes");
         goto cleanup_message_array;
     }
 
@@ -134,7 +138,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
                     &native_inst->crypto_suite, &signature))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "signature");
+            env, native_inst->IllegalStateException.classid, "signature");
         goto cleanup_message_bytes;
     }
 
@@ -145,7 +149,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
             message_size))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "signature_sign");
+            env, native_inst->IllegalStateException.classid, "signature_sign");
         goto cleanup_signature;
     }
 
@@ -154,7 +158,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == sign_out)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "sign_out");
+            env, native_inst->NullPointerException.classid, "sign_out");
         goto cleanup_signature;
     }
 
@@ -163,7 +167,7 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     if (NULL == sign_out_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "sign_out_bytes");
+            env, native_inst->NullPointerException.classid, "sign_out_bytes");
         goto cleanup_sign_out;
     }
 
@@ -177,11 +181,12 @@ JNIEXPORT jobject JNICALL Java_com_velopayments_blockchain_crypt_SigningPrivateK
     /* create a signature object using this byte buffer. */
     retval =
         (*env)->NewObject(
-            env, Signature, Signature_init, sign_out);
+            env, native_inst->Signature.classid, native_inst->Signature.init,
+            sign_out);
     if (NULL == retval)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "Signature_new");
+            env, native_inst->IllegalStateException.classid, "Signature_new");
         goto cleanup_sign_out;
     }
 

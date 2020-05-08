@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "AttestationException.h"
 
-jclass AttestationException = NULL;
-jmethodID AttestationException_init_String = NULL;
-jmethodID AttestationException_init_String_Throwable = NULL;
-
-static volatile bool AttestationException_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: AttestationException globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != AttestationException \
-     && NULL != AttestationException_init_String \
-     && NULL != AttestationException_init_String_Throwable)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->AttestationException.classid \
+     && NULL != inst->AttestationException.init_String \
+     && NULL != inst->AttestationException.init_String_Throwable)
 
 /**
  * Register the following AttestationException references and make them global.
@@ -32,24 +27,19 @@ static volatile bool AttestationException_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int AttestationException_register(JNIEnv* env)
+int
+AttestationException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register AttestationException once. */
-    if (AttestationException_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register AttestationException class */
     tempClassID = (*env)->FindClass(env,
@@ -58,32 +48,33 @@ int AttestationException_register(JNIEnv* env)
         return 1;
 
     /* create a global reference for this class. */
-    AttestationException = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == AttestationException)
+    inst->AttestationException.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->AttestationException.classid)
         return 1;
 
     /* we're done with our local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init(String) method */
-    AttestationException_init_String =
+    inst->AttestationException.init_String =
         (*env)->GetMethodID(
-            env, AttestationException, "<init>", "(Ljava/lang/String;)V");
-    if (NULL == AttestationException_init_String)
+            env, inst->AttestationException.classid,
+            "<init>", "(Ljava/lang/String;)V");
+    if (NULL == inst->AttestationException.init_String)
         return 1;
 
     /* register init(Throwable) method */
-    AttestationException_init_String_Throwable =
+    inst->AttestationException.init_String_Throwable =
         (*env)->GetMethodID(
-            env, AttestationException, "<init>",
-            "(Ljava/lang/String;Ljava/lang/Throwable;)V");
-    if (NULL == AttestationException_init_String_Throwable)
+            env, inst->AttestationException.classid,
+            "<init>", "(Ljava/lang/String;Ljava/lang/Throwable;)V");
+    if (NULL == inst->AttestationException.init_String_Throwable)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    AttestationException_registered = true;
     return 0;
 }

@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct EncryptionPublicKey_JavaVars
+EncryptionPublicKey_JavaVars;
 
 /**
  * Register the following EncryptionPublicKey references and make them global.
@@ -25,24 +31,38 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EncryptionPublicKey_register(JNIEnv* env);
+int
+EncryptionPublicKey_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.EncryptionPublicKey {
+/**
+ * \brief Java variables for EncryptionPublicKey.
  */
-extern jclass EncryptionPublicKey;
+struct EncryptionPublicKey_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.EncryptionPublicKey {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.EncryptionPublicKey(byte[]);
- * descriptor: ([B)V
- */
-extern jmethodID EncryptionPublicKey_init;
+    /* public com.velopayments.blockchain.crypt.EncryptionPublicKey(byte[]);
+     * descriptor: ([B)V
+     */
+    jmethodID init;
 
-/* public byte[] getRawBytes();
- * descriptor: ()[B
- */
-extern jmethodID EncryptionPublicKey_getRawBytes;
+    /* public byte[] getRawBytes();
+     * descriptor: ()[B
+     */
+    jmethodID getRawBytes;
+};
+
+/* helper macro. */
+#define ENCRYPTION_PUBLIC_KEY_JAVA_VARS() \
+    EncryptionPublicKey_JavaVars EncryptionPublicKey
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

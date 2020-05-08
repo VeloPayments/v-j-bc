@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct Certificate_JavaVars
+Certificate_JavaVars;
 
 /**
  * Register the following Certificate references and make them global.
@@ -25,25 +31,39 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Certificate_register(JNIEnv* env);
+int
+Certificate_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.Certificate {
+/**
+ * \brief Java variables for Certificate.
  */
-extern jclass Certificate;
+struct Certificate_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.Certificate {
+     */
+    jclass classid;
 
-/* public static com.velopayments.blockchain.cert.Certificate
- * fromByteArray(byte[]);
- * descriptor: ([B)Lcom/velopayments/blockchain/cert/Certificate;
- */
-extern jmethodID Certificate_fromByteArray;
+    /* public static com.velopayments.blockchain.cert.Certificate
+     * fromByteArray(byte[]);
+     * descriptor: ([B)Lcom/velopayments/blockchain/cert/Certificate;
+     */
+    jmethodID fromByteArray;
 
-/* public byte[] toByteArray();
- * descriptor: ()[B
- */
-extern jmethodID Certificate_toByteArray;
+    /* public byte[] toByteArray();
+     * descriptor: ()[B
+     */
+    jmethodID toByteArray;
+};
+
+/* helper macro. */
+#define CERTIFICATE_JAVA_VARS() \
+    Certificate_JavaVars Certificate
 
 #ifdef __cplusplus
 }

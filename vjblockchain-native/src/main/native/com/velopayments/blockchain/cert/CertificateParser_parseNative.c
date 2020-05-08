@@ -11,13 +11,7 @@
 #include <vpr/parameters.h>
 #include <com_velopayments_blockchain_cert_CertificateParser.h>
 
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalArgumentException.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
-#include "../../../../java/lang/Integer.h"
-#include "../../../../java/util/AbstractMap_SimpleEntry.h"
-#include "../../../../java/util/LinkedList.h"
+#include "../init/init.h"
 
 //forward declarations for dummy certificate delegate methods
 static bool dummy_txn_resolver(
@@ -54,7 +48,8 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -62,7 +57,7 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     if (NULL == cert)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "cert");
+            env, native_inst->NullPointerException.classid, "cert");
         return NULL;
     }
 
@@ -73,13 +68,16 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
                     &dummy_artifact_state_resolver, &dummy_contract_resolver,
                     &dummy_entity_key_resolver, NULL))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "vccert could not be initialized.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vccert could not be initialized.");
         return NULL;
     }
 
     /* create the return object */
-    jobject result = (*env)->NewObject(env, LinkedList, LinkedList_init);
+    jobject result =
+        (*env)->NewObject(env, native_inst->LinkedList.classid,
+        native_inst->LinkedList.init);
 
     /* copy the C bytes for this byte array. */
     jbyte* bufferPtr = (*env)->GetByteArrayElements(env, cert, NULL);
@@ -89,7 +87,8 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     if (0 != vccert_parser_init(&parser_options, &parser, bufferPtr, size))
     {
         (*env)->ThrowNew(
-            env, IllegalArgumentException, "certificate invalid.");
+            env, native_inst->IllegalArgumentException.classid,
+            "certificate invalid.");
         result = NULL;
         goto releaseJBuffer;
     }
@@ -98,7 +97,8 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
     if (0 != vccert_parser_field_first(&parser, &field_id, &value, &field_size))
     {
         (*env)->ThrowNew(
-            env, IllegalArgumentException, "certificate has no valid fields.");
+            env, native_inst->IllegalArgumentException.classid,
+            "certificate has no valid fields.");
         result = NULL;
         goto disposeParser;
     }
@@ -114,15 +114,18 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
         /* create Integer key for SimpleEntry */
         jobject key =
             (*env)->CallStaticObjectMethod(
-                env, Integer, Integer_valueOf, (jint)field_id);
+                env, native_inst->Integer.classid, native_inst->Integer.valueOf,
+                (jint)field_id);
 
         /* create the SimpleEntry of (key, value) */
         jobject entry =
             (*env)->NewObject(
-                env, SimpleEntry, SimpleEntry_init, key, byteArray);
+                env, native_inst->SimpleEntry.classid,
+                native_inst->SimpleEntry.init, key, byteArray);
 
         /* add this entry to our result list */
-        (*env)->CallBooleanMethod(env, result, LinkedList_add, entry);
+        (*env)->CallBooleanMethod(
+            env, result, native_inst->LinkedList.add, entry);
 
         /* let the collector know these references are falling out of scope. */
         (*env)->DeleteLocalRef(env, key);

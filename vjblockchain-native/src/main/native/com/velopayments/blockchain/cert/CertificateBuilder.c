@@ -8,35 +8,23 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "CertificateBuilder.h"
 
-jclass CertificateBuilder = NULL;
-jfieldID CertificateBuilder_field_fields = NULL;
-jmethodID CertificateBuilder_addByte = NULL;
-jmethodID CertificateBuilder_addShort = NULL;
-jmethodID CertificateBuilder_addInt = NULL;
-jmethodID CertificateBuilder_addLong = NULL;
-jmethodID CertificateBuilder_addUUID = NULL;
-jmethodID CertificateBuilder_addString = NULL;
-jmethodID CertificateBuilder_addDate = NULL;
-jmethodID CertificateBuilder_sign = NULL;
-
-static volatile bool CertificateBuilder_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: CertificateBuilder globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != CertificateBuilder \
-     && NULL != CertificateBuilder_field_fields \
-     && NULL != CertificateBuilder_addByte \
-     && NULL != CertificateBuilder_addShort \
-     && NULL != CertificateBuilder_addInt \
-     && NULL != CertificateBuilder_addLong \
-     && NULL != CertificateBuilder_addUUID \
-     && NULL != CertificateBuilder_addString \
-     && NULL != CertificateBuilder_addDate \
-     && NULL != CertificateBuilder_sign)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->CertificateBuilder.classid \
+     && NULL != inst->CertificateBuilder.field_fields \
+     && NULL != inst->CertificateBuilder.addByte \
+     && NULL != inst->CertificateBuilder.addShort \
+     && NULL != inst->CertificateBuilder.addInt \
+     && NULL != inst->CertificateBuilder.addLong \
+     && NULL != inst->CertificateBuilder.addUUID \
+     && NULL != inst->CertificateBuilder.addString \
+     && NULL != inst->CertificateBuilder.addDate \
+     && NULL != inst->CertificateBuilder.sign)
 
 /**
  * Register the following CertificateBuilder references and make them global.
@@ -46,24 +34,19 @@ static volatile bool CertificateBuilder_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int CertificateBuilder_register(JNIEnv* env)
+int
+CertificateBuilder_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register Builder once. */
-    if (CertificateBuilder_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register CertificateBuilder class */
     tempClassID = (*env)->FindClass(env,
@@ -72,93 +55,94 @@ int CertificateBuilder_register(JNIEnv* env)
         return 1;
 
     /* create global reference to CertificateBuilder. */
-    CertificateBuilder = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == CertificateBuilder)
+    inst->CertificateBuilder.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->CertificateBuilder.classid)
         return 1;
 
     /* delete local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register fields field */
-    CertificateBuilder_field_fields =
+    inst->CertificateBuilder.field_fields =
         (*env)->GetFieldID(
-            env, CertificateBuilder, "fields", "Ljava/util/LinkedList;");
-    if (NULL == CertificateBuilder_field_fields)
+            env, inst->CertificateBuilder.classid,
+            "fields", "Ljava/util/LinkedList;");
+    if (NULL == inst->CertificateBuilder.field_fields)
         return 1;
 
     /* register addByte method. */
-    CertificateBuilder_addByte =
+    inst->CertificateBuilder.addByte =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addByte",
+            env, inst->CertificateBuilder.classid, "addByte",
             "(IB)Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addByte)
+    if (NULL == inst->CertificateBuilder.addByte)
         return 1;
 
     /* register addShort method. */
-    CertificateBuilder_addShort =
+    inst->CertificateBuilder.addShort =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addShort",
+            env, inst->CertificateBuilder.classid, "addShort",
             "(II)Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addShort)
+    if (NULL == inst->CertificateBuilder.addShort)
         return 1;
 
     /* register addInt method. */
-    CertificateBuilder_addInt =
+    inst->CertificateBuilder.addInt =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addInt",
+            env, inst->CertificateBuilder.classid, "addInt",
             "(II)Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addInt)
+    if (NULL == inst->CertificateBuilder.addInt)
         return 1;
 
     /* register addLong method. */
-    CertificateBuilder_addLong =
+    inst->CertificateBuilder.addLong =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addLong",
+            env, inst->CertificateBuilder.classid, "addLong",
             "(IJ)Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addLong)
+    if (NULL == inst->CertificateBuilder.addLong)
         return 1;
 
     /* register addUUID method. */
-    CertificateBuilder_addUUID =
+    inst->CertificateBuilder.addUUID =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addUUID",
+            env, inst->CertificateBuilder.classid, "addUUID",
             "(ILjava/util/UUID;)"
                 "Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addUUID)
+    if (NULL == inst->CertificateBuilder.addUUID)
         return 1;
 
     /* register addString method. */
-    CertificateBuilder_addString =
+    inst->CertificateBuilder.addString =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addString",
+            env, inst->CertificateBuilder.classid, "addString",
             "(ILjava/lang/String;)"
                 "Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addString)
+    if (NULL == inst->CertificateBuilder.addString)
         return 1;
 
     /* register addDate method. */
-    CertificateBuilder_addDate =
+    inst->CertificateBuilder.addDate =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "addDate",
+            env, inst->CertificateBuilder.classid, "addDate",
             "(ILjava/util/Date;)"
                 "Lcom/velopayments/blockchain/cert/CertificateBuilder;");
-    if (NULL == CertificateBuilder_addDate)
+    if (NULL == inst->CertificateBuilder.addDate)
         return 1;
 
     /* register sign method. */
-    CertificateBuilder_sign =
+    inst->CertificateBuilder.sign =
         (*env)->GetMethodID(
-            env, CertificateBuilder, "sign",
+            env, inst->CertificateBuilder.classid, "sign",
             "(Ljava/util/UUID;"
             "Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)"
             "Lcom/velopayments/blockchain/cert/Certificate;");
-    if (NULL == CertificateBuilder_sign)
+    if (NULL == inst->CertificateBuilder.sign)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    CertificateBuilder_registered = true;
     return 0;
 }

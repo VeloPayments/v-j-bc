@@ -8,23 +8,17 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "EncryptionKeyPair.h"
 
-jclass EncryptionKeyPair;
-jmethodID EncryptionKeyPair_init;
-jmethodID EncryptionKeyPair_getPublicKey;
-jmethodID EncryptionKeyPair_getPrivateKey;
-
-static volatile bool EncryptionKeyPair_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: EncryptionKeyPair globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != EncryptionKeyPair \
-     && NULL != EncryptionKeyPair_init \
-     && NULL != EncryptionKeyPair_getPublicKey \
-     && NULL != EncryptionKeyPair_getPrivateKey)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->EncryptionKeyPair.classid \
+     && NULL != inst->EncryptionKeyPair.init \
+     && NULL != inst->EncryptionKeyPair.getPublicKey \
+     && NULL != inst->EncryptionKeyPair.getPrivateKey)
 
 /**
  * Register the following EncryptionKeyPair references and make them global.
@@ -34,24 +28,19 @@ static volatile bool EncryptionKeyPair_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EncryptionKeyPair_register(JNIEnv* env)
+int
+EncryptionKeyPair_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register EncryptionKeyPair once. */
-    if (EncryptionKeyPair_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register EncryptionKeyPair class */
     tempClassID = (*env)->FindClass(env,
@@ -60,42 +49,42 @@ int EncryptionKeyPair_register(JNIEnv* env)
         return 1;
 
     /* register EncryptionKeyPair class */
-    EncryptionKeyPair = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == EncryptionKeyPair)
+    inst->EncryptionKeyPair.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->EncryptionKeyPair.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    EncryptionKeyPair_init =
+    inst->EncryptionKeyPair.init =
         (*env)->GetMethodID(
-            env, EncryptionKeyPair, "<init>",
+            env, inst->EncryptionKeyPair.classid, "<init>",
             "(Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;"
              "Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;)V");
-    if (NULL == EncryptionKeyPair_init)
+    if (NULL == inst->EncryptionKeyPair.init)
         return 1;
 
     /* register getPublicKey method */
-    EncryptionKeyPair_getPublicKey =
+    inst->EncryptionKeyPair.getPublicKey =
         (*env)->GetMethodID(
-            env, EncryptionKeyPair, "getPublicKey",
+            env, inst->EncryptionKeyPair.classid, "getPublicKey",
             "()Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;");
-    if (NULL == EncryptionKeyPair_getPublicKey)
+    if (NULL == inst->EncryptionKeyPair.getPublicKey)
         return 1;
 
     /* register getPrivateKey method */
-    EncryptionKeyPair_getPrivateKey =
+    inst->EncryptionKeyPair.getPrivateKey =
         (*env)->GetMethodID(
-            env, EncryptionKeyPair, "getPrivateKey",
+            env, inst->EncryptionKeyPair.classid, "getPrivateKey",
             "()Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;");
-    if (NULL == EncryptionKeyPair_getPrivateKey)
+    if (NULL == inst->EncryptionKeyPair.getPrivateKey)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    EncryptionKeyPair_registered = true;
     return 0;
 }

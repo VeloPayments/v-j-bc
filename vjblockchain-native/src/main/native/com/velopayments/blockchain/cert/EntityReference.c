@@ -8,23 +8,17 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "EntityReference.h"
 
-jclass EntityReference = NULL;
-jmethodID EntityReference_init = NULL;
-jmethodID EntityReference_getPublicEncryptionKey = NULL;
-jmethodID EntityReference_getPublicSigningKey = NULL;
-
-static volatile bool EntityReference_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: EntityReference globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != EntityReference \
-     && NULL != EntityReference_init \
-     && NULL != EntityReference_getPublicEncryptionKey \
-     && NULL != EntityReference_getPublicSigningKey)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->EntityReference.classid \
+     && NULL != inst->EntityReference.init \
+     && NULL != inst->EntityReference.getPublicEncryptionKey \
+     && NULL != inst->EntityReference.getPublicSigningKey)
 
 /**
  * Register the following EntityReference references and make them global.
@@ -34,24 +28,19 @@ static volatile bool EntityReference_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EntityReference_register(JNIEnv* env)
+int
+EntityReference_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register UnknownEntityException once. */
-    if (EntityReference_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register EntityReference class */
     tempClassID = (*env)->FindClass(env,
@@ -60,38 +49,41 @@ int EntityReference_register(JNIEnv* env)
         return 1;
 
     /* create global class reference */
-    EntityReference = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == EntityReference)
+    inst->EntityReference.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->EntityReference.classid)
         return 1;
 
     /* we're done with this local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    EntityReference_init =
+    inst->EntityReference.init =
         (*env)->GetMethodID(
-            env, EntityReference, "<init>", "([B[BLjava/util/UUID;)V");
-    if (NULL == EntityReference_init)
+            env, inst->EntityReference.classid,
+            "<init>", "([B[BLjava/util/UUID;)V");
+    if (NULL == inst->EntityReference.init)
         return 1;
 
     /* register init method */
-    EntityReference_getPublicEncryptionKey =
+    inst->EntityReference.getPublicEncryptionKey =
         (*env)->GetMethodID(
-            env, EntityReference, "getPublicEncryptionKey", "()[B");
-    if (NULL == EntityReference_getPublicEncryptionKey)
+            env, inst->EntityReference.classid,
+            "getPublicEncryptionKey", "()[B");
+    if (NULL == inst->EntityReference.getPublicEncryptionKey)
         return 1;
 
     /* register init method */
-    EntityReference_getPublicSigningKey =
+    inst->EntityReference.getPublicSigningKey =
         (*env)->GetMethodID(
-            env, EntityReference, "getPublicSigningKey", "()[B");
-    if (NULL == EntityReference_getPublicSigningKey)
+            env, inst->EntityReference.classid,
+            "getPublicSigningKey", "()[B");
+    if (NULL == inst->EntityReference.getPublicSigningKey)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    EntityReference_registered = true;
     return 0;
 }

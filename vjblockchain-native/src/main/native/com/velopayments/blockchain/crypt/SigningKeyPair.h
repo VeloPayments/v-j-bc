@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct SigningKeyPair_JavaVars
+SigningKeyPair_JavaVars;
 
 /**
  * Register the following SigningKeyPair references and make them global.
@@ -25,22 +31,36 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SigningKeyPair_register(JNIEnv* env);
+int
+SigningKeyPair_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.SigningKeyPair {
+/**
+ * \brief Java variables for SigningKeyPair.
  */
-extern jclass SigningKeyPair;
+struct SigningKeyPair_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.SigningKeyPair {
+     */
+    jclass classid;
 
-/* private com.velopayments.blockchain.crypt.SigningKeyPair(
- *      SigningPublicKey, SigningPrivateKey)
- * descriptor:
- *      (Lcom/velopayments/blockchain/crypt/SigningPublicKey;
- *       Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)V
- */
-extern jmethodID SigningKeyPair_init;
+    /* private com.velopayments.blockchain.crypt.SigningKeyPair(
+     *      SigningPublicKey, SigningPrivateKey)
+     * descriptor:
+     *      (Lcom/velopayments/blockchain/crypt/SigningPublicKey;
+     *       Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)V
+     */
+    jmethodID init;
+};
+
+/* helper macro. */
+#define SIGNING_KEY_PAIR_JAVA_VARS() \
+    SigningKeyPair_JavaVars SigningKeyPair
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

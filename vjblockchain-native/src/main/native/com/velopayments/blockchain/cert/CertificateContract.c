@@ -8,19 +8,15 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "CertificateContract.h"
 
-jclass CertificateContract = NULL;
-jmethodID CertificateContract_verify = NULL;
-
-static volatile bool CertificateContract_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: CertificateContract globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != CertificateContract \
-     && NULL != CertificateContract_verify)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->CertificateContract.classid \
+     && NULL != inst->CertificateContract.verify)
 
 /**
  * Register the following CertificateContract references and make them global.
@@ -30,24 +26,19 @@ static volatile bool CertificateContract_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int CertificateContract_register(JNIEnv* env)
+int
+CertificateContract_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register UnknownEntityException once. */
-    if (CertificateContract_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register certificatecontract class */
     tempClassID = (*env)->FindClass(env,
@@ -56,25 +47,25 @@ int CertificateContract_register(JNIEnv* env)
         return 1;
 
     /* create global class reference */
-    CertificateContract = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == CertificateContract)
+    inst->CertificateContract.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->CertificateContract.classid)
         return 1;
 
     /* release local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register verify method */
-    CertificateContract_verify =
+    inst->CertificateContract.verify =
         (*env)->GetMethodID(
-            env, CertificateContract, "verify",
+            env, inst->CertificateContract.classid, "verify",
             "(Lcom/velopayments/blockchain/cert/CertificateParser;)Z");
-    if (NULL == CertificateContract_verify)
+    if (NULL == inst->CertificateContract.verify)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    CertificateContract_registered = true;
     return 0;
 }

@@ -8,27 +8,19 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "TransactionStatus.h"
 
-jclass TransactionStatus = NULL;
-jfieldID TransactionStatus_field_PENDING = NULL;
-jfieldID TransactionStatus_field_FAILED = NULL;
-jfieldID TransactionStatus_field_CANCELED = NULL;
-jfieldID TransactionStatus_field_SUCCEEDED = NULL;
-jfieldID TransactionStatus_field_UNKNOWN_DISCONNECTED = NULL;
-
-static volatile bool TransactionStatus_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: TransactionStatus globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != TransactionStatus \
-        NULL != TransactionStatus_field_PENDING \
-        NULL != TransactionStatus_field_FAILED \
-        NULL != TransactionStatus_field_CANCELED \
-        NULL != TransactionStatus_field_SUCCEEDED \
-        NULL != TransactionStatus_field_UNKNOWN_DISCONNECTED)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->TransactionStatus.classid \
+        NULL != inst->TransactionStatus.field_PENDING \
+        NULL != inst->TransactionStatus.field_FAILED \
+        NULL != inst->TransactionStatus.field_CANCELED \
+        NULL != inst->TransactionStatus.field_SUCCEEDED \
+        NULL != inst->TransactionStatus.field_UNKNOWN_DISCONNECTED)
 
 /**
  * Register the following TransactionStatus references and make them global.
@@ -38,24 +30,19 @@ static volatile bool TransactionStatus_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int TransactionStatus_register(JNIEnv* env)
+int
+TransactionStatus_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register TransactionStatus once. */
-    if (TransactionStatus_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register TransactionStatus class */
     tempClassID = (*env)->FindClass(env,
@@ -64,57 +51,57 @@ int TransactionStatus_register(JNIEnv* env)
         return 1;
 
     /* create global reference to TransactionStatus. */
-    TransactionStatus = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == TransactionStatus)
+    inst->TransactionStatus.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->TransactionStatus.classid)
         return 1;
 
     /* delete local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register PENDING field. */
-    TransactionStatus_field_PENDING =
+    inst->TransactionStatus.field_PENDING =
         (*env)->GetStaticFieldID(
-            env, TransactionStatus, "PENDING",
+            env, inst->TransactionStatus.classid, "PENDING",
             "Lcom/velopayments/blockchain/client/TransactionStatus;");
-    if (NULL == TransactionStatus_field_PENDING)
+    if (NULL == inst->TransactionStatus.field_PENDING)
         return 1;
 
     /* register FAILED field. */
-    TransactionStatus_field_FAILED =
+    inst->TransactionStatus.field_FAILED =
         (*env)->GetStaticFieldID(
-            env, TransactionStatus, "FAILED",
+            env, inst->TransactionStatus.classid, "FAILED",
             "Lcom/velopayments/blockchain/client/TransactionStatus;");
-    if (NULL == TransactionStatus_field_FAILED)
+    if (NULL == inst->TransactionStatus.field_FAILED)
         return 1;
 
     /* register CANCELED field. */
-    TransactionStatus_field_CANCELED =
+    inst->TransactionStatus.field_CANCELED =
         (*env)->GetStaticFieldID(
-            env, TransactionStatus, "CANCELED",
+            env, inst->TransactionStatus.classid, "CANCELED",
             "Lcom/velopayments/blockchain/client/TransactionStatus;");
-    if (NULL == TransactionStatus_field_CANCELED)
+    if (NULL == inst->TransactionStatus.field_CANCELED)
         return 1;
 
     /* register SUCCEEDED field. */
-    TransactionStatus_field_SUCCEEDED =
+    inst->TransactionStatus.field_SUCCEEDED =
         (*env)->GetStaticFieldID(
-            env, TransactionStatus, "SUCCEEDED",
+            env, inst->TransactionStatus.classid, "SUCCEEDED",
             "Lcom/velopayments/blockchain/client/TransactionStatus;");
-    if (NULL == TransactionStatus_field_SUCCEEDED)
+    if (NULL == inst->TransactionStatus.field_SUCCEEDED)
         return 1;
 
     /* register UNKNOWN_DISCONNECTED field. */
-    TransactionStatus_field_UNKNOWN_DISCONNECTED =
+    inst->TransactionStatus.field_UNKNOWN_DISCONNECTED =
         (*env)->GetStaticFieldID(
-            env, TransactionStatus, "UNKNOWN_DISCONNECTED",
+            env, inst->TransactionStatus.classid, "UNKNOWN_DISCONNECTED",
             "Lcom/velopayments/blockchain/client/TransactionStatus;");
-    if (NULL == TransactionStatus_field_UNKNOWN_DISCONNECTED)
+    if (NULL == inst->TransactionStatus.field_UNKNOWN_DISCONNECTED)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    TransactionStatus_registered = true;
     return 0;
 }

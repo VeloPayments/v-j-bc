@@ -13,8 +13,6 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
 #include "../init/init.h"
 
 /*
@@ -51,7 +49,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-                env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -59,7 +58,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == client_private_key)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "client_private_key");
+            env, native_inst->NullPointerException.classid,
+            "client_private_key");
         return NULL;
     }
 
@@ -67,7 +67,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == server_public_key)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "server_public_key");
+            env, native_inst->NullPointerException.classid,
+            "server_public_key");
         return NULL;
     }
 
@@ -75,7 +76,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == server_nonce)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "server_nonce");
+            env, native_inst->NullPointerException.classid,
+            "server_nonce");
         return NULL;
     }
 
@@ -83,7 +85,7 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == client_nonce)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "client_nonce");
+            env, native_inst->NullPointerException.classid, "client_nonce");
         return NULL;
     }
 
@@ -93,7 +95,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == client_private_key_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "client_private_key_bytes");
+            env, native_inst->NullPointerException.classid,
+            "client_private_key_bytes");
         goto done;
     }
 
@@ -105,14 +108,17 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
                     &client_private_key_buffer, &native_inst->alloc_opts,
                     client_private_key_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "client private key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "client private key buffer creation failure.");
         goto client_private_key_bytes_dispose;
     }
 
     /* copy the client private key data to the buffer. */
-    memcpy(client_private_key_buffer.data, client_private_key_bytes,
-            client_private_key_size);
+    MODEL_EXEMPT(
+        memcpy(
+            client_private_key_buffer.data, client_private_key_bytes,
+            client_private_key_size));
 
     /* get the raw bytes of the server public key */
     server_public_key_bytes = (*env)->GetByteArrayElements(
@@ -120,7 +126,8 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     if (NULL == server_public_key_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "server_public_key_bytes");
+            env, native_inst->NullPointerException.classid,
+            "server_public_key_bytes");
         goto client_private_key_buffer_dispose;
     }
 
@@ -132,21 +139,25 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
                     &server_public_key_buffer, &native_inst->alloc_opts,
                     server_public_key_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "server public key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "server public key buffer creation failure.");
         goto server_public_key_bytes_dispose;
     }
 
     /* copy the server public key data to the buffer. */
-    memcpy(server_public_key_buffer.data, server_public_key_bytes,
-           server_public_key_size);
+    MODEL_EXEMPT(
+        memcpy(
+            server_public_key_buffer.data, server_public_key_bytes,
+            server_public_key_size));
 
     /* get the raw bytes of the server nonce */
     server_nonce_bytes = (*env)->GetByteArrayElements(env, server_nonce, NULL);
     if (NULL == server_nonce_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "server_nonce_bytes");
+            env, native_inst->NullPointerException.classid,
+            "server_nonce_bytes");
         goto server_public_key_buffer_dispose;
     }
 
@@ -158,20 +169,24 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
                     &server_nonce_buffer, &native_inst->alloc_opts,
                     server_nonce_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "server nonce buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "server nonce buffer creation failure.");
         goto server_nonce_bytes_dispose;
     }
 
     /* copy the server nonce data to the buffer. */
-    memcpy(server_nonce_buffer.data, server_nonce_bytes, server_nonce_size);
+    MODEL_EXEMPT(
+        memcpy(
+            server_nonce_buffer.data, server_nonce_bytes, server_nonce_size));
 
     /* get the raw bytes of the client nonce */
     client_nonce_bytes = (*env)->GetByteArrayElements(env, client_nonce, NULL);
     if (NULL == client_nonce_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "client_nonce_bytes");
+            env, native_inst->NullPointerException.classid,
+            "client_nonce_bytes");
         goto server_nonce_buffer_dispose;
     }
 
@@ -183,19 +198,25 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
                     &client_nonce_buffer, &native_inst->alloc_opts,
                     client_nonce_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "client nonce buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "client nonce buffer creation failure.");
         goto client_nonce_bytes_dispose;
     }
 
     /* copy the client nonce data to the buffer. */
-    memcpy(client_nonce_buffer.data, client_nonce_bytes, client_nonce_size);
+    MODEL_EXEMPT(
+        memcpy(
+            client_nonce_buffer.data, client_nonce_bytes, client_nonce_size));
 
     /* create buffer for shared secret */
     if (0 !=
             vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret(
                     &native_inst->crypto_suite, &shared_secret_buffer))
     {
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret");
         goto client_nonce_buffer_dispose;
     }
 
@@ -204,6 +225,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
             vccrypt_suite_cipher_key_agreement_init(
                     &native_inst->crypto_suite, &agreement))
     {
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vccrypt_suite_cipher_key_agreement_init");
         goto shared_secret_buffer_dispose;
     }
 
@@ -213,6 +237,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
             &server_public_key_buffer, &server_nonce_buffer,
             &client_nonce_buffer, &shared_secret_buffer))
     {
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vccrypt_key_agreement_short_term_secret_create");
         goto key_agreement_dispose;
     }
 
@@ -220,9 +247,9 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     retval = (*env)->NewByteArray(env, shared_secret_buffer.size);
     if (NULL == retval)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array could not be allocated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "return value array could not be allocated.");
         goto key_agreement_dispose;
     }
 
@@ -230,16 +257,17 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
     jbyte* retval_bytes = (*env)->GetByteArrayElements(env, retval, NULL);
     if (NULL == retval_bytes)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array data could not be dereferenced.");
-
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "return value array data could not be dereferenced.");
         goto key_agreement_dispose;
     }
 
     /* copy the data to the buffer. */
     MODEL_EXEMPT(
-            memcpy(retval_bytes, shared_secret_buffer.data,
-                    shared_secret_buffer.size));
+        memcpy(
+            retval_bytes, shared_secret_buffer.data,
+            shared_secret_buffer.size));
 
     /* commit data to the byte array. */
     (*env)->ReleaseByteArrayElements(env, retval, retval_bytes, 0);

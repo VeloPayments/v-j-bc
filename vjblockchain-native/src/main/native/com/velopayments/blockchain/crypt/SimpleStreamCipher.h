@@ -14,10 +14,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
+
+/* forward decls. */
+typedef struct SimpleStreamCipher_JavaVars
+SimpleStreamCipher_JavaVars;
 
 /**
  * Register the following SimpleStreamCipher references and make them global.
@@ -27,40 +33,54 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SimpleStreamCipher_register(JNIEnv* env);
+int
+SimpleStreamCipher_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.SimpleStreamCipher {
+/**
+ * \brief Java variables for SimpleStreamCipher.
  */
-extern jclass SimpleStreamCipher;
+struct SimpleStreamCipher_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.SimpleStreamCipher {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.SimpleStreamCipher(Key);
- * descriptor: (Lcom/velopayments/blockchain/crypt/Key;)V
- */
-extern jmethodID SimpleStreamCipher_init;
+    /* public com.velopayments.blockchain.crypt.SimpleStreamCipher(Key);
+     * descriptor: (Lcom/velopayments/blockchain/crypt/Key;)V
+     */
+    jmethodID init;
 
-/* public com.velopayments.blockchain.crypt.Key getKey();
- * descriptor: ()Lcom/velopayments/blockchain/crypt/Key;
- */
-extern jmethodID SimpleStreamCipher_getKey;
+    /* public com.velopayments.blockchain.crypt.Key getKey();
+     * descriptor: ()Lcom/velopayments/blockchain/crypt/Key;
+     */
+    jmethodID getKey;
 
-/* public byte[] encrypt(byte[]);
- * descriptor: ([B)[B
- */
-extern jmethodID SimpleStreamCipher_encrypt;
+    /* public byte[] encrypt(byte[]);
+     * descriptor: ([B)[B
+     */
+    jmethodID encrypt;
 
-/* public byte[] decrypt(byte[]);
- * descriptor: ([B)[B
- */
-extern jmethodID SimpleStreamCipher_decrypt;
+    /* public byte[] decrypt(byte[]);
+     * descriptor: ([B)[B
+     */
+    jmethodID decrypt;
 
-/*
- * private Key key;
- * descriptor: Lcom/velopayments/blockchain/crypt/Key;
- */
-extern jfieldID SimpleStreamCipher_field_key;
+    /*
+     * private Key key;
+     * descriptor: Lcom/velopayments/blockchain/crypt/Key;
+     */
+    jfieldID field_key;
+};
+
+/* helper macro. */
+#define SIMPLE_STREAM_CIPHER_JAVA_VARS() \
+    SimpleStreamCipher_JavaVars SimpleStreamCipher
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

@@ -8,47 +8,29 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "Optional.h"
 
-jclass Optional = NULL;
-jmethodID Optional_empty = NULL;
-jmethodID Optional_of = NULL;
-jmethodID Optional_ofNullable = NULL;
-jmethodID Optional_get = NULL;
-jmethodID Optional_isPresent = NULL;
-jmethodID Optional_ifPresent = NULL;
-jmethodID Optional_filter = NULL;
-jmethodID Optional_map = NULL;
-jmethodID Optional_flatMap = NULL;
-jmethodID Optional_orElse = NULL;
-jmethodID Optional_orElseGet = NULL;
-jmethodID Optional_orElseThrow = NULL;
-jmethodID Optional_equals = NULL;
-jmethodID Optional_hashCode = NULL;
-jmethodID Optional_toString = NULL;
-
-static volatile bool Optional_registered = false;
+#include "../../com/velopayments/blockchain/init/init.h"
 
 /**
  * Property: Optional globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != Optional \
-        NULL != Optional_empty \
-        NULL != Optional_of \
-        NULL != Optional_ofNullable \
-        NULL != Optional_get \
-        NULL != Optional_isPresent \
-        NULL != Optional_ifPresent \
-        NULL != Optional_filter \
-        NULL != Optional_map \
-        NULL != Optional_flatMap \
-        NULL != Optional_orElse \
-        NULL != Optional_orElseGet \
-        NULL != Optional_orElseThrow \
-        NULL != Optional_equals \
-        NULL != Optional_hashCode \
-        NULL != Optional_toString)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->Optional.classid \
+        NULL != inst->Optional.empty \
+        NULL != inst->Optional.of \
+        NULL != inst->Optional.ofNullable \
+        NULL != inst->Optional.get \
+        NULL != inst->Optional.isPresent \
+        NULL != inst->Optional.ifPresent \
+        NULL != inst->Optional.filter \
+        NULL != inst->Optional.map \
+        NULL != inst->Optional.flatMap \
+        NULL != inst->Optional.orElse \
+        NULL != inst->Optional.orElseGet \
+        NULL != inst->Optional.orElseThrow \
+        NULL != inst->Optional.equals \
+        NULL != inst->Optional.hashCode \
+        NULL != inst->Optional.toString)
 
 /**
  * Register the following Optional references and make them global.
@@ -58,154 +40,151 @@ static volatile bool Optional_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Optional_register(JNIEnv* env)
+int
+Optional_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
-    /* only register Optional once. */
-    if (Optional_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
-
-    /* register ParserDelegate class */
+    /* register class */
     tempClassID = (*env)->FindClass(env,
         "java/util/Optional");
     if (NULL == tempClassID)
         return 1;
 
     /* create a global reference to this class */
-    Optional = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == Optional)
+    inst->Optional.classid = (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->Optional.classid)
         return 1;
 
     /* we don't need this local reference anymore. */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register empty method. */
-    Optional_empty =
+    inst->Optional.empty =
         (*env)->GetStaticMethodID(
-            env, Optional, "empty", "()Ljava/util/Optional;");
-    if (NULL == Optional_empty)
+            env, inst->Optional.classid, "empty", "()Ljava/util/Optional;");
+    if (NULL == inst->Optional.empty)
         return 1;
 
     /* register of method. */
-    Optional_of =
+    inst->Optional.of =
         (*env)->GetStaticMethodID(
-            env, Optional, "of", "(Ljava/lang/Object;)Ljava/util/Optional;");
-    if (NULL == Optional_of)
+            env, inst->Optional.classid,
+            "of", "(Ljava/lang/Object;)Ljava/util/Optional;");
+    if (NULL == inst->Optional.of)
         return 1;
 
     /* register ofNullable method. */
-    Optional_ofNullable =
+    inst->Optional.ofNullable =
         (*env)->GetStaticMethodID(
-            env, Optional, "ofNullable",
+            env, inst->Optional.classid, "ofNullable",
             "(Ljava/lang/Object;)Ljava/util/Optional;");
-    if (NULL == Optional_ofNullable)
+    if (NULL == inst->Optional.ofNullable)
         return 1;
 
     /* register get method. */
-    Optional_get =
+    inst->Optional.get =
         (*env)->GetMethodID(
-            env, Optional, "get", "()Ljava/lang/Object;");
-    if (NULL == Optional_get)
+            env, inst->Optional.classid, "get", "()Ljava/lang/Object;");
+    if (NULL == inst->Optional.get)
         return 1;
 
     /* register isPresent method. */
-    Optional_isPresent =
+    inst->Optional.isPresent =
         (*env)->GetMethodID(
-            env, Optional, "isPresent", "()Z");
-    if (NULL == Optional_isPresent)
+            env, inst->Optional.classid, "isPresent", "()Z");
+    if (NULL == inst->Optional.isPresent)
         return 1;
 
     /* register ifPresent method. */
-    Optional_ifPresent =
+    inst->Optional.ifPresent =
         (*env)->GetMethodID(
-            env, Optional, "ifPresent", "(Ljava/util/function/Consumer;)V");
-    if (NULL == Optional_ifPresent)
+            env, inst->Optional.classid,
+            "ifPresent", "(Ljava/util/function/Consumer;)V");
+    if (NULL == inst->Optional.ifPresent)
         return 1;
 
     /* register filter method. */
-    Optional_filter =
+    inst->Optional.filter =
         (*env)->GetMethodID(
-            env, Optional, "filter",
+            env, inst->Optional.classid, "filter",
             "(Ljava/util/function/Predicate;)Ljava/util/Optional;");
-    if (NULL == Optional_filter)
+    if (NULL == inst->Optional.filter)
         return 1;
 
     /* register map method. */
-    Optional_map =
+    inst->Optional.map =
         (*env)->GetMethodID(
-            env, Optional, "map",
+            env, inst->Optional.classid, "map",
             "(Ljava/util/function/Function;)Ljava/util/Optional;");
-    if (NULL == Optional_map)
+    if (NULL == inst->Optional.map)
         return 1;
 
     /* register flatMap method. */
-    Optional_flatMap =
+    inst->Optional.flatMap =
         (*env)->GetMethodID(
-            env, Optional, "flatMap",
+            env, inst->Optional.classid, "flatMap",
             "(Ljava/util/function/Function;)Ljava/util/Optional;");
-    if (NULL == Optional_flatMap)
+    if (NULL == inst->Optional.flatMap)
         return 1;
 
     /* register orElse method. */
-    Optional_orElse =
+    inst->Optional.orElse =
         (*env)->GetMethodID(
-            env, Optional, "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;");
-    if (NULL == Optional_orElse)
+            env, inst->Optional.classid,
+            "orElse", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    if (NULL == inst->Optional.orElse)
         return 1;
 
     /* register orElseGet method. */
-    Optional_orElseGet =
+    inst->Optional.orElseGet =
         (*env)->GetMethodID(
-            env, Optional, "orElseGet", 
+            env, inst->Optional.classid, "orElseGet", 
             "(Ljava/util/function/Supplier;)Ljava/lang/Object;");
-    if (NULL == Optional_orElseGet)
+    if (NULL == inst->Optional.orElseGet)
         return 1;
 
     /* register orElseThrow method. */
-    Optional_orElseThrow =
+    inst->Optional.orElseThrow =
         (*env)->GetMethodID(
-            env, Optional, "orElseThrow",
+            env, inst->Optional.classid, "orElseThrow",
             "(Ljava/util/function/Supplier;)Ljava/lang/Object;");
-    if (NULL == Optional_orElseThrow)
+    if (NULL == inst->Optional.orElseThrow)
         return 1;
 
     /* register equals method. */
-    Optional_equals =
+    inst->Optional.equals =
         (*env)->GetMethodID(
-            env, Optional, "equals", "(Ljava/lang/Object;)Z");
-    if (NULL == Optional_equals)
+            env, inst->Optional.classid, "equals", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->Optional.equals)
         return 1;
 
     /* register hashCode method. */
-    Optional_hashCode =
+    inst->Optional.hashCode =
         (*env)->GetMethodID(
-            env, Optional, "hashCode", "()I");
-    if (NULL == Optional_hashCode)
+            env, inst->Optional.classid, "hashCode", "()I");
+    if (NULL == inst->Optional.hashCode)
         return 1;
 
     /* register toString method. */
-    Optional_toString =
+    inst->Optional.toString =
         (*env)->GetMethodID(
-            env, Optional, "toString", "()Ljava/lang/String;");
-    if (NULL == Optional_toString)
+            env, inst->Optional.classid, "toString", "()Ljava/lang/String;");
+    if (NULL == inst->Optional.toString)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    Optional_registered = true;
     return 0;
 }

@@ -13,10 +13,16 @@
 
 #include <jni.h>
 
+#include "../../com/velopayments/blockchain/init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct NullPointerException_JavaVars
+NullPointerException_JavaVars;
 
 /**
  * Register the following NullPointerException references and make them global.
@@ -26,25 +32,39 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int NullPointerException_register(JNIEnv* env);
+int
+NullPointerException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class java.lang.NullPointerException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for NullPointerException.
  */
-extern jclass NullPointerException;
+struct NullPointerException_JavaVars
+{
+    /* public class java.lang.NullPointerException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public java.lang.NullPointerException();
- * descriptor: ()V
- */
-extern jmethodID NullPointerException_init;
+    /* public java.lang.NullPointerException();
+     * descriptor: ()V
+     */
+    jmethodID init;
 
-/* public java.lang.NullPointerException(java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID NullPointerException_init_String;
+    /* public java.lang.NullPointerException(java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
+};
+
+/* helper macros. */
+#define NULL_POINTER_EXCEPTION_JAVA_VARS() \
+    NullPointerException_JavaVars NullPointerException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "UnknownArtifactException.h"
 
-jclass UnknownArtifactException = NULL;
-jmethodID UnknownArtifactException_init_String = NULL;
-jmethodID UnknownArtifactException_init_UUID = NULL;
-
-static volatile bool UnknownArtifactException_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: UnknownArtifactException globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != UnknownArtifactException \
-     && NULL != UnknownArtifactException_init_String \
-     && NULL != UnknownArtifactException_init_UUID)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->UnknownArtifactException.classid \
+     && NULL != inst->UnknownArtifactException.init_String \
+     && NULL != inst->UnknownArtifactException.init_UUID)
 
 /**
  * Register the following UnknownArtifactException references and make them
@@ -33,24 +28,19 @@ static volatile bool UnknownArtifactException_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int UnknownArtifactException_register(JNIEnv* env)
+int
+UnknownArtifactException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register UnknownArtifactException once. */
-    if (UnknownArtifactException_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register UnknownArtifactException class */
     tempClassID = (*env)->FindClass(env,
@@ -59,31 +49,33 @@ int UnknownArtifactException_register(JNIEnv* env)
         return 1;
 
     /* create a global reference to this class. */
-    UnknownArtifactException = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == UnknownArtifactException)
+    inst->UnknownArtifactException.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->UnknownArtifactException.classid)
         return 1;
 
     /* we don't need this local reference anymore. */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init(String) method */
-    UnknownArtifactException_init_String =
+    inst->UnknownArtifactException.init_String =
         (*env)->GetMethodID(
-            env, UnknownArtifactException, "<init>", "(Ljava/lang/String;)V");
-    if (NULL == UnknownArtifactException_init_String)
+            env, inst->UnknownArtifactException.classid,
+            "<init>", "(Ljava/lang/String;)V");
+    if (NULL == inst->UnknownArtifactException.init_String)
         return 1;
 
     /* register init(UUID) method */
-    UnknownArtifactException_init_UUID =
+    inst->UnknownArtifactException.init_UUID =
         (*env)->GetMethodID(
-            env, UnknownArtifactException, "<init>", "(Ljava/util/UUID;)V");
-    if (NULL == UnknownArtifactException_init_UUID)
+            env, inst->UnknownArtifactException.classid,
+            "<init>", "(Ljava/util/UUID;)V");
+    if (NULL == inst->UnknownArtifactException.init_UUID)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    UnknownArtifactException_registered = true;
     return 0;
 }

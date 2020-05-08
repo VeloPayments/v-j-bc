@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "SigningKeyPair.h"
 
-jclass SigningPrivateKey = NULL;
-jmethodID SigningPrivateKey_init = NULL;
-jmethodID SigningPrivateKey_getRawBytes = NULL;
-
-static volatile bool SigningPrivateKey_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: SigningKeyPair globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != SigningPrivateKey \
-     && NULL != SigningPrivateKey_init \
-     && NULL != SigningPrivateKey_getRawBytes)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->SigningPrivateKey.classid \
+     && NULL != inst->SigningPrivateKey.init \
+     && NULL != inst->SigningPrivateKey.getRawBytes)
 
 /**
  * Register the following SigningPrivateKey references and make them global.
@@ -32,24 +27,19 @@ static volatile bool SigningPrivateKey_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SigningPrivateKey_register(JNIEnv* env)
+int
+SigningPrivateKey_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register KeyPair once. */
-    if (SigningPrivateKey_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register KeyPair class */
     tempClassID = (*env)->FindClass(env,
@@ -58,31 +48,31 @@ int SigningPrivateKey_register(JNIEnv* env)
         return 1;
 
     /* register KeyPair class */
-    SigningPrivateKey = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == SigningPrivateKey)
+    inst->SigningPrivateKey.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->SigningPrivateKey.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    SigningPrivateKey_init =
+    inst->SigningPrivateKey.init =
         (*env)->GetMethodID(
-            env, SigningPrivateKey, "<init>", "([B)V");
-    if (NULL == SigningPrivateKey_init)
+            env, inst->SigningPrivateKey.classid, "<init>", "([B)V");
+    if (NULL == inst->SigningPrivateKey.init)
         return 1;
 
     /* register getRawBytes method */
-    SigningPrivateKey_getRawBytes =
+    inst->SigningPrivateKey.getRawBytes =
         (*env)->GetMethodID(
-            env, SigningPrivateKey, "getRawBytes", "()[B");
-    if (NULL == SigningPrivateKey_getRawBytes)
+            env, inst->SigningPrivateKey.classid, "getRawBytes", "()[B");
+    if (NULL == inst->SigningPrivateKey.getRawBytes)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    SigningPrivateKey_registered = true;
     return 0;
 }

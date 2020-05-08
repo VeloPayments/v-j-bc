@@ -11,11 +11,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "SigningKeyPair.h"
-#include "SigningPublicKey.h"
-#include "SigningPrivateKey.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_SigningKeyPair
@@ -39,52 +35,58 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
     /* initialize digital signature impl. */
-    if (0 != vccrypt_suite_digital_signature_init(
-                    &native_inst->crypto_suite, &sign))
+    if (0 !=
+            vccrypt_suite_digital_signature_init(
+                &native_inst->crypto_suite, &sign))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "digital signature could not be initialized.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "digital signature could not be initialized.");
         return NULL;
     }
 
     MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_DIGITAL_SIGNATURE_CONTEXT(&sign));
 
     /* initialize private key buffer. */
-    if (0 != vccrypt_suite_buffer_init_for_signature_private_key(
-                    &native_inst->crypto_suite, &priv))
+    if (0 !=
+            vccrypt_suite_buffer_init_for_signature_private_key(
+                &native_inst->crypto_suite, &priv))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "private key buffer could not be initialized.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "private key buffer could not be initialized.");
         goto sign_dispose;
     }
 
     MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_BUFFER(&priv));
 
     /* initialize public key buffer. */
-    if (0 != vccrypt_suite_buffer_init_for_signature_public_key(
-                    &native_inst->crypto_suite, &pub))
+    if (0 !=
+            vccrypt_suite_buffer_init_for_signature_public_key(
+                &native_inst->crypto_suite, &pub))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "public key buffer could not be initialized.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "public key buffer could not be initialized.");
         goto priv_dispose;
     }
 
     MODEL_ASSERT(MODEL_PROP_VALID_VCCRYPT_BUFFER(&pub));
 
     /* create keypair. */
-    if (0 != vccrypt_digital_signature_keypair_create(
+    if (0 !=
+            vccrypt_digital_signature_keypair_create(
                 &sign, &priv, &pub))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "keypair could not be generated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "keypair could not be generated.");
         goto pub_dispose;
     }
 
@@ -92,9 +94,9 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     jbyteArray privArray = (*env)->NewByteArray(env, priv.size);
     if (NULL == privArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "priv key array could not be allocated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "priv key array could not be allocated.");
         goto pub_dispose;
     }
 
@@ -102,9 +104,9 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     jbyte* privArrayData = (*env)->GetByteArrayElements(env, privArray, NULL);
     if (NULL == privArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "priv key array data could not be dereferenced.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "priv key array data could not be dereferenced.");
         goto priv_array_dispose;
     }
 
@@ -119,9 +121,9 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     jbyteArray pubArray = (*env)->NewByteArray(env, pub.size);
     if (NULL == pubArray)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "pub key array could not be allocated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "pub key array could not be allocated.");
         goto priv_array_dispose;
     }
 
@@ -129,9 +131,9 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     jbyte* pubArrayData = (*env)->GetByteArrayElements(env, pubArray, NULL);
     if (NULL == pubArrayData)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "pub key array data could not be dereferenced.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "pub key array data could not be dereferenced.");
         goto pub_array_dispose;
     }
 
@@ -145,23 +147,26 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     /* create the SigningPrivateKey object. */
     jobject signingPrivateKey =
         (*env)->NewObject(
-            env, SigningPrivateKey, SigningPrivateKey_init, privArray);
+            env, native_inst->SigningPrivateKey.classid,
+            native_inst->SigningPrivateKey.init, privArray);
     if (NULL == signingPrivateKey)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "signingPrivateKey could not be instantiated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "signingPrivateKey could not be instantiated.");
         goto pub_array_dispose;
     }
 
     /* create the SigningPublicKey object. */
     jobject signingPublicKey =
         (*env)->NewObject(
-            env, SigningPublicKey, SigningPublicKey_init, pubArray);
+            env, native_inst->SigningPublicKey.classid,
+            native_inst->SigningPublicKey.init, pubArray);
     if (NULL == signingPublicKey)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "signingPublicKey could not be instantiated.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "signingPublicKey could not be instantiated.");
 
         goto pub_array_dispose;
     }
@@ -169,7 +174,8 @@ Java_com_velopayments_blockchain_crypt_SigningKeyPair_generateNative(
     /* create the return object. */
     retval =
         (*env)->NewObject(
-            env, SigningKeyPair, SigningKeyPair_init, signingPublicKey,
+            env, native_inst->SigningKeyPair.classid,
+            native_inst->SigningKeyPair.init, signingPublicKey,
             signingPrivateKey);
 
     /* fall-through cleanup and return of allocated SigningKeyPair. */

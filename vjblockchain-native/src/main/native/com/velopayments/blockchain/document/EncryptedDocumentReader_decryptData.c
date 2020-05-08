@@ -13,10 +13,7 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
-
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentReader
@@ -44,7 +41,8 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException,"vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -52,7 +50,8 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == secretKey)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "secretKey");
+            env, native_inst->NullPointerException.classid,
+            "secretKey");
         return NULL;
     }
 
@@ -60,7 +59,7 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == iv)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "iv");
+            env, native_inst->NullPointerException.classid, "iv");
         return NULL;
     }
 
@@ -68,7 +67,7 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == input)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "input");
+            env, native_inst->NullPointerException.classid, "input");
         return NULL;
     }
 
@@ -76,8 +75,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_buffer_init(
                     &keyBuffer, &native_inst->alloc_opts, 32))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key buffer create failure.");
         return NULL;
     }
 
@@ -86,8 +86,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         (*env)->GetByteArrayElements(env, secretKey, NULL);
     if (NULL == secretKeyArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "key data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "key data read failure.");
         goto keyBuffer_dispose;
     }
 
@@ -95,13 +96,13 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     MODEL_EXEMPT(
         memcpy(keyBuffer.data, secretKeyArrayData, 32));
 
-
     /* get the buffer for the iv array. */
     jbyte* ivArrayData = (*env)->GetByteArrayElements(env, iv, NULL);
     if (NULL == ivArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "iv data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "iv data read failure.");
         goto secretKeyArrayData_dispose;
     }
 
@@ -109,8 +110,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     jbyte* inputArrayData = (*env)->GetByteArrayElements(env, input, NULL);
     if (NULL == inputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "input data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "input data read failure.");
         goto ivArrayData_dispose;
     }
 
@@ -118,7 +120,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_stream_init(
                     &native_inst->crypto_suite, &stream, &keyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "stream context failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "stream context failure.");
         goto inputArrayData_dispose;
     }
 
@@ -130,7 +134,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     jbyteArray outputArray = (*env)->NewByteArray(env, output_size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, NullPointerException, "bad outputArray alloc.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "bad outputArray alloc.");
         goto stream_cipher_dispose;
     }
 
@@ -139,8 +145,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray data could not be read.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray data could not be read.");
         goto stream_cipher_dispose;
     }
 
@@ -149,17 +156,25 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     size_t input_offset = offset;
 
     /* start a decryption stream with the given output array. */
-    if (0 == offset) {
-        if (0 != vccrypt_stream_start_decryption(&stream, in, &input_offset)) {
-            (*env)->ThrowNew(env, IllegalStateException,
-                             "could not start decryption stream.");
+    if (0 == offset)
+    {
+        if (0 != vccrypt_stream_start_decryption(&stream, in, &input_offset))
+        {
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "could not start decryption stream.");
             goto stream_cipher_dispose;
         }
-    } else { /* continue decryption */
+    }
+    else
+    {
+        /* continue decryption */
         if (0 != vccrypt_stream_continue_decryption(
-                &stream, ivArrayData, 8, input_offset)) {
-            (*env)->ThrowNew(env, IllegalStateException,
-                             "could not continue decryption stream.");
+                &stream, ivArrayData, 8, input_offset))
+        {
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "could not continue decryption stream.");
             goto stream_cipher_dispose;
         }
     }
@@ -171,8 +186,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
                 &stream, in + input_buffer_offset, output_size,
                 out, &output_buffer_offset))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not decrypt input data.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "could not decrypt input data.");
         goto stream_cipher_dispose;
     }
 

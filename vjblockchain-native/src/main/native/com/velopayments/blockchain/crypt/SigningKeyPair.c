@@ -8,19 +8,15 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "SigningKeyPair.h"
 
-jclass SigningKeyPair = NULL;
-jmethodID SigningKeyPair_init = NULL;
-
-static volatile bool SigningKeyPair_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: SigningKeyPair globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != SigningKeyPair \
-     && NULL != SigningKeyPair_init)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->SigningKeyPair.classid \
+     && NULL != inst->SigningKeyPair.init)
 
 /**
  * Register the following SigningKeyPair references and make them global.
@@ -30,24 +26,19 @@ static volatile bool SigningKeyPair_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SigningKeyPair_register(JNIEnv* env)
+int
+SigningKeyPair_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register KeyPair once. */
-    if (SigningKeyPair_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register KeyPair class */
     tempClassID = (*env)->FindClass(env,
@@ -56,26 +47,26 @@ int SigningKeyPair_register(JNIEnv* env)
         return 1;
 
     /* register KeyPair class */
-    SigningKeyPair = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == SigningKeyPair)
+    inst->SigningKeyPair.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->SigningKeyPair.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    SigningKeyPair_init =
+    inst->SigningKeyPair.init =
         (*env)->GetMethodID(
-            env, SigningKeyPair, "<init>",
+            env, inst->SigningKeyPair.classid, "<init>",
             "(Lcom/velopayments/blockchain/crypt/SigningPublicKey;"
              "Lcom/velopayments/blockchain/crypt/SigningPrivateKey;)V");
-    if (NULL == SigningKeyPair_init)
+    if (NULL == inst->SigningKeyPair.init)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    SigningKeyPair_registered = true;
     return 0;
 }

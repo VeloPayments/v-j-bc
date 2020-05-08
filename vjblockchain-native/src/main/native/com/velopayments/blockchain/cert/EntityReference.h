@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct EntityReference_JavaVars
+EntityReference_JavaVars;
 
 /**
  * Register the following EntityReference references and make them global.
@@ -25,30 +31,44 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EntityReference_register(JNIEnv* env);
+int
+EntityReference_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.EntityReference {
+/**
+ * \brief Java variables for EntityReference.
  */
-extern jclass EntityReference;
+struct EntityReference_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.EntityReference {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.cert.EntityReference(
- *                                              byte[], byte[], UUID);
- * descriptor: ([B[BLjava/util/UUID;)V
- */
-extern jmethodID EntityReference_init;
+    /* public com.velopayments.blockchain.cert.EntityReference(
+     *                                              byte[], byte[], UUID);
+     * descriptor: ([B[BLjava/util/UUID;)V
+     */
+    jmethodID init;
 
-/* public byte[] getPublicEncryptionKey();
- * descriptor: ()[B
- */
-extern jmethodID EntityReference_getPublicEncryptionKey;
+    /* public byte[] getPublicEncryptionKey();
+     * descriptor: ()[B
+     */
+    jmethodID getPublicEncryptionKey;
 
-/* public byte[] getPublicSigningKey();
- * descriptor: ()[B
- */
-extern jmethodID EntityReference_getPublicSigningKey;
+    /* public byte[] getPublicSigningKey();
+     * descriptor: ()[B
+     */
+    jmethodID getPublicSigningKey;
+};
+
+/* helper macro. */
+#define ENTITY_REFERENCE_JAVA_VARS() \
+    EntityReference_JavaVars EntityReference
 
 #ifdef __cplusplus
 }

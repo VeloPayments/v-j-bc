@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "SigningKeyPair.h"
 
-jclass Message = NULL;
-jmethodID Message_init = NULL;
-jmethodID Message_getRawBytes = NULL;
-
-static volatile bool Message_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: SigningKeyPair globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != Message \
-     && NULL != Message_init \
-     && NULL != Message_getRawBytes)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->Message.classid \
+     && NULL != inst->Message.init \
+     && NULL != inst->Message.getRawBytes)
 
 /**
  * Register the following Message references and make them global.
@@ -32,24 +27,19 @@ static volatile bool Message_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Message_register(JNIEnv* env)
+int
+Message_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register KeyPair once. */
-    if (Message_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register KeyPair class */
     tempClassID = (*env)->FindClass(env,
@@ -58,31 +48,30 @@ int Message_register(JNIEnv* env)
         return 1;
 
     /* register KeyPair class */
-    Message = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == Message)
+    inst->Message.classid = (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->Message.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    Message_init =
+    inst->Message.init =
         (*env)->GetMethodID(
-            env, Message, "<init>", "([B)V");
-    if (NULL == Message_init)
+            env, inst->Message.classid, "<init>", "([B)V");
+    if (NULL == inst->Message.init)
         return 1;
 
     /* register getRawBytes method */
-    Message_getRawBytes =
+    inst->Message.getRawBytes =
         (*env)->GetMethodID(
-            env, Message, "getRawBytes", "()[B");
-    if (NULL == Message_getRawBytes)
+            env, inst->Message.classid, "getRawBytes", "()[B");
+    if (NULL == inst->Message.getRawBytes)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    Message_registered = true;
     return 0;
 }

@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct EncryptionKeyPair_JavaVars
+EncryptionKeyPair_JavaVars;
 
 /**
  * Register the following EncryptionKeyPair references and make them global.
@@ -25,34 +31,48 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EncryptionKeyPair_register(JNIEnv* env);
+int
+EncryptionKeyPair_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.EncryptionKeyPair {
+/**
+ * \brief Java variables for EncryptionKeyPair.
  */
-extern jclass EncryptionKeyPair;
+struct EncryptionKeyPair_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.EncryptionKeyPair {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.EncryptionKeyPair(
- *      com.velopayments.blockchain.crypt.EncryptionPublicKey,
- *      com.velopayments.blockchain.crypt.EncryptionPrivateKey);
- * descriptor: (Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;
- *              Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;)V
- */
-extern jmethodID EncryptionKeyPair_init;
+    /* public com.velopayments.blockchain.crypt.EncryptionKeyPair(
+     *      com.velopayments.blockchain.crypt.EncryptionPublicKey,
+     *      com.velopayments.blockchain.crypt.EncryptionPrivateKey);
+     * descriptor: (Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;
+     *              Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;)V
+     */
+    jmethodID init;
 
-/* public com.velopayments.blockchain.crypt.EncryptionPublicKey
- * getPublicKey();
- * descriptor: ()Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;
- */
-extern jmethodID EncryptionKeyPair_getPublicKey;
+    /* public com.velopayments.blockchain.crypt.EncryptionPublicKey
+     * getPublicKey();
+     * descriptor: ()Lcom/velopayments/blockchain/crypt/EncryptionPublicKey;
+     */
+    jmethodID getPublicKey;
 
-/* public com.velopayments.blockchain.crypt.EncryptionPrivateKey
- * getPrivateKey();
- * descriptor: ()Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;
- */
-extern jmethodID EncryptionKeyPair_getPrivateKey;
+    /* public com.velopayments.blockchain.crypt.EncryptionPrivateKey
+     * getPrivateKey();
+     * descriptor: ()Lcom/velopayments/blockchain/crypt/EncryptionPrivateKey;
+     */
+    jmethodID getPrivateKey;
+};
+
+/* helper macro. */
+#define ENCRYPTION_KEY_PAIR_JAVA_VARS() \
+    EncryptionKeyPair_JavaVars EncryptionKeyPair
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

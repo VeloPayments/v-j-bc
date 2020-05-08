@@ -14,10 +14,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
+
+/* forward decls. */
+typedef struct Key_JavaVars
+Key_JavaVars;
 
 /**
  * Register the following Key references and make them global.
@@ -27,30 +33,44 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Key_register(JNIEnv* env);
+int
+Key_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.Key {
+/**
+ * \brief Java variables for Key.
  */
-extern jclass Key;
+struct Key_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.Key {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.Key(byte[]);
- * descriptor: ([B)V
- */
-extern jmethodID Key_init;
+    /* public com.velopayments.blockchain.crypt.Key(byte[]);
+     * descriptor: ([B)V
+     */
+    jmethodID init;
 
-/* public byte[] getRawBytes();
- * descriptor: ()[B
- */
-extern jmethodID Key_getRawBytes;
+    /* public byte[] getRawBytes();
+     * descriptor: ()[B
+     */
+    jmethodID getRawBytes;
 
-/*
- * private byte[] key;
- * descriptor: [B
- */
-extern jfieldID Key_key;
+    /*
+     * private byte[] key;
+     * descriptor: [B
+     */
+    jfieldID key;
+};
+
+/* helper macro. */
+#define KEY_JAVA_VARS() \
+    Key_JavaVars Key
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

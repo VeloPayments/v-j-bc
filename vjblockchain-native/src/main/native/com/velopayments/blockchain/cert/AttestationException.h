@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct AttestationException_JavaVars
+AttestationException_JavaVars;
 
 /**
  * Register the following AttestationException references and make them global.
@@ -25,27 +31,41 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int AttestationException_register(JNIEnv* env);
+int
+AttestationException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.AttestationException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java Variables for AttestationException.
  */
-extern jclass AttestationException;
+struct AttestationException_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.AttestationException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.cert.AttestationException(
- *      java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID AttestationException_init_String;
+    /* public com.velopayments.blockchain.cert.AttestationException(
+     *      java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* public com.velopayments.blockchain.cert.AttestationException(
- *      java.lang.String, java.lang.Throwable);
- * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
- */
-extern jmethodID AttestationException_init_String_Throwable;
+    /* public com.velopayments.blockchain.cert.AttestationException(
+     *      java.lang.String, java.lang.Throwable);
+     * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
+     */
+    jmethodID init_String_Throwable;
+};
+
+/* helper macro. */
+#define ATTESTATION_EXCEPTION_JAVA_VARS() \
+    AttestationException_JavaVars AttestationException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

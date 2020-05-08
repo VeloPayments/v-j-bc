@@ -13,11 +13,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "Key.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
-
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
@@ -44,7 +40,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-                env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -62,21 +59,23 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
             VCCRYPT_MAC_ALGORITHM_SHA_2_512_256_HMAC;
 
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_key_derivation_options_init(
-                    &kd_options, &native_inst->alloc_opts,
-                    VCCRYPT_KEY_DERIVATION_ALGORITHM_PBKDF2, hmac_alg))
+            vccrypt_key_derivation_options_init(
+                &kd_options, &native_inst->alloc_opts,
+                VCCRYPT_KEY_DERIVATION_ALGORITHM_PBKDF2, hmac_alg))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key derivation options initialization failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key derivation options initialization failure.");
         return NULL;
     }
 
     /* initialize key derivation instance */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_key_derivation_init(&kd_ctx, &kd_options))
+            vccrypt_key_derivation_init(&kd_ctx, &kd_options))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key derivation instance initialization failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key derivation instance initialization failure.");
         goto kd_options_dispose;
     }
 
@@ -84,7 +83,9 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     jbyte* password_array = (*env)->GetByteArrayElements(env, password, NULL);
     if (NULL == password_array)
     {
-        (*env)->ThrowNew(env, NullPointerException, "password read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "password read failure.");
         goto kd_dispose;
     }
 
@@ -95,8 +96,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
                     &password_buffer, &native_inst->alloc_opts, password_sz))
     {
         (*env)->ThrowNew(
-                env, IllegalStateException,
-                "could not initialize password crypto buffer.");
+            env, native_inst->IllegalStateException.classid,
+            "could not initialize password crypto buffer.");
         goto password_dispose; 
     }
 
@@ -104,12 +105,13 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     MODEL_EXEMPT(
             memcpy(password_buffer.data, password_array, password_sz));
 
-
     /* get the buffer for the salt bytes */
     jbyte* salt_array = (*env)->GetByteArrayElements(env, salt, NULL);
     if (NULL == salt_array)
     {
-        (*env)->ThrowNew(env, NullPointerException, "salt data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "salt data read failure.");
         goto password_buffer_dispose;
     }
 
@@ -120,8 +122,8 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
                     &salt_buffer, &native_inst->alloc_opts, salt_sz))
     {
         (*env)->ThrowNew(
-                env, IllegalStateException,
-                "could not initialize salt crypto buffer.");
+            env, native_inst->IllegalStateException.classid,
+            "could not initialize salt crypto buffer.");
         goto salt_dispose; 
     }
 
@@ -129,26 +131,26 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     MODEL_EXEMPT(
             memcpy(salt_buffer.data, salt_array, salt_sz));
 
-
     /* initialize key crypto buffer. */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_buffer_init(
-                    &key_buffer, &native_inst->alloc_opts,
-                    kd_options.hmac_digest_length))
+            vccrypt_buffer_init(
+                &key_buffer, &native_inst->alloc_opts,
+                kd_options.hmac_digest_length))
     {
         (*env)->ThrowNew(
-                env, IllegalStateException,
-                "could not initialize key crypto buffer.");
+            env, native_inst->IllegalStateException.classid,
+            "could not initialize key crypto buffer.");
         goto salt_buffer_dispose;
     }
 
     /* derive the cryptographic key */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_key_derivation_derive_key(&key_buffer, &kd_ctx,
+            vccrypt_key_derivation_derive_key(&key_buffer, &kd_ctx,
                 &password_buffer, &salt_buffer, iterations))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                "key derivation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key derivation failure.");
         goto key_buffer_dispose;
     }
 
@@ -156,8 +158,9 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
     jbyteArray outputArray = (*env)->NewByteArray(env, key_buffer.size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray creation failure.");
         goto key_buffer_dispose;
     }
 
@@ -166,8 +169,9 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
             (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray data read failure.");
         goto key_buffer_dispose;
     }
 

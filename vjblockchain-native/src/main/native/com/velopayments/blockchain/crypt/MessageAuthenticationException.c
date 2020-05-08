@@ -10,21 +10,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "MessageAuthenticationException.h"
 
-jclass MessageAuthenticationException = NULL;
-jmethodID MessageAuthenticationException_init_String = NULL;
-jmethodID MessageAuthenticationException_init_String_Throwable = NULL;
-
-static volatile bool MessageAuthenticationException_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: MessageAuthenticationException globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != MessageAuthenticationException \
-     && NULL != MessageAuthenticationException_init_String \
-     && NULL != MessageAuthenticationException_init_String_Throwable)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->MessageAuthenticationException.classid \
+     && NULL != inst->MessageAuthenticationException.init_String \
+     && NULL != inst->MessageAuthenticationException.init_String_Throwable)
 
 /**
  * Register the following MessageAuthenticationException references and make
@@ -35,24 +30,19 @@ static volatile bool MessageAuthenticationException_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int MessageAuthenticationException_register(JNIEnv* env)
+int
+MessageAuthenticationException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register MessageAuthenticationException once. */
-    if (MessageAuthenticationException_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register MessageAuthenticationException class */
     tempClassID = (*env)->FindClass(env,
@@ -61,34 +51,33 @@ int MessageAuthenticationException_register(JNIEnv* env)
         return 1;
 
     /* create a global reference for this class. */
-    MessageAuthenticationException =
+    inst->MessageAuthenticationException.classid =
         (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == MessageAuthenticationException)
+    if (NULL == inst->MessageAuthenticationException.classid)
         return 1;
 
     /* we're done with our local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init(String) method */
-    MessageAuthenticationException_init_String =
+    inst->MessageAuthenticationException.init_String =
         (*env)->GetMethodID(
-            env, MessageAuthenticationException, "<init>",
+            env, inst->MessageAuthenticationException.classid, "<init>",
             "(Ljava/lang/String;)V");
-    if (NULL == MessageAuthenticationException_init_String)
+    if (NULL == inst->MessageAuthenticationException.init_String)
         return 1;
 
     /* register init(Throwable) method */
-    MessageAuthenticationException_init_String_Throwable =
+    inst->MessageAuthenticationException.init_String_Throwable =
         (*env)->GetMethodID(
-            env, MessageAuthenticationException, "<init>",
+            env, inst->MessageAuthenticationException.classid, "<init>",
             "(Ljava/lang/String;Ljava/lang/Throwable;)V");
-    if (NULL == MessageAuthenticationException_init_String_Throwable)
+    if (NULL == inst->MessageAuthenticationException.init_String_Throwable)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    MessageAuthenticationException_registered = true;
     return 0;
 }

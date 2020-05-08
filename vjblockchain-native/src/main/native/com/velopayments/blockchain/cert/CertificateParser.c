@@ -8,29 +8,20 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "CertificateParser.h"
 
-jclass CertificateParser = NULL;
-jfieldID CertificateParser_field_certificate = NULL;
-jfieldID CertificateParser_field_rawSize = NULL;
-jfieldID CertificateParser_field_size = NULL;
-jmethodID CertificateParser_init = NULL;
-jmethodID CertificateParser_parse = NULL;
-jmethodID CertificateParser_attest = NULL;
-
-static volatile bool CertificateParser_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: CertificateParser globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != CertificateParser \
-     && NULL != CertificateParser_field_certificate \
-     && NULL != CertificateParser_field_rawSize \
-     && NULL != CertificateParser_field_size \
-     && NULL != CertificateParser_init \
-     && NULL != CertificateParser_parse \
-     && NULL != CertificateParser_attest)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->CertificateParser.classid \
+     && NULL != inst->CertificateParser.field_certificate \
+     && NULL != inst->CertificateParser.field_rawSize \
+     && NULL != inst->CertificateParser.field_size \
+     && NULL != inst->CertificateParser.init \
+     && NULL != inst->CertificateParser.parse \
+     && NULL != inst->CertificateParser.attest)
 
 /**
  * Register the following CertificateParser references and make them global.
@@ -40,24 +31,19 @@ static volatile bool CertificateParser_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int CertificateParser_register(JNIEnv* env)
+int
+CertificateParser_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register ParserDelegate once. */
-    if (CertificateParser_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register ParserDelegate class */
     tempClassID = (*env)->FindClass(env,
@@ -66,62 +52,62 @@ int CertificateParser_register(JNIEnv* env)
         return 1;
 
     /* create a global reference to this class */
-    CertificateParser = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == CertificateParser)
+    inst->CertificateParser.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->CertificateParser.classid)
         return 1;
 
     /* we don't need this local reference anymore. */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register certificate field */
-    CertificateParser_field_certificate =
+    inst->CertificateParser.field_certificate =
         (*env)->GetFieldID(
-            env, CertificateParser, "certificate", "[B");
-    if (NULL == CertificateParser_field_certificate)
+            env, inst->CertificateParser.classid, "certificate", "[B");
+    if (NULL == inst->CertificateParser.field_certificate)
         return 1;
 
     /* register rawSize field */
-    CertificateParser_field_rawSize =
+    inst->CertificateParser.field_rawSize =
         (*env)->GetFieldID(
-            env, CertificateParser, "rawSize", "I");
-    if (NULL == CertificateParser_field_rawSize)
+            env, inst->CertificateParser.classid, "rawSize", "I");
+    if (NULL == inst->CertificateParser.field_rawSize)
         return 1;
 
     /* register size field */
-    CertificateParser_field_size =
+    inst->CertificateParser.field_size =
         (*env)->GetFieldID(
-            env, CertificateParser, "size", "I");
-    if (NULL == CertificateParser_field_size)
+            env, inst->CertificateParser.classid, "size", "I");
+    if (NULL == inst->CertificateParser.field_size)
         return 1;
 
     /* register init method */
-    CertificateParser_init =
+    inst->CertificateParser.init =
         (*env)->GetMethodID(
-            env, CertificateParser, "<init>",
+            env, inst->CertificateParser.classid, "<init>",
             "(Lcom/velopayments/blockchain/cert/Certificate;)V");
-    if (NULL == CertificateParser_init)
+    if (NULL == inst->CertificateParser.init)
         return 1;
 
     /* register parse method */
-    CertificateParser_parse =
+    inst->CertificateParser.parse =
         (*env)->GetMethodID(
-            env, CertificateParser, "parse", "()Ljava/util/Map;");
-    if (NULL == CertificateParser_parse)
+            env, inst->CertificateParser.classid, "parse", "()Ljava/util/Map;");
+    if (NULL == inst->CertificateParser.parse)
         return 1;
 
     /* register attest method */
-    CertificateParser_attest =
+    inst->CertificateParser.attest =
         (*env)->GetMethodID(
-            env, CertificateParser, "attest",
+            env, inst->CertificateParser.classid, "attest",
             "(Lcom/velopayments/blockchain/cert/CertificateParserDelegate;"
             "JZ)Z");
-    if (NULL == CertificateParser_attest)
+    if (NULL == inst->CertificateParser.attest)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    CertificateParser_registered = true;
     return 0;
 }

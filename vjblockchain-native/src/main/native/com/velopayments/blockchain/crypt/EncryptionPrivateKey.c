@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "EncryptionPrivateKey.h"
 
-jclass EncryptionPrivateKey;
-jmethodID EncryptionPrivateKey_init;
-jmethodID EncryptionPrivateKey_getRawBytes;
-
-static volatile bool EncryptionPrivateKey_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: EncryptionPrivateKey globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != EncryptionPrivateKey \
-     && NULL != EncryptionPrivateKey_init \
-     && NULL != EncryptionPrivateKey_getRawBytes)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->EncryptionPrivateKey.classid \
+     && NULL != inst->EncryptionPrivateKey.init \
+     && NULL != inst->EncryptionPrivateKey.getRawBytes)
 
 /**
  * Register the following EncryptionPrivateKey references and make them global.
@@ -32,24 +27,19 @@ static volatile bool EncryptionPrivateKey_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int EncryptionPrivateKey_register(JNIEnv* env)
+int
+EncryptionPrivateKey_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register EncryptionPrivateKey once. */
-    if (EncryptionPrivateKey_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register EncryptionPrivateKey class */
     tempClassID = (*env)->FindClass(env,
@@ -58,33 +48,33 @@ int EncryptionPrivateKey_register(JNIEnv* env)
         return 1;
 
     /* register EncryptionPrivateKey class */
-    EncryptionPrivateKey = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == EncryptionPrivateKey)
+    inst->EncryptionPrivateKey.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->EncryptionPrivateKey.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    EncryptionPrivateKey_init =
+    inst->EncryptionPrivateKey.init =
         (*env)->GetMethodID(
-            env, EncryptionPrivateKey, "<init>",
+            env, inst->EncryptionPrivateKey.classid, "<init>",
             "([B)V");
-    if (NULL == EncryptionPrivateKey_init)
+    if (NULL == inst->EncryptionPrivateKey.init)
         return 1;
 
     /* register getRawBytes method */
-    EncryptionPrivateKey_getRawBytes =
+    inst->EncryptionPrivateKey.getRawBytes =
         (*env)->GetMethodID(
-            env, EncryptionPrivateKey, "getRawBytes",
+            env, inst->EncryptionPrivateKey.classid, "getRawBytes",
             "()[B");
-    if (NULL == EncryptionPrivateKey_getRawBytes)
+    if (NULL == inst->EncryptionPrivateKey.getRawBytes)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    EncryptionPrivateKey_registered = true;
     return 0;
 }

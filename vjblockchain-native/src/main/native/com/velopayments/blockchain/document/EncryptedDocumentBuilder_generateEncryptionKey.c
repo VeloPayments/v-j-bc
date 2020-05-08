@@ -12,9 +12,7 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentBuilder
@@ -36,30 +34,40 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_generateEncry
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)
     {
-        (*env)->ThrowNew(env, IllegalStateException, "vjblockchain not initialized.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
     /* initialize key buffer. */
-    if (0 != vccrypt_buffer_init(
-                    &randomKey, &native_inst->alloc_opts, 32))
+    if (0 !=
+            vccrypt_buffer_init(
+                &randomKey, &native_inst->alloc_opts, 32))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "bad vccrypt buffer.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "bad vccrypt buffer.");
         return NULL;
     }
 
     /* initialize prng. */
-    if (0 != vccrypt_suite_prng_init(
-                    &native_inst->crypto_suite, &prng))
+    if (0 !=
+            vccrypt_suite_prng_init(
+                &native_inst->crypto_suite, &prng))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "bad vccrypt prng.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "bad vccrypt prng.");
         goto dispose_randomKey;
     }
 
     /* read cryptographically random key. */
     if (0 != vccrypt_prng_read(&prng, &randomKey, 32))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "bad vccrypt prng read.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "bad vccrypt prng read.");
         goto dispose_prng;
     }
 
@@ -67,7 +75,9 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_generateEncry
     jbyteArray keyArray = (*env)->NewByteArray(env, 32);
     if (NULL == keyArray)
     {
-        (*env)->ThrowNew(env, NullPointerException, "bad keyArray alloc.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "bad keyArray alloc.");
         goto dispose_prng;
     }
 
@@ -75,8 +85,9 @@ Java_com_velopayments_blockchain_document_EncryptedDocumentBuilder_generateEncry
     jbyte* keyArrayData = (*env)->GetByteArrayElements(env, keyArray, NULL);
     if (NULL == keyArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "keyArray data could not be dereferenced.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "keyArray data could not be dereferenced.");
         goto dispose_prng;
     }
 

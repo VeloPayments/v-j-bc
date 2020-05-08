@@ -7,13 +7,7 @@
  */
 
 #include <cbmc/model_assert.h>
-#include <com/velopayments/blockchain/cert/Certificate.h>
-#include <com/velopayments/blockchain/cert/CertificateBuilder.h>
 #include <com/velopayments/blockchain/init/init.h>
-#include <java/lang/IllegalStateException.h>
-#include <java/lang/Integer.h>
-#include <java/util/AbstractMap_SimpleEntry.h>
-#include <java/util/LinkedList.h>
 #include <string.h>
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
@@ -37,19 +31,23 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "vjblockchain not initialized.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
     /* don't emit an empty certificate */
     jobject lst =
-        (*env)->GetObjectField(env, that, CertificateBuilder_field_fields);
-    jint lst_size = (*env)->CallIntMethod(env, lst, LinkedList_size);
+        (*env)->GetObjectField(
+            env, that, native_inst->CertificateBuilder.field_fields);
+    jint lst_size =
+        (*env)->CallIntMethod(
+            env, lst, native_inst->LinkedList.size);
     if (lst_size <= 0)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException,
+            env, native_inst->IllegalStateException.classid,
             "cannot emit empty certificate fragment.");
         return NULL;
     }
@@ -58,10 +56,12 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     jsize cert_size = 0;
     for (jint i = 0; i < lst_size; ++i)
     {
-        jobject pair = (*env)->CallObjectMethod(env, lst, LinkedList_get, i);
+        jobject pair =
+            (*env)->CallObjectMethod(
+                env, lst, native_inst->LinkedList.get, i);
         jbyteArray array =
             (jbyteArray)(*env)->CallObjectMethod(
-                env, pair, SimpleEntry_getValue);
+                env, pair, native_inst->SimpleEntry.getValue);
         jsize array_len = 
             (*env)->GetArrayLength(env, array);
 
@@ -77,21 +77,27 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     if (0 != vccert_builder_init(
                     &native_inst->builder_opts, &builder, cert_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "general error.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "vccert_builder_init");
         return NULL;
     }
 
     /* for each field; add it to the builder */
     for (jint i = 0; i < lst_size; ++i)
     {
-        jobject pair = (*env)->CallObjectMethod(env, lst, LinkedList_get, i);
+        jobject pair =
+            (*env)->CallObjectMethod(
+                env, lst, native_inst->LinkedList.get, i);
         jobject int_obj =
-            (*env)->CallObjectMethod(env, pair, SimpleEntry_getKey);
+            (*env)->CallObjectMethod(
+                env, pair, native_inst->SimpleEntry.getKey);
         jint field_type =
-            (*env)->CallIntMethod(env, int_obj, Integer_intValue);
+            (*env)->CallIntMethod(
+                env, int_obj, native_inst->Integer.intValue);
         jbyteArray array =
             (jbyteArray)(*env)->CallObjectMethod(
-                env, pair, SimpleEntry_getValue);
+                env, pair, native_inst->SimpleEntry.getValue);
         jsize array_len = 
             (*env)->GetArrayLength(env, array);
         jbyte* field_val = (*env)->GetByteArrayElements(env, array, NULL);
@@ -101,7 +107,9 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
                 &builder, field_type, (const uint8_t*)field_val, array_len))
         {
             (*env)->ReleaseByteArrayElements(env, array, field_val, JNI_ABORT);
-            (*env)->ThrowNew(env, IllegalStateException, "general error.");
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "vccert_builder_add_short_buffer");
             retval = NULL;
             goto dispose_builder;
         }
@@ -119,7 +127,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     if (emitted_size != (unsigned)cert_size)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "emitted_size != cert_size");
+            env, native_inst->IllegalStateException.classid,
+            "emitted_size != cert_size");
         retval = NULL;
         goto dispose_builder;
     }
@@ -139,7 +148,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_emit(
     /* set retval to the byte array */
     retval =
         (*env)->CallStaticObjectMethod(
-            env, Certificate, Certificate_fromByteArray, out);
+            env, native_inst->Certificate.classid,
+            native_inst->Certificate.fromByteArray, out);
 
     /* clean up */
 dispose_builder:

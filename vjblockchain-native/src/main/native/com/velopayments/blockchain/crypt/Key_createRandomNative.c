@@ -11,10 +11,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "Key.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
@@ -37,7 +34,8 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -48,7 +46,7 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
                     native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException,
+            env, native_inst->IllegalStateException.classid,
             "could not initialize a crypto buffer.");
         return NULL;
     }
@@ -58,8 +56,9 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
             vccrypt_suite_prng_init(
                     &native_inst->crypto_suite, &prng))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "prng instance creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "prng instance creation failure.");
         goto buffer_dispose;
     }
 
@@ -67,8 +66,9 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_prng_read(&prng, &keyBuffer, keyBuffer.size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "prng read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "prng read failure.");
         goto prng_dispose;
     }
 
@@ -76,8 +76,9 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     jbyteArray outputArray = (*env)->NewByteArray(env, keyBuffer.size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray creation failure.");
         goto prng_dispose;
     }
 
@@ -86,8 +87,9 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
         (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray data read failure.");
         goto outputArray_dispose;
     }
 
@@ -99,7 +101,10 @@ Java_com_velopayments_blockchain_crypt_Key_createRandomNative(
     (*env)->ReleaseByteArrayElements(env, outputArray, outputArrayData, 0);
 
     /* create a Key instance. */
-    retval = (*env)->NewObject(env, Key, Key_init, outputArray);
+    retval =
+        (*env)->NewObject(
+            env, native_inst->Key.classid,
+            native_inst->Key.init, outputArray);
 
     /* fall through. */
 

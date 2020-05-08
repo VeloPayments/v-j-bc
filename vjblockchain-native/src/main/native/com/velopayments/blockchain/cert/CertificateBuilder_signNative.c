@@ -7,15 +7,7 @@
  */
 
 #include <cbmc/model_assert.h>
-#include <com/velopayments/blockchain/cert/Certificate.h>
-#include <com/velopayments/blockchain/cert/CertificateBuilder.h>
 #include <com/velopayments/blockchain/init/init.h>
-#include <java/lang/IllegalStateException.h>
-#include <java/lang/IllegalArgumentException.h>
-#include <java/lang/Integer.h>
-#include <java/lang/NullPointerException.h>
-#include <java/util/AbstractMap_SimpleEntry.h>
-#include <java/util/LinkedList.h>
 #include <string.h>
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
@@ -42,7 +34,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -50,7 +43,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (NULL == signer_id)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "signerId");
+            env, native_inst->NullPointerException.classid, "signerId");
         return NULL;
     }
 
@@ -58,7 +51,7 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (NULL == private_key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "privateKey");
+            env, native_inst->NullPointerException.classid, "privateKey");
         return NULL;
     }
 
@@ -67,21 +60,27 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (16 != signer_id_size)
     {
         (*env)->ThrowNew(
-            env, IllegalArgumentException, "Signer ID is the wrong size");
+            env, native_inst->IllegalArgumentException.classid,
+            "Signer ID is the wrong size");
         return NULL;
     }
 
     /* compute the size of the certificate to emit */
     jobject lst =
-        (*env)->GetObjectField(env, that,CertificateBuilder_field_fields);
-    jint lst_size = (*env)->CallIntMethod(env, lst, LinkedList_size);
+        (*env)->GetObjectField(
+            env, that, native_inst->CertificateBuilder.field_fields);
+    jint lst_size =
+        (*env)->CallIntMethod(
+            env, lst, native_inst->LinkedList.size);
     jsize cert_size = 0;
     for (jint i = 0; i < lst_size; ++i)
     {
-        jobject pair = (*env)->CallObjectMethod(env, lst, LinkedList_get, i);
+        jobject pair =
+            (*env)->CallObjectMethod(
+                env, lst, native_inst->LinkedList.get, i);
         jbyteArray array =
             (jbyteArray)(*env)->CallObjectMethod(
-                env, pair, SimpleEntry_getValue);
+                env, pair, native_inst->SimpleEntry.getValue);
         jsize array_len = 
             (*env)->GetArrayLength(env, array);
 
@@ -101,21 +100,26 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (0 != vccert_builder_init(
                     &native_inst->builder_opts, &builder, cert_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "general error.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid, "general error.");
         return NULL;
     }
 
     /* for each field; add it to the builder */
     for (jint i = 0; i < lst_size; ++i)
     {
-        jobject pair = (*env)->CallObjectMethod(env, lst, LinkedList_get, i);
+        jobject pair =
+            (*env)->CallObjectMethod(
+                env, lst, native_inst->LinkedList.get, i);
         jobject int_obj =
-            (*env)->CallObjectMethod(env, pair, SimpleEntry_getKey);
+            (*env)->CallObjectMethod(
+                env, pair, native_inst->SimpleEntry.getKey);
         jint field_type =
-            (*env)->CallIntMethod(env, int_obj, Integer_intValue);
+            (*env)->CallIntMethod(
+                env, int_obj, native_inst->Integer.intValue);
         jbyteArray array =
             (jbyteArray)(*env)->CallObjectMethod(
-                env, pair, SimpleEntry_getValue);
+                env, pair, native_inst->SimpleEntry.getValue);
         jsize array_len = 
             (*env)->GetArrayLength(env, array);
         jbyte* field_val = (*env)->GetByteArrayElements(env, array, NULL);
@@ -125,7 +129,9 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
                 &builder, field_type, (const uint8_t*)field_val, array_len))
         {
             (*env)->ReleaseByteArrayElements(env, array, field_val, JNI_ABORT);
-            (*env)->ThrowNew(env, IllegalStateException, "general error.");
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "general error.");
             retval = NULL;
             goto dispose_builder;
         }
@@ -143,7 +149,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
                 &native_inst->crypto_suite, &priv))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "Couldn't create private key buffer");
+            env, native_inst->IllegalStateException.classid,
+            "Couldn't create private key buffer");
         retval = NULL;
         goto dispose_builder;
     }
@@ -153,7 +160,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if ((unsigned)priv_size != priv.size)
     {
         (*env)->ThrowNew(
-            env, IllegalArgumentException, "Private key is the wrong size");
+            env, native_inst->IllegalArgumentException.classid,
+            "Private key is the wrong size");
         retval = NULL;
         goto dispose_priv;
     }
@@ -172,7 +180,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
                     &builder, (const uint8_t*)signer_id_bytes, &priv))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "signature error");
+            env, native_inst->IllegalStateException.classid,
+            "signature error");
         retval = NULL;
         goto release_signer_id;
     }
@@ -183,7 +192,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     if (emitted_size != (unsigned)cert_size)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "emitted_size != cert_size");
+            env, native_inst->IllegalStateException.classid,
+            "emitted_size != cert_size");
         retval = NULL;
         goto release_signer_id;
     }
@@ -203,7 +213,8 @@ Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
     /* set retval to the byte array */
     retval = 
         (*env)->CallStaticObjectMethod(
-            env, Certificate, Certificate_fromByteArray, out);
+            env, native_inst->Certificate.classid,
+            native_inst->Certificate.fromByteArray, out);
 
     /* clean up */
 release_signer_id:

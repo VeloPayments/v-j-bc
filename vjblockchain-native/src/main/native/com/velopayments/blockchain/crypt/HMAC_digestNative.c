@@ -13,8 +13,6 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
 #include "../init/init.h"
 
 #include <stdio.h>
@@ -46,7 +44,8 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-                env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -54,7 +53,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (NULL == key)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "key");
+            env, native_inst->NullPointerException.classid, "key");
         return NULL;
     }
 
@@ -62,7 +61,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (NULL == message)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "message");
+            env, native_inst->NullPointerException.classid, "message");
         return NULL;
     }
 
@@ -71,7 +70,7 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (NULL == key_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "key_bytes");
+            env, native_inst->NullPointerException.classid, "key_bytes");
         goto done;
     }
 
@@ -81,13 +80,15 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
             vccrypt_buffer_init(
                     &key_buffer, &native_inst->alloc_opts, key_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key buffer creation failure.");
         goto key_bytes_dispose;
     }
 
     /* copy the key data to the key buffer. */
-    memcpy(key_buffer.data, key_bytes, key_size);
+    MODEL_EXEMPT(
+        memcpy(key_buffer.data, key_bytes, key_size));
 
     /* initialize HMAC */
     if (hmacShort)
@@ -96,8 +97,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
                     vccrypt_suite_mac_short_init(
                             &native_inst->crypto_suite, &mac, &key_buffer))
         {
-            (*env)->ThrowNew(env, IllegalStateException,
-                             "could not initialize short mac.");
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "could not initialize short mac.");
             goto key_buffer_dispose;
         }
     }
@@ -107,8 +109,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
                     vccrypt_suite_mac_init(
                             &native_inst->crypto_suite, &mac, &key_buffer))
         {
-            (*env)->ThrowNew(env, IllegalStateException,
-                             "could not initialize mac.");
+            (*env)->ThrowNew(
+                env, native_inst->IllegalStateException.classid,
+                "could not initialize mac.");
             goto key_buffer_dispose;
         }
     }
@@ -118,17 +121,18 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (NULL == message_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "message_bytes");
+            env, native_inst->NullPointerException.classid, "message_bytes");
         goto key_buffer_dispose;
     }
 
     /* digest */
     size_t message_size = (*env)->GetArrayLength(env, message);
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_mac_digest(&mac, (uint8_t*)message_bytes, message_size))
+            vccrypt_mac_digest(&mac, (uint8_t*)message_bytes, message_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not digest.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "could not digest.");
         goto message_bytes_dispose;
     }
 
@@ -137,8 +141,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
             vccrypt_suite_buffer_init_for_mac_authentication_code(
                     &native_inst->crypto_suite,&mac_buffer,(bool)hmacShort))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not finalize.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "could not finalize.");
         goto message_bytes_dispose;
     }
 
@@ -146,8 +151,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_mac_finalize(&mac,&mac_buffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "could not finalize.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "could not finalize.");
         goto mac_buffer_dispose;
     }
 
@@ -155,9 +161,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     retval = (*env)->NewByteArray(env, mac_buffer.size);
     if (NULL == retval)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array could not be allocated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "return value array could not be allocated.");
         goto mac_buffer_dispose;
     }
 
@@ -165,9 +171,9 @@ Java_com_velopayments_blockchain_crypt_HMAC_digestNative(
     jbyte* retval_bytes = (*env)->GetByteArrayElements(env, retval, NULL);
     if (NULL == retval_bytes)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array data could not be dereferenced.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "return value array data could not be dereferenced.");
         goto mac_buffer_dispose;
     }
 

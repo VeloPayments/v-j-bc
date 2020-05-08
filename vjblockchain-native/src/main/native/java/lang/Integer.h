@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../../com/velopayments/blockchain/init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct Integer_JavaVars
+Integer_JavaVars;
 
 /**
  * Register the following Integer references and make them global.
@@ -25,26 +31,40 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Integer_register(JNIEnv* env);
+int
+Integer_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public final class java.lang.Integer
- *          extends java.lang.Number
- *          implements java.lang.Comparable<java.lang.Integer> {
+/**
+ * \brief Java variables for Integer.
  */
-extern jclass Integer;
+struct Integer_JavaVars
+{
+    /* public final class java.lang.Integer
+     *          extends java.lang.Number
+     *          implements java.lang.Comparable<java.lang.Integer> {
+     */
+    jclass classid;
 
-/* public static java.lang.Integer valueOf(int);
- * descriptor: (I)Ljava/lang/Integer;
- */
-extern jmethodID Integer_valueOf;
+    /* public static java.lang.Integer valueOf(int);
+     * descriptor: (I)Ljava/lang/Integer;
+     */
+    jmethodID valueOf;
 
-/* public int intValue();
- * descriptor: ()I
- */
-extern jmethodID Integer_intValue;
+    /* public int intValue();
+     * descriptor: ()I
+     */
+    jmethodID intValue;
+};
+
+/* helper macro. */
+#define INTEGER_JAVA_VARS() \
+    Integer_JavaVars Integer
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

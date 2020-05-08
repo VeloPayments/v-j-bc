@@ -10,23 +10,17 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "Key.h"
 
-jclass Key = NULL;
-jmethodID Key_init = NULL;
-jmethodID Key_getRawBytes = NULL;
-jfieldID Key_key = NULL;
-
-static volatile bool Key_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: Key globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != Key \
-     && NULL != Key_init \
-     && NULL != Key_getRawBytes \
-     && NULL != Key_key)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->Key.classid \
+     && NULL != inst->Key.init \
+     && NULL != inst->Key.getRawBytes \
+     && NULL != inst->Key.key)
 
 /**
  * Register the following Key references and make them global.
@@ -36,24 +30,19 @@ static volatile bool Key_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Key_register(JNIEnv* env)
+int
+Key_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register Key once. */
-    if (Key_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register Key class */
     tempClassID = (*env)->FindClass(env,
@@ -62,32 +51,36 @@ int Key_register(JNIEnv* env)
         return 1;
 
     /* create global reference to Key. */
-    Key = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == Key)
+    inst->Key.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->Key.classid)
         return 1;
 
     /* delete local reference */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register Key_init method. */
-    Key_init = (*env)->GetMethodID(env, Key, "<init>", "([B)V");
-    if (NULL == Key_init)
+    inst->Key.init =
+        (*env)->GetMethodID(env, inst->Key.classid, "<init>", "([B)V");
+    if (NULL == inst->Key.init)
         return 1;
 
     /* register Key_getRawBytes method. */
-    Key_getRawBytes = (*env)->GetMethodID(env, Key, "getRawBytes", "()[B");
-    if (NULL == Key_getRawBytes)
+    inst->Key.getRawBytes =
+        (*env)->GetMethodID(env, inst->Key.classid, "getRawBytes", "()[B");
+    if (NULL == inst->Key.getRawBytes)
         return 1;
 
     /* register key field */
-    Key_key = (*env)->GetFieldID(env, Key, "key", "[B");
-    if (NULL == Key_key)
+    inst->Key.key =
+        (*env)->GetFieldID(
+            env, inst->Key.classid, "key", "[B");
+    if (NULL == inst->Key.key)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    Key_registered = true;
     return 0;
 }

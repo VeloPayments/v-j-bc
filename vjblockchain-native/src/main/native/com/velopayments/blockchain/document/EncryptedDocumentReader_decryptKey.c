@@ -13,11 +13,7 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../com/velopayments/blockchain/crypt/EncryptionPrivateKey.h"
-#include "../../../../com/velopayments/blockchain/crypt/EncryptionPublicKey.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_document_EncryptedDocumentReader
@@ -49,7 +45,8 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -57,7 +54,8 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == localPrivateKey)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "localPrivateKey");
+            env, native_inst->NullPointerException.classid,
+            "localPrivateKey");
         return NULL;
     }
 
@@ -65,7 +63,8 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == peerPublicKey)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "peerPublicKey");
+            env, native_inst->NullPointerException.classid,
+            "peerPublicKey");
         return NULL;
     }
 
@@ -73,7 +72,7 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (NULL == encryptedKey)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "encryptedKey");
+            env, native_inst->NullPointerException.classid, "encryptedKey");
         return NULL;
     }
 
@@ -81,18 +80,22 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     jbyte* keyArrayData = (*env)->GetByteArrayElements(env, encryptedKey, NULL);
     if (NULL == keyArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "key data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "key data read failure.");
         return NULL;
     }
 
     /* get the byte array for the private key. */
-    jbyteArray privateKeyArray = (*env)->CallObjectMethod(
-            env, localPrivateKey, EncryptionPrivateKey_getRawBytes);
+    jbyteArray privateKeyArray =
+        (*env)->CallObjectMethod(
+            env, localPrivateKey,
+            native_inst->EncryptionPrivateKey.getRawBytes);
     if (NULL == privateKeyArray)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "private key read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "private key read failure.");
         goto keyArrayData_dispose ;
     }
 
@@ -101,8 +104,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         (*env)->GetByteArrayElements(env, privateKeyArray, NULL);
     if (NULL == privateKeyArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "private key data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "private key data read failure.");
         goto privateKeyArray_dispose;
     }
 
@@ -110,8 +114,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_private_key(
                     &native_inst->crypto_suite, &privateKeyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "private key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "private key buffer creation failure.");
         goto privateKeyArrayData_dispose;
     }
 
@@ -120,12 +125,14 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         memcpy(privateKeyBuffer.data, privateKeyArrayData, 32));
 
     /* get the byte array for the public key. */
-    jbyteArray publicKeyArray = (*env)->CallObjectMethod(
-            env, peerPublicKey, EncryptionPublicKey_getRawBytes);
+    jbyteArray publicKeyArray =
+        (*env)->CallObjectMethod(
+            env, peerPublicKey, native_inst->EncryptionPublicKey.getRawBytes);
     if (NULL == publicKeyArray)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "peerPublicKey.getRawBytes()");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "peerPublicKey.getRawBytes()");
         goto privateKeyBuffer_dispose;
     }
 
@@ -134,8 +141,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         (*env)->GetByteArrayElements(env, publicKeyArray, NULL);
     if (NULL == publicKeyArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "public key data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "public key data read failure.");
         goto publicKeyArray_dispose;
     }
 
@@ -143,8 +151,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_public_key(
                     &native_inst->crypto_suite, &publicKeyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "public key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "public key buffer creation failure.");
         goto publicKeyArrayData_dispose;
     }
 
@@ -156,8 +165,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_buffer_init_for_cipher_key_agreement_shared_secret(
                     &native_inst->crypto_suite, &keyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "public key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "public key buffer creation failure.");
         goto publicKeyBuffer_dispose;
     }
 
@@ -165,8 +175,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_cipher_key_agreement_init(
                     &native_inst->crypto_suite, &ka))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key agreement context creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key agreement context creation failure.");
         goto keyBuffer_dispose;
     }
 
@@ -174,8 +185,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_key_agreement_long_term_secret_create(
                 &ka, &privateKeyBuffer, &publicKeyBuffer, &keyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key agreement failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key agreement failure.");
         goto ka_dispose;
     }
 
@@ -187,8 +199,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     jbyteArray outputArray = (*env)->NewByteArray(env, output_size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray creation failure.");
         goto ka_dispose;
     }
 
@@ -197,8 +210,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
         (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray data read failure.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray data read failure.");
         goto ka_dispose;
     }
 
@@ -206,8 +220,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_suite_block_init(
                     &native_inst->crypto_suite, &block, &keyBuffer, false))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "block cipher creation failure.");
         goto outputArrayData_dispose;
     }
 
@@ -218,8 +233,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_block_decrypt(
                 &block, keyData, keyData + 16, out))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher block 1 decrypt failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "block cipher block 1 decrypt failure.");
         goto block_dispose;
     }
 
@@ -227,8 +243,9 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
     if (0 != vccrypt_block_decrypt(
                 &block, keyData + 16, keyData + 32, out + 16))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher block 2 decrypt failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "block cipher block 2 decrypt failure.");
         goto block_dispose;
     }
 

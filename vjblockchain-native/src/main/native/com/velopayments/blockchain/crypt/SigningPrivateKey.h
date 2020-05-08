@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct SigningPrivateKey_JavaVars
+SigningPrivateKey_JavaVars;
 
 /**
  * Register the following SigningPrivateKey references and make them global.
@@ -25,24 +31,38 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int SigningPrivateKey_register(JNIEnv* env);
+int
+SigningPrivateKey_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.SigningPrivateKey {
+/**
+ * \brief Java variables for SigningPrivateKey.
  */
-extern jclass SigningPrivateKey;
+struct SigningPrivateKey_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.SigningPrivateKey {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.SigningPrivateKey(byte[]);
- * descriptor: ([B)V
- */
-extern jmethodID SigningPrivateKey_init;
+    /* public com.velopayments.blockchain.crypt.SigningPrivateKey(byte[]);
+     * descriptor: ([B)V
+     */
+    jmethodID init;
 
-/* public byte[] getRawBytes();
- * descriptor: ()[B
- */
-extern jmethodID SigningPrivateKey_getRawBytes;
+    /* public byte[] getRawBytes();
+     * descriptor: ()[B
+     */
+    jmethodID getRawBytes;
+};
+
+/* helper macro. */
+#define SIGNING_PRIVATE_KEY_JAVA_VARS() \
+    SigningPrivateKey_JavaVars SigningPrivateKey
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

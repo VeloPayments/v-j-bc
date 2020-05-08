@@ -14,10 +14,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct InvalidKeySizeException_JavaVars
+InvalidKeySizeException_JavaVars;
 
 /**
  * Register the following InvalidKeySizeException references and make them
@@ -28,27 +34,41 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int InvalidKeySizeException_register(JNIEnv* env);
+int
+InvalidKeySizeException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.InvalidKeySizeException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for InvalidKeySizeException.
  */
-extern jclass InvalidKeySizeException;
+struct InvalidKeySizeException_JavaVars
+{
+    /* public class com.velopayments.blockchain.crypt.InvalidKeySizeException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.InvalidKeySizeException(
- *      java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID InvalidKeySizeException_init_String;
+    /* public com.velopayments.blockchain.crypt.InvalidKeySizeException(
+     *      java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* public com.velopayments.blockchain.crypt.InvalidKeySizeException(
- *      java.lang.String, java.lang.Throwable);
- * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
- */
-extern jmethodID InvalidKeySizeException_init_String_Throwable;
+    /* public com.velopayments.blockchain.crypt.InvalidKeySizeException(
+     *      java.lang.String, java.lang.Throwable);
+     * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
+     */
+    jmethodID init_String_Throwable;
+};
+
+/* helper macro. */
+#define INVALID_KEY_SIZE_EXCEPTION_JAVA_VARS() \
+    InvalidKeySizeException_JavaVars InvalidKeySizeException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

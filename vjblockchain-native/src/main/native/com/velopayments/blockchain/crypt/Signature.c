@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "SigningKeyPair.h"
 
-jclass Signature = NULL;
-jmethodID Signature_init = NULL;
-jmethodID Signature_getSignatureBytes = NULL;
-
-static volatile bool Signature_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: SigningKeyPair globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != Signature \
-     && NULL != Signature_init \
-     && NULL != Signature_getSignatureBytes)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->Signature \
+     && NULL != inst->Signature.init \
+     && NULL != inst->Signature.getSignatureBytes)
 
 /**
  * Register the following Signature references and make them global.
@@ -35,21 +30,15 @@ static volatile bool Signature_registered = false;
  *
  * \returns 0 on success and non-zero on failure.
  */
-int Signature_register(JNIEnv* env)
+int
+Signature_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register KeyPair once. */
-    if (Signature_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register KeyPair class */
     tempClassID = (*env)->FindClass(env,
@@ -58,31 +47,30 @@ int Signature_register(JNIEnv* env)
         return 1;
 
     /* register KeyPair class */
-    Signature = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == Signature)
+    inst->Signature.classid = (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->Signature.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init method */
-    Signature_init =
+    inst->Signature.init =
         (*env)->GetMethodID(
-            env, Signature, "<init>", "([B)V");
-    if (NULL == Signature_init)
+            env, inst->Signature.classid, "<init>", "([B)V");
+    if (NULL == inst->Signature.init)
         return 1;
 
     /* register getSignatureBytes method */
-    Signature_getSignatureBytes =
+    inst->Signature.getSignatureBytes =
         (*env)->GetMethodID(
-            env, Signature, "getSignatureBytes", "()[B");
-    if (NULL == Signature_getSignatureBytes)
+            env, inst->Signature.classid, "getSignatureBytes", "()[B");
+    if (NULL == inst->Signature.getSignatureBytes)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    Signature_registered = true;
     return 0;
 }

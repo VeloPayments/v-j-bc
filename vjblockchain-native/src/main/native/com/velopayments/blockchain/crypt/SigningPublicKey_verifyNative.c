@@ -11,12 +11,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "Message.h"
-#include "Signature.h"
-#include "SigningPublicKey.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_SigningPublicKey
@@ -38,7 +33,8 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         goto done;
     }
  
@@ -46,7 +42,7 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == signature)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "signature");
+            env, native_inst->NullPointerException.classid, "signature");
         goto done;
     }
 
@@ -54,17 +50,19 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == message)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message");
+            env, native_inst->NullPointerException.classid, "message");
         goto done;
     }
 
     /* get the raw bytes for this public key. */
     jobject public_key =
-        (*env)->CallObjectMethod(env, that, SigningPublicKey_getRawBytes);
+        (*env)->CallObjectMethod(
+            env, that, native_inst->SigningPublicKey.getRawBytes);
     if (NULL == public_key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "this.getRawBytes()");
+            env, native_inst->NullPointerException.classid,
+            "this.getRawBytes()");
         goto done;
     }
 
@@ -74,18 +72,19 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
                 native_inst->crypto_suite.sign_opts.public_key_size)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "public_key_size");
+            env, native_inst->IllegalStateException.classid,
+            "public_key_size");
         goto cleanup_public_key;
     }
 
     /* create key buffer. */
     vccrypt_buffer_t pubkey;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_buffer_init_for_signature_public_key(
+            vccrypt_suite_buffer_init_for_signature_public_key(
                 &native_inst->crypto_suite, &pubkey))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "pubkey");
+            env, native_inst->IllegalStateException.classid, "pubkey");
         goto cleanup_public_key;
     }
 
@@ -95,7 +94,8 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == public_key_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "public_key_bytes");
+            env, native_inst->NullPointerException.classid,
+            "public_key_bytes");
         goto cleanup_pubkey;
     }
 
@@ -105,21 +105,24 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     /* create the signature context. */
     vccrypt_digital_signature_context_t sign;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_digital_signature_init(
+            vccrypt_suite_digital_signature_init(
                     &native_inst->crypto_suite, &sign))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "signature_init");
+            env, native_inst->IllegalStateException.classid,
+            "signature_init");
         goto cleanup_public_key_bytes;
     }
 
     /* get the raw array for the message. */
     jobject message_array =
-        (*env)->CallObjectMethod(env, message, Message_getRawBytes);
+        (*env)->CallObjectMethod(
+            env, message, native_inst->Message.getRawBytes);
     if (NULL == message_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message.getRawBytes()");
+            env, native_inst->NullPointerException.classid,
+            "message.getRawBytes()");
         goto cleanup_sign;
     }
 
@@ -132,28 +135,31 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == message_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "message_bytes");
+            env, native_inst->NullPointerException.classid,
+            "message_bytes");
         goto cleanup_message_array;
     }
 
     /* create the signature buffer. */
     vccrypt_buffer_t sign_buf;
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_suite_buffer_init_for_signature(
+            vccrypt_suite_buffer_init_for_signature(
                     &native_inst->crypto_suite, &sign_buf))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "sign_buf");
+            env, native_inst->IllegalStateException.classid, "sign_buf");
         goto cleanup_message_bytes;
     }
 
     /* get the byte array for the signature. */
     jobject signature_array =
-        (*env)->CallObjectMethod(env, signature, Signature_getSignatureBytes);
+        (*env)->CallObjectMethod(
+            env, signature, native_inst->Signature.getSignatureBytes);
     if (NULL == signature_array)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "signature.getSignatureBytes()");
+            env, native_inst->NullPointerException.classid,
+            "signature.getSignatureBytes()");
         goto cleanup_sign_buf;
     }
 
@@ -173,7 +179,8 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
     if (NULL == signature_array_bytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "signature_array_bytes");
+            env, native_inst->NullPointerException.classid,
+            "signature_array_bytes");
         goto cleanup_signature_array;
     }
 
@@ -182,8 +189,9 @@ JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicK
 
     /* verify the signature. */
     if (VCCRYPT_STATUS_SUCCESS !=
-        vccrypt_digital_signature_verify(
-            &sign, &sign_buf, &pubkey, (uint8_t*)message_bytes, message_size))
+            vccrypt_digital_signature_verify(
+                &sign, &sign_buf, &pubkey, (uint8_t*)message_bytes,
+                message_size))
     {
         /* signature verification failed. */
         retval = JNI_FALSE;

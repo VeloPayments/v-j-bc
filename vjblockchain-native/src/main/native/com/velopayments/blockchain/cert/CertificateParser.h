@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct CertificateParser_JavaVars
+CertificateParser_JavaVars;
 
 /**
  * Register the following CertificateParser references and make them global.
@@ -25,49 +31,64 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int CertificateParser_register(JNIEnv* env);
+int
+CertificateParser_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.CertificateParser {
+/**
+ * \brief Java variables for CertificateParser.
  */
-extern jclass CertificateParser;
+struct CertificateParser_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.CertificateParser {
+     */
+    jclass classid;
 
-/* private byte[] certificate;
- * descriptor: [B
- */
-extern jfieldID CertificateParser_field_certificate;
+    /* private byte[] certificate;
+     * descriptor: [B
+     */
+    jfieldID field_certificate;
 
-/* private int rawSize;
- * descriptor: I
- */
-extern jfieldID CertificateParser_field_rawSize;
+    /* private int rawSize;
+     * descriptor: I
+     */
+    jfieldID field_rawSize;
 
-/* private int size;
- * descriptor: I
- */
-extern jfieldID CertificateParser_field_size;
+    /* private int size;
+     * descriptor: I
+     */
+    jfieldID field_size;
 
-/* public com.velopayments.blockchain.cert.CertificateParser(byte[]);
- * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)V
- */
-extern jmethodID CertificateParser_init;
+    /* public com.velopayments.blockchain.cert.CertificateParser(byte[]);
+     * descriptor: (Lcom/velopayments/blockchain/cert/Certificate;)V
+     */
+    jmethodID init;
 
-/* public java.util.Map<java.lang.Integer, java.util.List<byte[]>> parse();
- * descriptor: ()Ljava/util/Map;
- */
-extern jmethodID CertificateParser_parse;
+    /* public java.util.Map<java.lang.Integer, java.util.List<byte[]>> parse();
+     * descriptor: ()Ljava/util/Map;
+     */
+    jmethodID parse;
 
-/* public boolean
- *      attest(com.velopayments.blockchain.cert.CertificateParserDelegate,
-               long, boolean)
- *      throws com.velopayments.blockchain.cert.AttestationException,
- *             com.velopayments.blockchain.cert.UnknownEntityTypeException,
- *             com.velopayments.blockchain.cert.UnknownEntityException;
- * descriptor: (Lcom/velopayments/blockchain/cert/CertificateParserDelegate;JZ)Z
- */
-extern jmethodID CertificateParser_attest;
+    /* public boolean
+     *      attest(com.velopayments.blockchain.cert.CertificateParserDelegate,
+                   long, boolean)
+     *      throws com.velopayments.blockchain.cert.AttestationException,
+     *             com.velopayments.blockchain.cert.UnknownEntityTypeException,
+     *             com.velopayments.blockchain.cert.UnknownEntityException;
+     * descriptor:
+     * (Lcom/velopayments/blockchain/cert/CertificateParserDelegate;JZ)Z
+     */
+    jmethodID attest;
+};
+
+/* helper macro. */
+#define CERTIFICATE_PARSER_JAVA_VARS() \
+    CertificateParser_JavaVars CertificateParser
 
 #ifdef __cplusplus
 }

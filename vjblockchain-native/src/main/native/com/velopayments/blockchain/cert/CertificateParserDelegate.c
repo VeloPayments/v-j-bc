@@ -8,21 +8,16 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "CertificateParserDelegate.h"
 
-jclass CertificateParserDelegate = NULL;
-jmethodID CertificateParserDelegate_resolveEntity = NULL;
-jmethodID CertificateParserDelegate_resolveArtifactState = NULL;
-
-static volatile bool CertificateParserDelegate_registered = false;
+#include "../init/init.h"
 
 /**
  * Property: CertificateParserDelegate globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != CertificateParserDelegate \
-     && NULL != CertificateParserDelegate_resolveEntity \
-     && NULL != CertificateParserDelegate_resolveArtifactState)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->CertificateParserDelegate.classid \
+     && NULL != inst->CertificateParserDelegate.resolveEntity \
+     && NULL != inst->CertificateParserDelegate.resolveArtifactState)
 
 /**
  * Register the following CertificateParserDelegate references and make them
@@ -33,24 +28,19 @@ static volatile bool CertificateParserDelegate_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int CertificateParserDelegate_register(JNIEnv* env)
+int
+CertificateParserDelegate_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register ParserDelegate once. */
-    if (CertificateParserDelegate_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register ParserDelegate class */
     tempClassID = (*env)->FindClass(env,
@@ -59,35 +49,36 @@ int CertificateParserDelegate_register(JNIEnv* env)
         return 1;
 
     /* create global reference for this class */
-    CertificateParserDelegate = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == CertificateParserDelegate)
+    inst->CertificateParserDelegate.classid =
+        (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->CertificateParserDelegate.classid)
         return 1;
 
     /* we don't need this local reference anymore. */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register resolveEntity method */
-    CertificateParserDelegate_resolveEntity =
+    inst->CertificateParserDelegate.resolveEntity =
         (*env)->GetMethodID(
-            env, CertificateParserDelegate, "resolveEntity",
+            env, inst->CertificateParserDelegate.classid, "resolveEntity",
                 "(Ljava/util/UUID;J)"
                 "Lcom/velopayments/blockchain/cert/EntityReference;");
-    if (NULL == CertificateParserDelegate_resolveEntity)
+    if (NULL == inst->CertificateParserDelegate.resolveEntity)
         return 1;
 
     /* register resolveArtifactState method */
-    CertificateParserDelegate_resolveArtifactState =
+    inst->CertificateParserDelegate.resolveArtifactState =
         (*env)->GetMethodID(
-            env, CertificateParserDelegate, "resolveArtifactState",
+            env, inst->CertificateParserDelegate.classid,
+            "resolveArtifactState",
             "(Ljava/util/UUID;J)"
             "Lcom/velopayments/blockchain/cert/ArtifactState;");
-    if (NULL == CertificateParserDelegate_resolveArtifactState)
+    if (NULL == inst->CertificateParserDelegate.resolveArtifactState)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    CertificateParserDelegate_registered = true;
     return 0;
 }

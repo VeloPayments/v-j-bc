@@ -12,12 +12,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "Key.h"
-#include "MessageAuthenticationException.h"
-#include "SimpleStreamCipher.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_SimpleStreamCipher
@@ -54,7 +49,8 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return NULL;
     }
 
@@ -62,7 +58,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (NULL == input)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "input");
+            env, native_inst->NullPointerException.classid, "input");
         return NULL;
     }
 
@@ -72,25 +68,29 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (NULL == inputData)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "inputData");
+            env, native_inst->NullPointerException.classid, "inputData");
         return NULL;
     }
 
     /* get the key field. */
-    key = (*env)->GetObjectField(env, that, SimpleStreamCipher_field_key);
+    key =
+        (*env)->GetObjectField(
+            env, that, native_inst->SimpleStreamCipher.field_key);
     if (NULL == key)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "key");
+            env, native_inst->NullPointerException.classid, "key");
         goto inputData_dispose;
     }
 
     /* get the key byte array. */
-    keyBytes = (*env)->CallObjectMethod(env, key, Key_getRawBytes);
+    keyBytes =
+        (*env)->CallObjectMethod(
+            env, key, native_inst->Key.getRawBytes);
     if (NULL == keyBytes)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "keyBytes");
+            env, native_inst->NullPointerException.classid, "keyBytes");
         goto inputData_dispose;
     }
 
@@ -99,7 +99,7 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (NULL == keyBytesData)
     {
         (*env)->ThrowNew(
-            env, NullPointerException, "keyBytesData");
+            env, native_inst->NullPointerException.classid, "keyBytesData");
         goto inputData_dispose;
     }
 
@@ -109,8 +109,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
                     &keyBuffer, &native_inst->alloc_opts,
                     native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "key buffer creation failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "key buffer creation failure.");
         goto keyBytesData_dispose;
     }
 
@@ -128,8 +129,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     /* verify that this message is large enough. */
     if (input_size < envelope_size)
     {
-        (*env)->ThrowNew(env, MessageAuthenticationException,
-                         "bad message size.");
+        (*env)->ThrowNew(
+            env, native_inst->MessageAuthenticationException.classid,
+            "bad message size.");
         goto keyBuffer_dispose;
     }
 
@@ -140,7 +142,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     jbyteArray outputArray = (*env)->NewByteArray(env, plaintext_size);
     if (NULL == outputArray)
     {
-        (*env)->ThrowNew(env, NullPointerException, "bad outputArray alloc.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "bad outputArray alloc.");
         goto keyBuffer_dispose;
     }
 
@@ -149,8 +153,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
         (*env)->GetByteArrayElements(env, outputArray, NULL);
     if (NULL == outputArrayData)
     {
-        (*env)->ThrowNew(env, NullPointerException,
-                         "outputArray data could not be read.");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid,
+            "outputArray data could not be read.");
         goto keyBuffer_dispose;
     }
 
@@ -160,8 +165,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
                     &sessionKeyBuffer, &native_inst->alloc_opts,
                     native_inst->crypto_suite.stream_cipher_opts.key_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "session key buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "session key buffer create failure.");
         goto outputArrayData_dispose;
     }
 
@@ -170,8 +176,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_suite_block_init(
                     &native_inst->crypto_suite, &block, &keyBuffer, false))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher init failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "block cipher init failure.");
         goto sessionKeyBuffer_dispose;
     }
 
@@ -187,8 +194,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
      || VCCRYPT_STATUS_SUCCESS !=
             vccrypt_block_decrypt(&block, in + 16, in + 32, sessionKeyPtr + 16))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "block cipher decrypt failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "block cipher decrypt failure.");
         goto block_dispose;
     }
 
@@ -197,8 +205,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_suite_mac_init(
                     &native_inst->crypto_suite, &mac, &sessionKeyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "mac init failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "mac init failure.");
         goto block_dispose;
     }
 
@@ -206,8 +215,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (VCCRYPT_STATUS_SUCCESS !=
             vccrypt_mac_digest(&mac, in, input_size - MAC_SIZE))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "message digest failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "message digest failure.");
         goto mac_dispose;
     }
 
@@ -216,16 +226,18 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_suite_buffer_init_for_mac_authentication_code(
                     &native_inst->crypto_suite, &macBuffer, false))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "mac buffer init failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "mac buffer init failure.");
         goto mac_dispose;
     }
 
     /* finalize the mac. */
     if (VCCRYPT_STATUS_SUCCESS != vccrypt_mac_finalize(&mac, &macBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "mac finalize failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "mac finalize failure.");
         goto macBuffer_dispose;
     }
 
@@ -233,8 +245,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
     if (0 !=
             crypto_memcmp(macBuffer.data, in + input_size - MAC_SIZE, MAC_SIZE))
     {
-        (*env)->ThrowNew(env, MessageAuthenticationException,
-                         "bad message.");
+        (*env)->ThrowNew(
+            env, native_inst->MessageAuthenticationException.classid,
+            "bad message.");
         goto macBuffer_dispose;
     }
 
@@ -243,8 +256,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_suite_stream_init(
                     &native_inst->crypto_suite, &stream, &sessionKeyBuffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "stream cipher init failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "stream cipher init failure.");
         goto macBuffer_dispose;
     }
 
@@ -257,8 +271,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_stream_start_decryption(
                 &stream, in, &offset))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "stream cipher start decryption failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "stream cipher start decryption failure.");
         goto stream_dispose;
     }
 
@@ -268,8 +283,9 @@ Java_com_velopayments_blockchain_crypt_SimpleStreamCipher_decryptNative(
             vccrypt_stream_decrypt(
                 &stream, in + 8, plaintext_size, outputArrayData, &offset))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "stream cipher decryption failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "stream cipher decryption failure.");
         goto stream_dispose;
     }
 

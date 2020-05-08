@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct UnknownArtifactException_JavaVars
+UnknownArtifactException_JavaVars;
 
 /**
  * Register the following UnknownArtifactException references and make them
@@ -26,27 +32,41 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int UnknownArtifactException_register(JNIEnv* env);
+int
+UnknownArtifactException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.UnknownArtifactException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for UnknownArtifactException.
  */
-extern jclass UnknownArtifactException;
+struct UnknownArtifactException_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.UnknownArtifactException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.cert.UnknownArtifactException(
- *      java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID UnknownArtifactException_init_String;
+    /* public com.velopayments.blockchain.cert.UnknownArtifactException(
+     *      java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* com.velopayments.blockchain.cert.UnknownArtifactException(
- *      java.util.UUID);
- * descriptor: (Ljava/util/UUID;)V
- */
-extern jmethodID UnknownArtifactException_init_UUID;
+    /* com.velopayments.blockchain.cert.UnknownArtifactException(
+     *      java.util.UUID);
+     * descriptor: (Ljava/util/UUID;)V
+     */
+    jmethodID init_UUID;
+};
+
+/* helper macro. */
+#define UNKNOWN_ARTIFACT_EXCEPTION_JAVA_VARS() \
+    UnknownArtifactException_JavaVars UnknownArtifactException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

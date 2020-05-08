@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct TransactionStatus_JavaVars
+TransactionStatus_JavaVars;
 
 /**
  * Register the following TransactionStatus references and make them global.
@@ -25,44 +31,58 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int TransactionStatus_register(JNIEnv* env);
+int
+TransactionStatus_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.client.TransactionStatus {
+/**
+ * \brief Java variables for TransactionStatus.
  */
-extern jclass TransactionStatus;
+struct TransactionStatus_JavaVars
+{
+    /* public class com.velopayments.blockchain.client.TransactionStatus {
+     */
+    jclass classid;
 
-/* public static final com.velopayments.blockchain.client.TransactionStatus
- * PENDING;
- * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
- */
-extern jfieldID TransactionStatus_field_PENDING;
+    /* public static final com.velopayments.blockchain.client.TransactionStatus
+     * PENDING;
+     * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
+     */
+    jfieldID field_PENDING;
 
-/* public static final com.velopayments.blockchain.client.TransactionStatus
- * FAILED;
- * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
- */
-extern jfieldID TransactionStatus_field_FAILED;
+    /* public static final com.velopayments.blockchain.client.TransactionStatus
+     * FAILED;
+     * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
+     */
+    jfieldID field_FAILED;
 
-/* public static final com.velopayments.blockchain.client.TransactionStatus
- * CANCELED;
- * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
- */
-extern jfieldID TransactionStatus_field_CANCELED;
+    /* public static final com.velopayments.blockchain.client.TransactionStatus
+     * CANCELED;
+     * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
+     */
+    jfieldID field_CANCELED;
 
-/* public static final com.velopayments.blockchain.client.TransactionStatus
- * SUCCEEDED;
- * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
- */
-extern jfieldID TransactionStatus_field_SUCCEEDED;
+    /* public static final com.velopayments.blockchain.client.TransactionStatus
+     * SUCCEEDED;
+     * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
+     */
+    jfieldID field_SUCCEEDED;
 
-/* public static final com.velopayments.blockchain.client.TransactionStatus
- * UNKNOWN_DISCONNECTED;
- * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
- */
-extern jfieldID TransactionStatus_field_DISCONNECTED;
+    /* public static final com.velopayments.blockchain.client.TransactionStatus
+     * UNKNOWN_DISCONNECTED;
+     * descriptor: Lcom/velopayments/blockchain/client/TransactionStatus;
+     */
+    jfieldID field_UNKNOWN_DISCONNECTED;
+};
+
+/* helper macro. */
+#define TRANSACTION_STATUS_JAVA_VARS() \
+    TransactionStatus_JavaVars TransactionStatus
 
 #ifdef __cplusplus
 }

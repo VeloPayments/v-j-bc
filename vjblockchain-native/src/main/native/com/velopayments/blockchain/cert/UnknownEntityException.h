@@ -12,10 +12,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
+
+/* forward decls. */
+typedef struct UnknownEntityException_JavaVars
+UnknownEntityException_JavaVars;
 
 /**
  * Register the following UnknownEntityException references and make them
@@ -26,27 +32,41 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int UnknownEntityException_register(JNIEnv* env);
+int
+UnknownEntityException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.cert.UnknownEntityException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for UnknownEntityException.
  */
-extern jclass UnknownEntityException;
+struct UnknownEntityException_JavaVars
+{
+    /* public class com.velopayments.blockchain.cert.UnknownEntityException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.cert.UnknownEntityException(
- *      java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID UnknownEntityException_init_String;
+    /* public com.velopayments.blockchain.cert.UnknownEntityException(
+     *      java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* com.velopayments.blockchain.cert.UnknownEntityException(
- *      java.util.UUID);
- * descriptor: (Ljava/util/UUID;)V
- */
-extern jmethodID UnknownEntityException_init_UUID;
+    /* com.velopayments.blockchain.cert.UnknownEntityException(
+     *      java.util.UUID);
+     * descriptor: (Ljava/util/UUID;)V
+     */
+    jmethodID init_UUID;
+};
+
+/* helper macro. */
+#define UNKNOWN_ENTITY_EXCEPTION_JAVA_VARS() \
+    UnknownEntityException_JavaVars UnknownEntityException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus

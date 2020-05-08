@@ -7,7 +7,7 @@
 #include <cbmc/model_assert.h>
 #include <stdint.h>
 
-#include "../java/util/UUID.h"
+#include "../com/velopayments/blockchain/init/init.h"
 #include "uuid_conv.h"
 
 /**
@@ -47,7 +47,9 @@ jobject uuidFromBytes(JNIEnv* env, const uint8_t* uuid_bytes)
         | (((uint64_t)uuid_bytes[15])      );
 
     return
-        (*env)->NewObject(env, UUID, UUID_init, (jlong)msb, (jlong)lsb);
+        (*env)->NewObject(
+            env, native_inst->UUID.classid, native_inst->UUID.init,
+            (jlong)msb, (jlong)lsb);
 }
 
 /**
@@ -61,8 +63,10 @@ void uuidToBytes(JNIEnv* env, jobject uuid, uint8_t* uuid_bytes)
 {
     uint64_t msb, lsb;
 
-    msb = (*env)->CallLongMethod(env, uuid, UUID_getMostSignificantBits);
-    lsb = (*env)->CallLongMethod(env, uuid, UUID_getLeastSignificantBits);
+    msb = (*env)->CallLongMethod(
+        env, uuid, native_inst->UUID.getMostSignificantBits);
+    lsb = (*env)->CallLongMethod(
+        env, uuid, native_inst->UUID.getLeastSignificantBits);
 
     uuid_bytes[ 0] = (msb & 0xFF00000000000000UL) >> 56;
     uuid_bytes[ 1] = (msb & 0x00FF000000000000UL) >> 48;

@@ -8,101 +8,56 @@
 
 #include <cbmc/model_assert.h>
 #include <stdbool.h>
-#include "LinkedList.h"
 
-jclass LinkedList = NULL;
-jmethodID LinkedList_init = NULL;
-jmethodID LinkedList_init_Collection = NULL;
-jmethodID LinkedList_getFirst = NULL;
-jmethodID LinkedList_getLast = NULL;
-jmethodID LinkedList_removeFirst = NULL;
-jmethodID LinkedList_removeLast = NULL;
-jmethodID LinkedList_addFirst = NULL;
-jmethodID LinkedList_addLast = NULL;
-jmethodID LinkedList_contains = NULL;
-jmethodID LinkedList_size = NULL;
-jmethodID LinkedList_add = NULL;
-jmethodID LinkedList_remove_Object = NULL;
-jmethodID LinkedList_addAll_Collection = NULL;
-jmethodID LinkedList_addAll_int_Collection = NULL;
-jmethodID LinkedList_clear = NULL;
-jmethodID LinkedList_get = NULL;
-jmethodID LinkedList_set = NULL;
-jmethodID LinkedList_add_int_Object = NULL;
-jmethodID LinkedList_remove_int = NULL;
-jmethodID LinkedList_indexOf = NULL;
-jmethodID LinkedList_lastIndexOf = NULL;
-jmethodID LinkedList_peek = NULL;
-jmethodID LinkedList_element = NULL;
-jmethodID LinkedList_poll = NULL;
-jmethodID LinkedList_remove = NULL;
-jmethodID LinkedList_offer = NULL;
-jmethodID LinkedList_offerFirst = NULL;
-jmethodID LinkedList_offerLast = NULL;
-jmethodID LinkedList_peekFirst = NULL;
-jmethodID LinkedList_peekLast = NULL;
-jmethodID LinkedList_pollFirst = NULL;
-jmethodID LinkedList_pollLast = NULL;
-jmethodID LinkedList_push = NULL;
-jmethodID LinkedList_pop = NULL;
-jmethodID LinkedList_removeFirstOccurrence = NULL;
-jmethodID LinkedList_removeLastOccurrence = NULL;
-jmethodID LinkedList_listIterator = NULL;
-jmethodID LinkedList_descendingIterator = NULL;
-jmethodID LinkedList_clone = NULL;
-jmethodID LinkedList_toArray = NULL;
-jmethodID LinkedList_toArray_Object = NULL;
-jmethodID LinkedList_spliterator = NULL;
-
-static volatile bool LinkedList_registered = false;
+#include "../../com/velopayments/blockchain/init/init.h"
 
 /**
  * Property: ParserDelegate globals are set.
  */
-#define MODEL_PROP_GLOBALS_SET \
-    (   NULL != LinkedList \
-     && NULL != LinkedList_init \
-     && NULL != LinkedList_init_Collection \
-     && NULL != LinkedList_getFirst \
-     && NULL != LinkedList_getLast \
-     && NULL != LinkedList_removeFirst \
-     && NULL != LinkedList_removeLast \
-     && NULL != LinkedList_addFirst \
-     && NULL != LinkedList_addLast \
-     && NULL != LinkedList_contains \
-     && NULL != LinkedList_size \
-     && NULL != LinkedList_add \
-     && NULL != LinkedList_remove_Object \
-     && NULL != LinkedList_addAll_Collection \
-     && NULL != LinkedList_addAll_int_Collection \
-     && NULL != LinkedList_clear \
-     && NULL != LinkedList_get \
-     && NULL != LinkedList_set \
-     && NULL != LinkedList_add_int_Object \
-     && NULL != LinkedList_remove_int \
-     && NULL != LinkedList_indexOf \
-     && NULL != LinkedList_lastIndexOf \
-     && NULL != LinkedList_peek \
-     && NULL != LinkedList_element \
-     && NULL != LinkedList_poll \
-     && NULL != LinkedList_remove \
-     && NULL != LinkedList_offer \
-     && NULL != LinkedList_offerFirst \
-     && NULL != LinkedList_offerLast \
-     && NULL != LinkedList_peekFirst \
-     && NULL != LinkedList_peekLast \
-     && NULL != LinkedList_pollFirst \
-     && NULL != LinkedList_pollLast \
-     && NULL != LinkedList_push \
-     && NULL != LinkedList_pop \
-     && NULL != LinkedList_removeFirstOccurrence \
-     && NULL != LinkedList_removeLastOccurrence \
-     && NULL != LinkedList_listIterator \
-     && NULL != LinkedList_descendingIterator \
-     && NULL != LinkedList_clone \
-     && NULL != LinkedList_toArray \
-     && NULL != LinkedList_toArray_Object \
-     && NULL != LinkedList_spliterator)
+#define MODEL_PROP_GLOBALS_SET(inst) \
+    (   NULL != inst->LinkedList.classid \
+     && NULL != inst->LinkedList.init \
+     && NULL != inst->LinkedList.init_Collection \
+     && NULL != inst->LinkedList.getFirst \
+     && NULL != inst->LinkedList.getLast \
+     && NULL != inst->LinkedList.removeFirst \
+     && NULL != inst->LinkedList.removeLast \
+     && NULL != inst->LinkedList.addFirst \
+     && NULL != inst->LinkedList.addLast \
+     && NULL != inst->LinkedList.contains \
+     && NULL != inst->LinkedList.size \
+     && NULL != inst->LinkedList.add \
+     && NULL != inst->LinkedList.remove_Object \
+     && NULL != inst->LinkedList.addAll_Collection \
+     && NULL != inst->LinkedList.addAll_int_Collection \
+     && NULL != inst->LinkedList.clear \
+     && NULL != inst->LinkedList.get \
+     && NULL != inst->LinkedList.set \
+     && NULL != inst->LinkedList.add_int_Object \
+     && NULL != inst->LinkedList.remove_int \
+     && NULL != inst->LinkedList.indexOf \
+     && NULL != inst->LinkedList.lastIndexOf \
+     && NULL != inst->LinkedList.peek \
+     && NULL != inst->LinkedList.element \
+     && NULL != inst->LinkedList.poll \
+     && NULL != inst->LinkedList.remove \
+     && NULL != inst->LinkedList.offer \
+     && NULL != inst->LinkedList.offerFirst \
+     && NULL != inst->LinkedList.offerLast \
+     && NULL != inst->LinkedList.peekFirst \
+     && NULL != inst->LinkedList.peekLast \
+     && NULL != inst->LinkedList.pollFirst \
+     && NULL != inst->LinkedList.pollLast \
+     && NULL != inst->LinkedList.push \
+     && NULL != inst->LinkedList.pop \
+     && NULL != inst->LinkedList.removeFirstOccurrence \
+     && NULL != inst->LinkedList.removeLastOccurrence \
+     && NULL != inst->LinkedList.listIterator \
+     && NULL != inst->LinkedList.descendingIterator \
+     && NULL != inst->LinkedList.clone \
+     && NULL != inst->LinkedList.toArray \
+     && NULL != inst->LinkedList.toArray_Object \
+     && NULL != inst->LinkedList.spliterator)
 
 /**
  * Register the following LinkedList references and make them global.
@@ -112,24 +67,19 @@ static volatile bool LinkedList_registered = false;
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int LinkedList_register(JNIEnv* env)
+int
+LinkedList_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst)
 {
     jclass tempClassID;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
-
-    /* only register java.util.LinkedList once. */
-    if (LinkedList_registered)
-    {
-        /* enforce globals invariant */
-        MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
-
-        return 0;
-    }
 
     /* register LinkedList class */
     tempClassID = (*env)->FindClass(env, "java/util/LinkedList");
@@ -137,312 +87,331 @@ int LinkedList_register(JNIEnv* env)
         return 1;
 
     /* create a global reference to this class */
-    LinkedList = (jclass)(*env)->NewGlobalRef(env, tempClassID);
-    if (NULL == LinkedList)
+    inst->LinkedList.classid = (jclass)(*env)->NewGlobalRef(env, tempClassID);
+    if (NULL == inst->LinkedList.classid)
         return 1;
 
     /* we don't need this local reference anymore */
     (*env)->DeleteLocalRef(env, tempClassID);
 
     /* register init() method */
-    LinkedList_init =
+    inst->LinkedList.init =
         (*env)->GetMethodID(
-            env, LinkedList, "<init>", "()V");
-    if (NULL == LinkedList_init)
+            env, inst->LinkedList.classid, "<init>", "()V");
+    if (NULL == inst->LinkedList.init)
         return 1;
 
     /* register init(Collection) method */
-    LinkedList_init_Collection =
+    inst->LinkedList.init_Collection =
         (*env)->GetMethodID(
-            env, LinkedList, "<init>", "(Ljava/util/Collection;)V");
-    if (NULL == LinkedList_init_Collection)
+            env, inst->LinkedList.classid,
+            "<init>", "(Ljava/util/Collection;)V");
+    if (NULL == inst->LinkedList.init_Collection)
         return 1;
 
     /* register getFirst method */
-    LinkedList_getFirst =
+    inst->LinkedList.getFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "getFirst", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_getFirst)
+            env, inst->LinkedList.classid, "getFirst", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.getFirst)
         return 1;
 
     /* register getLast method */
-    LinkedList_getLast =
+    inst->LinkedList.getLast =
         (*env)->GetMethodID(
-            env, LinkedList, "getLast", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_getLast)
+            env, inst->LinkedList.classid, "getLast", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.getLast)
         return 1;
 
     /* register removeFirst method */
-    LinkedList_removeFirst =
+    inst->LinkedList.removeFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "removeFirst", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_removeFirst)
+            env, inst->LinkedList.classid,
+            "removeFirst", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.removeFirst)
         return 1;
 
     /* register removeLast method */
-    LinkedList_removeLast =
+    inst->LinkedList.removeLast =
         (*env)->GetMethodID(
-            env, LinkedList, "removeLast", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_removeLast)
+            env, inst->LinkedList.classid,
+            "removeLast", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.removeLast)
         return 1;
 
     /* register addFirst method */
-    LinkedList_addFirst =
+    inst->LinkedList.addFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "addFirst", "(Ljava/lang/Object;)V");
-    if (NULL == LinkedList_addFirst)
+            env, inst->LinkedList.classid,
+            "addFirst", "(Ljava/lang/Object;)V");
+    if (NULL == inst->LinkedList.addFirst)
         return 1;
 
     /* register addLast method */
-    LinkedList_addLast =
+    inst->LinkedList.addLast =
         (*env)->GetMethodID(
-            env, LinkedList, "addLast", "(Ljava/lang/Object;)V");
-    if (NULL == LinkedList_addLast)
+            env, inst->LinkedList.classid,
+            "addLast", "(Ljava/lang/Object;)V");
+    if (NULL == inst->LinkedList.addLast)
         return 1;
 
     /* register contains method */
-    LinkedList_contains =
+    inst->LinkedList.contains =
         (*env)->GetMethodID(
-            env, LinkedList, "contains", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_contains)
+            env, inst->LinkedList.classid,
+            "contains", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.contains)
         return 1;
 
     /* register size method */
-    LinkedList_size =
+    inst->LinkedList.size =
         (*env)->GetMethodID(
-            env, LinkedList, "size", "()I");
-    if (NULL == LinkedList_size)
+            env, inst->LinkedList.classid, "size", "()I");
+    if (NULL == inst->LinkedList.size)
         return 1;
 
     /* register add method */
-    LinkedList_add =
+    inst->LinkedList.add =
         (*env)->GetMethodID(
-            env, LinkedList, "add", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_add)
+            env, inst->LinkedList.classid, "add", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.add)
         return 1;
 
     /* register remove(Object) method */
-    LinkedList_remove_Object =
+    inst->LinkedList.remove_Object =
         (*env)->GetMethodID(
-            env, LinkedList, "remove", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_remove_Object)
+            env, inst->LinkedList.classid, "remove", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.remove_Object)
         return 1;
 
     /* register addAll(Collection) method */
-    LinkedList_addAll_Collection =
+    inst->LinkedList.addAll_Collection =
         (*env)->GetMethodID(
-            env, LinkedList, "addAll", "(Ljava/util/Collection;)Z");
-    if (NULL == LinkedList_addAll_Collection)
+            env, inst->LinkedList.classid,
+            "addAll", "(Ljava/util/Collection;)Z");
+    if (NULL == inst->LinkedList.addAll_Collection)
         return 1;
 
     /* register addAll(int, Collection) method */
-    LinkedList_addAll_int_Collection =
+    inst->LinkedList.addAll_int_Collection =
         (*env)->GetMethodID(
-            env, LinkedList, "addAll", "(ILjava/util/Collection;)Z");
-    if (NULL == LinkedList_addAll_int_Collection)
+            env, inst->LinkedList.classid,
+            "addAll", "(ILjava/util/Collection;)Z");
+    if (NULL == inst->LinkedList.addAll_int_Collection)
         return 1;
 
     /* register clear method */
-    LinkedList_clear =
+    inst->LinkedList.clear =
         (*env)->GetMethodID(
-            env, LinkedList, "clear", "()V");
-    if (NULL == LinkedList_clear)
+            env, inst->LinkedList.classid, "clear", "()V");
+    if (NULL == inst->LinkedList.clear)
         return 1;
 
     /* register get method */
-    LinkedList_get =
+    inst->LinkedList.get =
         (*env)->GetMethodID(
-            env, LinkedList, "get", "(I)Ljava/lang/Object;");
-    if (NULL == LinkedList_get)
+            env, inst->LinkedList.classid, "get", "(I)Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.get)
         return 1;
 
     /* register set method */
-    LinkedList_set =
+    inst->LinkedList.set =
         (*env)->GetMethodID(
-            env, LinkedList, "set", "(ILjava/lang/Object;)Ljava/lang/Object;");
-    if (NULL == LinkedList_set)
+            env, inst->LinkedList.classid,
+            "set", "(ILjava/lang/Object;)Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.set)
         return 1;
 
     /* register add(int, Object) method */
-    LinkedList_add_int_Object =
+    inst->LinkedList.add_int_Object =
         (*env)->GetMethodID(
-            env, LinkedList, "add", "(ILjava/lang/Object;)V");
-    if (NULL == LinkedList_add_int_Object)
+            env, inst->LinkedList.classid, "add", "(ILjava/lang/Object;)V");
+    if (NULL == inst->LinkedList.add_int_Object)
         return 1;
 
     /* register remove(int) method */
-    LinkedList_remove_int =
+    inst->LinkedList.remove_int =
         (*env)->GetMethodID(
-            env, LinkedList, "remove", "(I)Ljava/lang/Object;");
-    if (NULL == LinkedList_remove_int)
+            env, inst->LinkedList.classid, "remove", "(I)Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.remove_int)
         return 1;
 
     /* register indexOf method */
-    LinkedList_indexOf =
+    inst->LinkedList.indexOf =
         (*env)->GetMethodID(
-            env, LinkedList, "indexOf", "(Ljava/lang/Object;)I");
-    if (NULL == LinkedList_indexOf)
+            env, inst->LinkedList.classid, "indexOf", "(Ljava/lang/Object;)I");
+    if (NULL == inst->LinkedList.indexOf)
         return 1;
 
     /* register lastIndexOf method */
-    LinkedList_lastIndexOf =
+    inst->LinkedList.lastIndexOf =
         (*env)->GetMethodID(
-            env, LinkedList, "lastIndexOf", "(Ljava/lang/Object;)I");
-    if (NULL == LinkedList_lastIndexOf)
+            env, inst->LinkedList.classid,
+            "lastIndexOf", "(Ljava/lang/Object;)I");
+    if (NULL == inst->LinkedList.lastIndexOf)
         return 1;
 
     /* register peek method */
-    LinkedList_peek =
+    inst->LinkedList.peek =
         (*env)->GetMethodID(
-            env, LinkedList, "peek", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_peek)
+            env, inst->LinkedList.classid, "peek", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.peek)
         return 1;
 
     /* register element method */
-    LinkedList_element =
+    inst->LinkedList.element =
         (*env)->GetMethodID(
-            env, LinkedList, "element", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_element)
+            env, inst->LinkedList.classid, "element", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.element)
         return 1;
 
     /* register poll method */
-    LinkedList_poll =
+    inst->LinkedList.poll =
         (*env)->GetMethodID(
-            env, LinkedList, "poll", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_poll)
+            env, inst->LinkedList.classid, "poll", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.poll)
         return 1;
 
     /* register remove method */
-    LinkedList_remove =
+    inst->LinkedList.remove =
         (*env)->GetMethodID(
-            env, LinkedList, "remove", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_remove)
+            env, inst->LinkedList.classid, "remove", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.remove)
         return 1;
 
     /* register offer method */
-    LinkedList_offer =
+    inst->LinkedList.offer =
         (*env)->GetMethodID(
-            env, LinkedList, "offer", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_offer)
+            env, inst->LinkedList.classid, "offer", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.offer)
         return 1;
 
     /* register offerFirst method */
-    LinkedList_offerFirst =
+    inst->LinkedList.offerFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "offerFirst", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_offerFirst)
+            env, inst->LinkedList.classid,
+            "offerFirst", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.offerFirst)
         return 1;
 
     /* register offerLast method */
-    LinkedList_offerLast =
+    inst->LinkedList.offerLast =
         (*env)->GetMethodID(
-            env, LinkedList, "offerLast", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_offerLast)
+            env, inst->LinkedList.classid,
+            "offerLast", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.offerLast)
         return 1;
 
     /* register peekFirst method */
-    LinkedList_peekFirst =
+    inst->LinkedList.peekFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "peekFirst", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_peekFirst)
+            env, inst->LinkedList.classid,
+            "peekFirst", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.peekFirst)
         return 1;
 
     /* register peekLast method */
-    LinkedList_peekLast =
+    inst->LinkedList.peekLast =
         (*env)->GetMethodID(
-            env, LinkedList, "peekLast", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_peekLast)
+            env, inst->LinkedList.classid,
+            "peekLast", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.peekLast)
         return 1;
 
     /* register pollFirst method */
-    LinkedList_pollFirst =
+    inst->LinkedList.pollFirst =
         (*env)->GetMethodID(
-            env, LinkedList, "pollFirst", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_pollFirst)
+            env, inst->LinkedList.classid,
+            "pollFirst", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.pollFirst)
         return 1;
 
     /* register pollLast method */
-    LinkedList_pollLast =
+    inst->LinkedList.pollLast =
         (*env)->GetMethodID(
-            env, LinkedList, "pollLast", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_pollLast)
+            env, inst->LinkedList.classid, "pollLast", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.pollLast)
         return 1;
 
     /* register push method */
-    LinkedList_push =
+    inst->LinkedList.push =
         (*env)->GetMethodID(
-            env, LinkedList, "push", "(Ljava/lang/Object;)V");
-    if (NULL == LinkedList_push)
+            env, inst->LinkedList.classid, "push", "(Ljava/lang/Object;)V");
+    if (NULL == inst->LinkedList.push)
         return 1;
 
     /* register pop method */
-    LinkedList_pop =
+    inst->LinkedList.pop =
         (*env)->GetMethodID(
-            env, LinkedList, "pop", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_pop)
+            env, inst->LinkedList.classid, "pop", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.pop)
         return 1;
 
     /* register removeFirstOccurrence method */
-    LinkedList_removeFirstOccurrence =
+    inst->LinkedList.removeFirstOccurrence =
         (*env)->GetMethodID(
-            env, LinkedList, "removeFirstOccurrence", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_removeFirstOccurrence)
+            env, inst->LinkedList.classid,
+            "removeFirstOccurrence", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.removeFirstOccurrence)
         return 1;
 
     /* register removeLastOccurrence method */
-    LinkedList_removeLastOccurrence =
+    inst->LinkedList.removeLastOccurrence =
         (*env)->GetMethodID(
-            env, LinkedList, "removeLastOccurrence", "(Ljava/lang/Object;)Z");
-    if (NULL == LinkedList_removeLastOccurrence)
+            env, inst->LinkedList.classid,
+            "removeLastOccurrence", "(Ljava/lang/Object;)Z");
+    if (NULL == inst->LinkedList.removeLastOccurrence)
         return 1;
 
     /* register listIterator method */
-    LinkedList_listIterator =
+    inst->LinkedList.listIterator =
         (*env)->GetMethodID(
-            env, LinkedList, "listIterator", "(I)Ljava/util/ListIterator;");
-    if (NULL == LinkedList_listIterator)
+            env, inst->LinkedList.classid,
+            "listIterator", "(I)Ljava/util/ListIterator;");
+    if (NULL == inst->LinkedList.listIterator)
         return 1;
 
     /* register descendingIterator method */
-    LinkedList_descendingIterator =
+    inst->LinkedList.descendingIterator =
         (*env)->GetMethodID(
-            env, LinkedList, "descendingIterator", "()Ljava/util/Iterator;");
-    if (NULL == LinkedList_descendingIterator)
+            env, inst->LinkedList.classid,
+            "descendingIterator", "()Ljava/util/Iterator;");
+    if (NULL == inst->LinkedList.descendingIterator)
         return 1;
 
     /* register clone method */
-    LinkedList_clone =
+    inst->LinkedList.clone =
         (*env)->GetMethodID(
-            env, LinkedList, "clone", "()Ljava/lang/Object;");
-    if (NULL == LinkedList_clone)
+            env, inst->LinkedList.classid, "clone", "()Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.clone)
         return 1;
 
     /* register toArray method */
-    LinkedList_toArray =
+    inst->LinkedList.toArray =
         (*env)->GetMethodID(
-            env, LinkedList, "toArray", "()[Ljava/lang/Object;");
-    if (NULL == LinkedList_toArray)
+            env, inst->LinkedList.classid, "toArray", "()[Ljava/lang/Object;");
+    if (NULL == inst->LinkedList.toArray)
         return 1;
 
     /* register toArray(Object) method */
-    LinkedList_toArray_Object =
+    inst->LinkedList.toArray_Object =
         (*env)->GetMethodID(
-            env, LinkedList, "toArray",
+            env, inst->LinkedList.classid, "toArray",
             "([Ljava/lang/Object;)[Ljava/lang/Object;");
-    if (NULL == LinkedList_toArray_Object)
+    if (NULL == inst->LinkedList.toArray_Object)
         return 1;
 
     /* register spliterator method */
-    LinkedList_spliterator =
+    inst->LinkedList.spliterator =
         (*env)->GetMethodID(
-            env, LinkedList, "spliterator", "()Ljava/util/Spliterator;");
-    if (NULL == LinkedList_spliterator)
+            env, inst->LinkedList.classid,
+            "spliterator", "()Ljava/util/Spliterator;");
+    if (NULL == inst->LinkedList.spliterator)
         return 1;
 
     /* globals invariant in place. */
-    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET);
+    MODEL_ASSERT(MODEL_PROP_GLOBALS_SET(inst));
 
     /* success */
-    LinkedList_registered = true;
     return 0;
 }

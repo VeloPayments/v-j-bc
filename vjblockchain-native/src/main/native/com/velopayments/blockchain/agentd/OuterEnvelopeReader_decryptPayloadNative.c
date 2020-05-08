@@ -16,9 +16,6 @@
 #include <vpr/allocator/malloc_allocator.h>
 #include <vpr/parameters.h>
 
-#include "../../../../com/velopayments/blockchain/agentd/MessageVerificationException.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
 #include "../init/init.h"
 
 /*
@@ -53,7 +50,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-                env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         goto done;
     }
 
@@ -61,7 +59,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     if (NULL == shared_secret)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "shared_secret");
+            env, native_inst->NullPointerException.classid, "shared_secret");
         goto done;
     }
 
@@ -69,7 +67,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     if (NULL == header)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "header");
+            env, native_inst->NullPointerException.classid, "header");
         goto done;
     }
 
@@ -77,7 +75,7 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     if (NULL == payload)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "payload");
+            env, native_inst->NullPointerException.classid, "payload");
         goto done;
     }
 
@@ -87,7 +85,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     if (NULL == shared_secret_bytes)
     {
         (*env)->ThrowNew(
-                env, NullPointerException, "shared_secret_bytes");
+            env, native_inst->NullPointerException.classid,
+            "shared_secret_bytes");
         goto done;
     }
 
@@ -98,8 +97,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
                     &shared_secret_buffer, &native_inst->alloc_opts, 
                     shared_secret_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "shared secret buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "shared secret buffer create failure.");
         goto shared_secret_bytes_dispose;
     }
 
@@ -112,7 +112,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     header_bytes = (*env)->GetByteArrayElements(env, header, NULL);
     if (NULL == header_bytes)
     {
-        (*env)->ThrowNew(env, NullPointerException, "header_bytes");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid, "header_bytes");
         goto shared_secret_buffer_dispose;
     }
 
@@ -122,8 +123,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
             vccrypt_buffer_init(
                     &header_buffer, &native_inst->alloc_opts, header_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "header buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "header buffer create failure.");
         goto header_bytes_dispose;
     }
 
@@ -134,7 +136,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     payload_bytes = (*env)->GetByteArrayElements(env, payload, NULL);
     if (NULL == payload_bytes)
     {
-        (*env)->ThrowNew(env, NullPointerException, "payload_bytes");
+        (*env)->ThrowNew(
+            env, native_inst->NullPointerException.classid, "payload_bytes");
         goto header_buffer_dispose;
     }
 
@@ -144,8 +147,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
             vccrypt_buffer_init(
                     &payload_buffer, &native_inst->alloc_opts, payload_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "payload buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "payload buffer create failure.");
         goto payload_bytes_dispose;
     }
 
@@ -157,8 +161,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     size_t mac_size = native_inst->crypto_suite.mac_short_opts.mac_size;
     if (payload_size < mac_size)
     {
-        (*env)->ThrowNew(env, MessageVerificationException,
-                         "invalid payload size (MAC)");
+        (*env)->ThrowNew(
+            env, native_inst->MessageVerificationException.classid,
+            "invalid payload size (MAC)");
         goto payload_buffer_dispose;
     }
 
@@ -172,8 +177,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
             vccrypt_suite_mac_short_init(
                     &native_inst->crypto_suite, &mac, &shared_secret_buffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "MAC instance create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "MAC instance create failure.");
         goto payload_buffer_dispose;
     }
 
@@ -183,8 +189,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
             vccrypt_buffer_init(
                     &digest_buffer, &native_inst->alloc_opts, mac_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "digest buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "digest buffer create failure.");
         goto mac_instance_dispose;
     }
 
@@ -196,21 +203,27 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
             vccrypt_mac_digest(
                 &mac, payload_begin, payload_buffer.size - mac_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "digest failure");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "digest failure");
         goto digest_buffer_dispose;
     }
 
     /* finalize the digest. */
     if (VCCRYPT_STATUS_SUCCESS != vccrypt_mac_finalize(&mac, &digest_buffer))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "finalize failure");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "finalize failure");
         goto digest_buffer_dispose;
     }
 
     /* verify the digest. */
     if (0 != crypto_memcmp(payload_buffer.data, digest_buffer.data, mac_size))
     {
-        (*env)->ThrowNew(env, MessageVerificationException, "Bad packet MAC");
+        (*env)->ThrowNew(
+            env, native_inst->MessageVerificationException.classid,
+            "Bad packet MAC");
         goto digest_buffer_dispose;
     }
 
@@ -221,8 +234,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
                     &dpayload_buffer, &native_inst->alloc_opts,
                     payload_size - mac_size))
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "decrypted payload buffer create failure.");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "decrypted payload buffer create failure.");
         goto digest_buffer_dispose;
     }
 
@@ -233,7 +247,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
                     &native_inst->crypto_suite, &stream, &shared_secret_buffer))
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "stream context failure.");
+            env, native_inst->IllegalStateException.classid,
+            "stream context failure.");
         goto dpayload_buffer_dispose;
     }
 
@@ -244,7 +259,8 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
                 sizeof(server_iv), 5)) // TODO
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "continue_decryption failure");
+            env, native_inst->IllegalStateException.classid,
+            "continue_decryption failure");
         goto stream_cipher_dispose;
     }
 
@@ -255,7 +271,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
                 &stream, payload_begin, payload_size - mac_size, 
                 dpayload_buffer.data, &offset))
     {
-        (*env)->ThrowNew(env, IllegalStateException, "decryption failure");
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "decryption failure");
         goto stream_cipher_dispose;
     }
 
@@ -263,9 +281,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     retval = (*env)->NewByteArray(env, dpayload_buffer.size);
     if (NULL == retval)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array could not be allocated.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "return value array could not be allocated.");
         goto stream_cipher_dispose;
     }
 
@@ -273,9 +291,9 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptPayloadNative
     jbyte* retval_bytes = (*env)->GetByteArrayElements(env, retval, NULL);
     if (NULL == retval_bytes)
     {
-        (*env)->ThrowNew(env, IllegalStateException,
-                         "return value array data could not be dereferenced.");
-
+        (*env)->ThrowNew(
+            env, native_inst->IllegalStateException.classid,
+            "return value array data could not be dereferenced.");
         goto stream_cipher_dispose;
     }
 

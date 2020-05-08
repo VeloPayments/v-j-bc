@@ -11,11 +11,7 @@
 #include <vccrypt/suite.h>
 #include <vpr/parameters.h>
 
-#include "InvalidKeySizeException.h"
-#include "Key.h"
-#include "../../../../com/velopayments/blockchain/init/init.h"
-#include "../../../../java/lang/IllegalStateException.h"
-#include "../../../../java/lang/NullPointerException.h"
+#include "../init/init.h"
 
 /*
  * Class:     com_velopayments_blockchain_crypt_Key
@@ -34,17 +30,19 @@ Java_com_velopayments_blockchain_crypt_Key_verifyKeySizeNative(
     if (!native_inst || !native_inst->initialized)
     {
         (*env)->ThrowNew(
-            env, IllegalStateException, "vjblockchain not initialized.");
+            env, native_inst->IllegalStateException.classid,
+            "vjblockchain not initialized.");
         return;
     }
 
     /* get the length of the key. */
-    jbyteArray key = (*env)->GetObjectField(env, that, Key_key);
+    jbyteArray key = (*env)->GetObjectField(env, that, native_inst->Key.key);
     jint keyLen = (*env)->GetArrayLength(env, key);
 
     if ((size_t)keyLen != native_inst->crypto_suite.stream_cipher_opts.key_size)
     {
         (*env)->ThrowNew(
-            env, InvalidKeySizeException, "Invalid Key Size.");
+            env, native_inst->InvalidKeySizeException.classid,
+            "Invalid Key Size.");
     }
 }

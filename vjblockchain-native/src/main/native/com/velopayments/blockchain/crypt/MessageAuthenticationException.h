@@ -15,10 +15,16 @@
 
 #include <jni.h>
 
+#include "../init/init_fwd.h"
+
 /* make this header C++ friendly */
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
+
+/* forward decls. */
+typedef struct MessageAuthenticationException_JavaVars
+MessageAuthenticationException_JavaVars;
 
 /**
  * Register the following MessageAuthenticationException references and make
@@ -29,27 +35,43 @@ extern "C" {
  * must be called before any of the following references are used.
  *
  * \param env   JNI environment to use.
+ * \param inst  native instance to initialize.
  *
  * \returns 0 on success and non-zero on failure.
  */
-int MessageAuthenticationException_register(JNIEnv* env);
+int
+MessageAuthenticationException_register(
+    JNIEnv* env,
+    vjblockchain_native_instance* inst);
 
-/* public class com.velopayments.blockchain.crypt.MessageAuthenticationException
- *          extends java.lang.RuntimeException {
+/**
+ * \brief Java variables for MessageAuthenticationException.
  */
-extern jclass MessageAuthenticationException;
+struct MessageAuthenticationException_JavaVars
+{
+    /* public class
+     * com.velopayments.blockchain.crypt.MessageAuthenticationException
+     *          extends java.lang.RuntimeException {
+     */
+    jclass classid;
 
-/* public com.velopayments.blockchain.crypt.MessageAuthenticationException(
- *      java.lang.String);
- * descriptor: (Ljava/lang/String;)V
- */
-extern jmethodID MessageAuthenticationException_init_String;
+    /* public
+     * com.velopayments.blockchain.crypt.MessageAuthenticationException(
+     *      java.lang.String);
+     * descriptor: (Ljava/lang/String;)V
+     */
+    jmethodID init_String;
 
-/* public com.velopayments.blockchain.crypt.MessageAuthenticationException(
- *      java.lang.String, java.lang.Throwable);
- * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
- */
-extern jmethodID MessageAuthenticationException_init_String_Throwable;
+    /* public com.velopayments.blockchain.crypt.MessageAuthenticationException(
+     *      java.lang.String, java.lang.Throwable);
+     * descriptor: (Ljava/lang/String;Ljava/lang/Throwable;)V
+     */
+    jmethodID init_String_Throwable;
+};
+
+/* helper macro. */
+#define MESSAGE_AUTHENTICATION_EXCEPTION_JAVA_VARS() \
+    MessageAuthenticationException_JavaVars MessageAuthenticationException
 
 /* make this header C++ friendly */
 #ifdef __cplusplus
