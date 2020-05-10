@@ -20,15 +20,21 @@
  */
 JNIEXPORT jobject JNICALL
 Java_com_velopayments_blockchain_cert_CertificateBuilder_signNative(
-    JNIEnv *env, jobject that, jbyteArray signer_id, jbyteArray private_key)
+    JNIEnv *env, jobject that, jlong nativeInst, jbyteArray signer_id,
+    jbyteArray private_key)
 {
     jobject retval = NULL;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != that);
     MODEL_ASSERT(NULL != signer_id);
     MODEL_ASSERT(NULL != private_key);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

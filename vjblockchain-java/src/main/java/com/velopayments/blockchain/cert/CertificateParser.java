@@ -6,10 +6,6 @@ import java.util.function.BiFunction;
 
 public class CertificateParser {
 
-    static {
-        Initializer.init();
-    }
-
     private byte[] certificate;
     private int size;
     private int rawSize;
@@ -51,7 +47,7 @@ public class CertificateParser {
      */
     public Map<Integer, List<byte[]>> parse() {
         List<AbstractMap.SimpleEntry<Integer, byte[]>> certFields =
-            parseNative(certificate, size);
+            parseNative(Initializer.getInstance(), certificate, size);
 
         HashMap<Integer, List<byte[]>> map =
             new HashMap<>();
@@ -82,7 +78,10 @@ public class CertificateParser {
     throws AttestationException, UnknownArtifactTypeException,
            UnknownArtifactException, UnknownEntityException {
 
-        return attestNative(delegate, blockHeight, validateContract);
+        return
+            attestNative(
+                Initializer.getInstance(), delegate, blockHeight,
+                validateContract);
     }
 
     /**
@@ -97,17 +96,19 @@ public class CertificateParser {
     /**
      * Internal parse method for parsing a certificate.
      *
+     * @param nativeInst the native instance pointer.
      * @param cert     The raw certificate to parse.
      * @param certSize The size override to use for finding the end of
      *                 the certificate.
      * @return the fields of the certificate, as key-value pairs.
      */
     private native List<AbstractMap.SimpleEntry<Integer, byte[]>>
-    parseNative(byte[] cert, int certSize);
+    parseNative(long nativeInst, byte[] cert, int certSize);
 
     /**
      * Internal attestation method for performing certificate attestation.
      *
+     * @param nativeInst the native instance pointer.
      * @param delegate         The parser delegate to use during attestation.
      * @param blockHeight      Height of the blockchain at time of attestation.
      * @param validateContract Set to true if the contract should be validated.
@@ -115,7 +116,7 @@ public class CertificateParser {
      */
     private native boolean
     attestNative(
-        CertificateParserDelegate delegate, long blockHeight,
+        long nativeInst, CertificateParserDelegate delegate, long blockHeight,
         boolean validateContract)
     throws AttestationException, UnknownArtifactTypeException,
            UnknownArtifactException, UnknownEntityException;

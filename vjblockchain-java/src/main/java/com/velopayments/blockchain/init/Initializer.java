@@ -10,11 +10,23 @@ public final class Initializer {
     private Initializer() {
     }
 
+    public static synchronized long getInstance() {
+
+        /* create the instance once. */
+        if (!initialized) {
+            init();
+            initialized = true;
+        }
+
+        /* return the native instance pointer. */
+        return nativeInstance;
+    }
+
     /**
      * Initialize this library.  This method must be called exactly once during
      * application initialization.
      */
-    public static synchronized void init() {
+    private static void init() {
         if (!loaded) {
             InputStream is = null;
             OutputStream os = null;
@@ -36,7 +48,8 @@ public final class Initializer {
                 System.load(libFile.getPath());
 
                 /* attempt to initialize vjblockchain */
-                if (!blockchainInit()) {
+                nativeInstance = blockchainInit();
+                if (0 == nativeInstance) {
                     /* unspecified error that couldn't be thrown. */
                     throw new IllegalStateException("Bad vjblockchain registration.");
                 }
@@ -58,12 +71,15 @@ public final class Initializer {
         }
     }
 
+    private static boolean initialized = false;
+    private static long nativeInstance = 0;
+
     /**
      * Initialize internal descriptors used by this library.
      *
-     * @return true on success.  Returns false or throws exception on failure.
+     * @return the address of the java native instance.
      */
-    private static native boolean blockchainInit();
+    private static native long blockchainInit();
 
     /**
      * Set to true the first time this is loaded.

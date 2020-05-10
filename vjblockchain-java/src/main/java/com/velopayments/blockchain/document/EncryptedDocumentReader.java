@@ -3,6 +3,7 @@ package com.velopayments.blockchain.document;
 
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.init.Initializer;
 
 import java.io.*;
 import java.util.Arrays;
@@ -14,19 +15,25 @@ public class EncryptedDocumentReader {
     private InputStream source;
     private OutputStream destination;
 
-
     /**
-     * Create an EncryptedDocumentReader from a private key, a public key, a shared secret
-     * and an InputStream.
+     * Create an EncryptedDocumentReader from a private key, a public key, a
+     * shared secret and an InputStream.
      *
-     * @param localPrivateKey     The private key of the entity reading this document.
-     * @param peerPublicKey       The public key of the peer that created this document.
-     * @param sharedSecret        The shared secret produced for the entity reading this document.
+     * @param localPrivateKey     The private key of the entity reading this
+     *                            document.
+     * @param peerPublicKey       The public key of the peer that created this
+     *                            document.
+     * @param sharedSecret        The shared secret produced for the entity
+     *                            reading this document.
      */
-    public EncryptedDocumentReader(EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-                                   byte[] sharedSecret) {
+    public EncryptedDocumentReader(
+        EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
+        byte[] sharedSecret) {
 
-        this.secretKey = decryptKey(localPrivateKey, peerPublicKey, sharedSecret);
+        this.secretKey =
+            decryptKey(
+                Initializer.getInstance(), localPrivateKey, peerPublicKey,
+                sharedSecret);
     }
 
     /**
@@ -89,7 +96,9 @@ public class EncryptedDocumentReader {
             } else {
                 chunk = Arrays.copyOf(buffer, r);
             }
-            byte[] decrypted = decryptData(secretKey, iv, chunk, offset);
+            byte[] decrypted =
+                decryptData(
+                    Initializer.getInstance(), secretKey, iv, chunk, offset);
             offset += r;
 
             destination.write(decrypted);
@@ -99,6 +108,7 @@ public class EncryptedDocumentReader {
     /**
      * Decrypt the input value using the provided secret key.
      *
+     * @param nativeInst    The native instance pointer.
      * @param secretKey     The secret key to use to decrypt this value.
      * @param iv            The initialization vector to use
      * @param chunk         The input value to decrypt.
@@ -106,12 +116,15 @@ public class EncryptedDocumentReader {
      *
      * @return the decrypted value.
      */
-    private static native byte[] decryptData(byte[] secretKey, byte[] iv, byte[] chunk, long offset);
+    private static native byte[] decryptData(
+            long nativeInst, byte[] secretKey, byte[] iv, byte[] chunk,
+            long offset);
 
     /**
      * Recover the secret key from the given local private key, peer public key,
      * and encrypted key.
      *
+     * @param nativeInst        The native instance pointer.
      * @param localPrivateKey   The local private key.
      * @param peerPublicKey     The peer public key.
      * @param encryptedKey      The encrypted key to decrypt.
@@ -119,7 +132,6 @@ public class EncryptedDocumentReader {
      * @return the decrypted key.
      */
     private static native byte[] decryptKey(
-            EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-            byte[] encryptedKey);
-
+            long nativeInst, EncryptionPrivateKey localPrivateKey,
+            EncryptionPublicKey peerPublicKey, byte[] encryptedKey);
 }

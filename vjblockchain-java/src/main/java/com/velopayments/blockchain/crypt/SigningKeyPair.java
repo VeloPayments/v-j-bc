@@ -4,15 +4,11 @@ import com.velopayments.blockchain.init.Initializer;
 
 public class SigningKeyPair {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Generate a keypair.
      */
     public static SigningKeyPair generate() {
-        return generateNative();
+        return generateNative(Initializer.getInstance());
     }
 
     /**
@@ -42,7 +38,7 @@ public class SigningKeyPair {
         return privateKey;
     }
 
-    private static native SigningKeyPair generateNative();
+    private static native SigningKeyPair generateNative(long nativeInst);
 
     private SigningPublicKey publicKey;
     private SigningPrivateKey privateKey;

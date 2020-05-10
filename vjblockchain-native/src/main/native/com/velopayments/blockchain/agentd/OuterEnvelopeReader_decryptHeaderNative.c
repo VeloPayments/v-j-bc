@@ -24,7 +24,7 @@
  */
 JNIEXPORT jint JNICALL 
 Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptHeaderNative(
-        JNIEnv* env, jobject UNUSED(outer_env_reader), 
+        JNIEnv* env, jobject UNUSED(outer_env_reader), jlong nativeInst,
         jbyteArray shared_secret, jlong iv, jbyteArray header)
 {
     jint retval = -1;
@@ -33,11 +33,15 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeReader_decryptHeaderNative(
     jbyte* header_bytes;
     vccrypt_buffer_t header_buffer;
 
-
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != shared_secret);
     MODEL_ASSERT(NULL != header);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

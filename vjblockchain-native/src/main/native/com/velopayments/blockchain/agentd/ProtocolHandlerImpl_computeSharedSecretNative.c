@@ -22,9 +22,9 @@
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretNative(
-        JNIEnv* env, jclass UNUSED(proto_handler), jbyteArray client_private_key,
-        jbyteArray server_public_key, jbyteArray server_nonce,
-        jbyteArray client_nonce)
+        JNIEnv* env, jclass UNUSED(proto_handler), jlong nativeInst,
+        jbyteArray client_private_key, jbyteArray server_public_key,
+        jbyteArray server_nonce, jbyteArray client_nonce)
 {
     jbyteArray retval = NULL;
     jbyte* client_private_key_bytes;
@@ -40,10 +40,15 @@ Java_com_velopayments_blockchain_agentd_ProtocolHandlerImpl_computeSharedSecretN
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != client_private_key);
     MODEL_ASSERT(NULL != server_public_key);
     MODEL_ASSERT(NULL != server_nonce);
     MODEL_ASSERT(NULL != client_nonce);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

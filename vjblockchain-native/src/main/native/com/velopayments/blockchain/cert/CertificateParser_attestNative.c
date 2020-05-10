@@ -18,8 +18,8 @@
 
 //forward declarations for certificate delegate methods
 static jboolean attest(
-    JNIEnv* env, jobject, vccert_parser_context_t*, jlong height,
-    jboolean validateContract);
+    JNIEnv* env, jobject, jlong nativeInst, vccert_parser_context_t*,
+    jlong height, jboolean validateContract);
 static bool attest_txn_resolver(
                 void*, void*, const uint8_t*, const uint8_t*,
                 vccrypt_buffer_t*, bool*);
@@ -52,7 +52,7 @@ typedef struct parser_user_context
  */
 JNIEXPORT jboolean JNICALL
 Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
-    JNIEnv* env, jobject that, jobject delegate, jlong height,
+    JNIEnv* env, jobject that, jlong nativeInst, jobject delegate, jlong height,
     jboolean validateContract)
 {
     jboolean result = JNI_FALSE;
@@ -60,9 +60,14 @@ Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != that);
     MODEL_ASSERT(NULL != delegate);
     MODEL_ASSERT(0 <= height);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)
@@ -125,7 +130,7 @@ Java_com_velopayments_blockchain_cert_CertificateParser_attestNative(
     }
 
     /* perform attestation of the certificate */
-    result = attest(env, that, &parser, height, validateContract);
+    result = attest(env, that, nativeInst, &parser, height, validateContract);
 
     /* dispose of the parser */
     dispose((disposable_t*)&parser);
@@ -144,16 +149,21 @@ releaseJBuffer:
  *
  * \param env           The Java Environment for this call.
  * \param that          The Java CertificateParser object.
+ * \param nativeInst    The native instance pointer.
  * \param parser        The certificate parser.
  *
  * \returns JNI_TRUE on success and JNI_FALSE on error.  Will throw an
  * appropriate exception on error.
  */
 static jboolean attest(
-    JNIEnv* env, jobject that, vccert_parser_context_t* parser, jlong height,
-    jboolean validateContract)
+    JNIEnv* env, jobject that, jlong nativeInst,
+    vccert_parser_context_t* parser, jlong height, jboolean validateContract)
 {
     jthrowable nestedException;
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     switch (
         vccert_parser_attest(parser, (uint64_t)height, (bool)validateContract))
@@ -288,15 +298,16 @@ static bool attest_entity_key_resolver(
     jthrowable nestedException;
 
     /* first, we need to convert the entity ID to a valid Java UUID. */
-    jobject jEntityId = uuidFromBytes(ctx->env, entity_id);
+    jobject jEntityId =
+        uuidFromBytes(ctx->env, (jlong)ctx->native_inst, entity_id);
     nestedException = (*ctx->env)->ExceptionOccurred(ctx->env);
     if (NULL != nestedException)
     {
         /* bubble this up as an attestation exception */
         jthrowable ex = (jthrowable)
             (*ctx->env)->NewObject(
-                ctx->env, native_inst->AttestationException.classid,
-                native_inst->AttestationException.init_String_Throwable,
+                ctx->env, ctx->native_inst->AttestationException.classid,
+                ctx->native_inst->AttestationException.init_String_Throwable,
                 "invalid entity uuid",
                 nestedException);
         (*ctx->env)->Throw(ctx->env, ex);
@@ -307,7 +318,7 @@ static bool attest_entity_key_resolver(
     jobject entref =
         (*ctx->env)->CallObjectMethod(
             ctx->env, ctx->delegate,
-            native_inst->CertificateParserDelegate.resolveEntity,
+            ctx->native_inst->CertificateParserDelegate.resolveEntity,
             jEntityId, (jlong)height);
     nestedException = (*ctx->env)->ExceptionOccurred(ctx->env);
     if (NULL != nestedException)
@@ -321,8 +332,8 @@ static bool attest_entity_key_resolver(
         /* bubble this up as an UnknownEntityException */
         jthrowable ex = (jthrowable)
             (*ctx->env)->NewObject(
-                ctx->env, native_inst->UnknownEntityException.classid,
-                native_inst->UnknownEntityException.init_UUID, jEntityId);
+                ctx->env, ctx->native_inst->UnknownEntityException.classid,
+                ctx->native_inst->UnknownEntityException.init_UUID, jEntityId);
         (*ctx->env)->Throw(ctx->env, ex);
         return false;
     }
@@ -331,7 +342,7 @@ static bool attest_entity_key_resolver(
     jbyteArray array = (jbyteArray)
         (*ctx->env)->CallObjectMethod(
             ctx->env, entref,
-            native_inst->EntityReference.getPublicEncryptionKey);
+            ctx->native_inst->EntityReference.getPublicEncryptionKey);
     jsize arrayLen = (*ctx->env)->GetArrayLength(ctx->env, array);
 
     /* create an output buffer large enough to hold the entity encryption key */
@@ -339,7 +350,7 @@ static bool attest_entity_key_resolver(
                     pubenckey_buffer, &ctx->native_inst->alloc_opts, arrayLen))
     {
         (*ctx->env)->ThrowNew(
-            ctx->env, native_inst->AttestationException.classid,
+            ctx->env, ctx->native_inst->AttestationException.classid,
             "vccrypt_buffer_init");
         return false;
     }
@@ -357,7 +368,8 @@ static bool attest_entity_key_resolver(
     /* get the java byte array from the entity public signing key. */
     array = (jbyteArray)
         (*ctx->env)->CallObjectMethod(
-            ctx->env, entref, native_inst->EntityReference.getPublicSigningKey);
+            ctx->env, entref,
+            ctx->native_inst->EntityReference.getPublicSigningKey);
     arrayLen = (*ctx->env)->GetArrayLength(ctx->env, array);
 
     /* create an output buffer large enough to hold the entity signing key */
@@ -365,7 +377,7 @@ static bool attest_entity_key_resolver(
                     pubsignkey_buffer, &ctx->native_inst->alloc_opts, arrayLen))
     {
         (*ctx->env)->ThrowNew(
-            ctx->env, native_inst->AttestationException.classid,
+            ctx->env, ctx->native_inst->AttestationException.classid,
             "vccrypt_buffer_init");
         return false;
     }

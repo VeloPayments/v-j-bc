@@ -24,8 +24,8 @@
  */
 JNIEXPORT jbyteArray JNICALL 
 Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative(
-        JNIEnv* env, jobject UNUSED(outer_env), jbyteArray shared_secret,
-        jlong iv, jbyteArray payload)
+        JNIEnv* env, jobject UNUSED(outer_env), jlong nativeInst,
+        jbyteArray shared_secret, jlong iv, jbyteArray payload)
 {
     jbyteArray retval = NULL;
     jbyte* shared_secret_bytes;
@@ -38,8 +38,13 @@ Java_com_velopayments_blockchain_agentd_OuterEnvelopeWriter_encryptPayloadNative
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != shared_secret);
     MODEL_ASSERT(NULL != payload);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

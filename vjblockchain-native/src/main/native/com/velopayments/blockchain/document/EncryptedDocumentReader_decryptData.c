@@ -22,7 +22,7 @@
  */
 JNIEXPORT jbyteArray
 JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryptData
-  (JNIEnv* env, jclass UNUSED(clazz), jbyteArray secretKey,
+  (JNIEnv* env, jclass UNUSED(clazz), jlong nativeInst, jbyteArray secretKey,
    jbyteArray iv, jbyteArray input, jlong offset)
 {
     jbyteArray retval = NULL;
@@ -34,8 +34,13 @@ JNICALL Java_com_velopayments_blockchain_document_EncryptedDocumentReader_decryp
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != secretKey);
     MODEL_ASSERT(NULL != input);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

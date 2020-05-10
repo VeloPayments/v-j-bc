@@ -100,8 +100,6 @@ struct vjblockchain_native_instance
     UUID_JAVA_VARS();
 };
 
-extern vjblockchain_native_instance* native_inst;
-
 /* make this header C++ friendly */
 #ifdef __cplusplus
 }

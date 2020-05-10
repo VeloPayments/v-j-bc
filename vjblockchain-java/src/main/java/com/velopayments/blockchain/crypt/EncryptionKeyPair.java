@@ -4,15 +4,11 @@ import com.velopayments.blockchain.init.Initializer;
 
 public class EncryptionKeyPair {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Generate a keypair.
      */
     public static EncryptionKeyPair generate() {
-        return generateNative();
+        return generateNative(Initializer.getInstance());
     }
 
     /**
@@ -42,7 +38,7 @@ public class EncryptionKeyPair {
         return privateKey;
     }
 
-    private static native EncryptionKeyPair generateNative();
+    private static native EncryptionKeyPair generateNative(long nativeInst);
 
     private EncryptionPublicKey publicKey;
     private EncryptionPrivateKey privateKey;

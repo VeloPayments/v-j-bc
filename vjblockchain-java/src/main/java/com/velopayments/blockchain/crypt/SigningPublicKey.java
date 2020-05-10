@@ -4,10 +4,6 @@ import com.velopayments.blockchain.init.Initializer;
 
 public class SigningPublicKey {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Create a public signing key from a raw byte array.
      *
@@ -34,11 +30,11 @@ public class SigningPublicKey {
      * @return true if the signature is valid and false otherwise.
      */
     public boolean verify(Signature signature, Message message) {
-        return verifyNative(signature, message);
+        return verifyNative(Initializer.getInstance(), signature, message);
     }
 
     private native boolean verifyNative(
-        Signature signature, Message message);
+        long nativeInst, Signature signature, Message message);
 
     private byte[] rawBytes;
 }

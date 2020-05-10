@@ -11,15 +11,11 @@ import com.velopayments.blockchain.init.Initializer;
  */
 public class Key {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Generate a random Key.
      */
     public static Key createRandom() {
-        return createRandomNative();
+        return createRandomNative(Initializer.getInstance());
     }
 
     /**
@@ -55,7 +51,8 @@ public class Key {
             byte[] salt, int iterations, String password, boolean sha512)
     {
         return createFromPasswordNative(
-                password.getBytes(), salt, iterations, sha512);
+                Initializer.getInstance(), password.getBytes(), salt,
+                iterations, sha512);
     }
 
     /**
@@ -66,7 +63,7 @@ public class Key {
      */
     public Key(byte[] key) {
         this.key = key;
-        verifyKeySizeNative();
+        verifyKeySizeNative(Initializer.getInstance());
     }
 
     /**
@@ -79,18 +76,23 @@ public class Key {
     /**
      * Verify that this key is the correct size, or throw an
      * InvalidKeySizeException.
+     *
+     * @param nativeInst the native instance pointer.
      */
-    private native void verifyKeySizeNative();
+    private native void verifyKeySizeNative(long nativeInst);
 
     /**
      * Create a Key from a cryptographically random source.
+     *
+     * @param nativeInst the native instance pointer.
      */
-    private static native Key createRandomNative();
+    private static native Key createRandomNative(long nativeInst);
 
 
     /**
      * Generate a key from a password.
      *
+     * @param nativeInst the native instance pointer.
      * @param salt The random salt to use for this password.  Must be unique per
      *             password and should be stored as password metadata.
      * @param iterations The number of iterations (e.g. 10000).
@@ -101,9 +103,8 @@ public class Key {
      * @return a byte array from this password and metadata.
      */
     private static native byte[] createFromPasswordNative(
-            byte[] password, byte[] salt, int iterations, boolean sha512);
+            long nativeInst, byte[] password, byte[] salt, int iterations,
+            boolean sha512);
 
     private byte[] key;
-
-
 }

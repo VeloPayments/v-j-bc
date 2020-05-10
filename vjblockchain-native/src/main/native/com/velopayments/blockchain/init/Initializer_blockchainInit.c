@@ -15,14 +15,12 @@
 
 #include "init.h"
 
-vjblockchain_native_instance* native_inst = NULL;
-
 #define INIT_OR_FAIL(text, invocation) \
     if (0 != (invocation)) \
     { \
         (*env)->ThrowNew(env, native_inst->IllegalStateException.classid, \
                          text " not initialized."); \
-        return false; \
+        return 0; \
     } \
     do { } while (0)
 
@@ -31,10 +29,12 @@ vjblockchain_native_instance* native_inst = NULL;
  * Method:    blockchainInit
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jlong JNICALL
 Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     JNIEnv* env, jclass UNUSED(that))
 {
+    vjblockchain_native_instance* native_inst = NULL;
+
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
 
@@ -54,7 +54,7 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     {
         free(native_inst);
 
-        return false;
+        return 0;
     }
 
     /* create allocator used by vjblockchain C methods. */
@@ -146,5 +146,5 @@ Java_com_velopayments_blockchain_init_Initializer_blockchainInit(
     /* we are now initialized */
     native_inst->initialized = true;
 
-    return true;
+    return (jlong)native_inst;
 }

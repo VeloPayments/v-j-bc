@@ -32,7 +32,8 @@ static vccert_contract_fn_t dummy_contract_resolver(
  */
 JNIEXPORT jobject JNICALL
 Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
-    JNIEnv* env, jobject UNUSED(that), jbyteArray cert, jint size)
+    JNIEnv* env, jobject UNUSED(that), jlong nativeInst, jbyteArray cert,
+    jint size)
 {
     vccert_parser_options_t parser_options;
     uint16_t field_id;
@@ -41,8 +42,13 @@ Java_com_velopayments_blockchain_cert_CertificateParser_parseNative(
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != cert);
     MODEL_ASSERT(0 <= size);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

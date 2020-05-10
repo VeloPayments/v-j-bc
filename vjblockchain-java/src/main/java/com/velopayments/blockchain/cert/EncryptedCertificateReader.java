@@ -2,6 +2,7 @@ package com.velopayments.blockchain.cert;
 
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.init.Initializer;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,8 +71,10 @@ public class EncryptedCertificateReader extends CertificateReader {
                 throw new FieldConversionException("Invalid encrypted field.");
             }
 
-            return new CertificateFieldReader(
-                            decryptNative(secretKey, rawValue));
+            return
+                new CertificateFieldReader(
+                        decryptNative(
+                            Initializer.getInstance(), secretKey, rawValue));
         }
     }
 
@@ -100,7 +103,8 @@ public class EncryptedCertificateReader extends CertificateReader {
                 if (euuid.equals(uuid)) {
                     secretKey =
                         decryptSecretNative(
-                            localPrivateKey, peerPublicKey,
+                            Initializer.getInstance(), localPrivateKey,
+                            peerPublicKey,
                             r.getFirst(Field.VELO_ENCRYPTED_SHARED_SECRET_KEY)
                                 .asByteArray());
                     return;
@@ -119,6 +123,7 @@ public class EncryptedCertificateReader extends CertificateReader {
      * Recover the secret key from the given local private key, peer public key,
      * and encrypted key.
      *
+     * @param nativeInst the native instance pointer.
      * @param localPrivateKey   The local private key.
      * @param peerPublicKey     The peer public key.
      * @param encryptedKey      The encrypted key to decrypt.
@@ -126,18 +131,20 @@ public class EncryptedCertificateReader extends CertificateReader {
      * @return the decrypted key.
      */
     private static native byte[] decryptSecretNative(
-        EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-        byte[] encryptedKey);
+        long nativeInst, EncryptionPrivateKey localPrivateKey,
+        EncryptionPublicKey peerPublicKey, byte[] encryptedKey);
 
     /**
      * Decrypt the input value using the provided secret key.
      *
+     * @param nativeInst the native instance pointer.
      * @param secretKey     The secret key to use to decrypt this value.
      * @param input         The input value to decrypt.
      *
      * @return the decrypted value.
      */
-    private static native byte[] decryptNative(byte[] secretKey, byte[] input);
+    private static native byte[] decryptNative(
+        long nativeInst, byte[] secretKey, byte[] input);
 
     private UUID uuid;
     private EncryptionPrivateKey localPrivateKey;

@@ -43,10 +43,6 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     public static final long
         UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET                = 33L;
 
-    static {
-        Initializer.init();
-    }
-
     private DataChannel dataChannel;
     private UUID agentId;
     private UUID entityId;
@@ -458,14 +454,14 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
           EncryptionPublicKey serverPublicKey, byte[] serverNonce,
           byte[] clientNonce)
     {
-        return computeSharedSecretNative(clientPrivateKey.getRawBytes(),
+        return computeSharedSecretNative(
+                Initializer.getInstance(), clientPrivateKey.getRawBytes(),
                 serverPublicKey.getRawBytes(), serverNonce, clientNonce);
     }
 
-
-    private static native byte[] computeSharedSecretNative(byte[] clientPrivateKey,
-        byte[] serverPublicKey, byte[] serverNonce, byte[] clientNonce);
-
+    private static native byte[] computeSharedSecretNative(
+        long nativeInst, byte[] clientPrivateKey, byte[] serverPublicKey,
+        byte[] serverNonce, byte[] clientNonce);
 
     private void acknowledgeHandshake(byte[] serverChallengeNonce)
             throws IOException

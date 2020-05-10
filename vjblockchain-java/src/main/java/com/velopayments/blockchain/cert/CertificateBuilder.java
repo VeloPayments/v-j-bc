@@ -17,10 +17,6 @@ public class CertificateBuilder {
      */
     private static Charset stringTranscoder = Charset.forName("UTF-8");
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Field list.
      */
@@ -196,7 +192,21 @@ public class CertificateBuilder {
      *
      * @return a raw unsigned certificate.
      */
-    public native Certificate emit();
+    public Certificate emit() {
+        return emit(Initializer.getInstance());
+    }
+
+    /**
+     * Emit an unsigned certificate.
+     * <p>
+     * This method is used to create untrusted certificates, such as
+     * certificates for private keys.
+     *
+     * @param nativeInst the native instance pointer.
+     *
+     * @return a raw unsigned certificate.
+     */
+    private native Certificate emit(long nativeInst);
 
     /**
      * Sign and emit the completed certificate.
@@ -206,7 +216,10 @@ public class CertificateBuilder {
      * @return the certificate as a byte array.
      */
     public Certificate sign(UUID signerId, SigningPrivateKey privateKey) {
-        return signNative(serializeUUID(signerId), privateKey.getRawBytes());
+        return
+            signNative(
+                Initializer.getInstance(), serializeUUID(signerId),
+                privateKey.getRawBytes());
     }
 
     /**
@@ -318,8 +331,12 @@ public class CertificateBuilder {
     /**
      * Sign and emit the completed certificate.
      *
+     * @param nativeInst the native instance pointer.
+     * @param signerId The UUID of the signer.
      * @param privateKey The private key of the signer.
+     *
      * @return the certificate as a byte array.
      */
-    private native Certificate signNative(byte[] signerId, byte[] privateKey);
+    private native Certificate signNative(
+        long nativeInst, byte[] signerId, byte[] privateKey);
 }

@@ -3,6 +3,7 @@ package com.velopayments.blockchain.cert;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.init.Initializer;
 import java.util.UUID;
 import java.util.Date;
 
@@ -15,7 +16,7 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
         super();
 
         this.keyPair = keyPair;
-        this.secretKey = generateEncryptionKey();
+        this.secretKey = generateEncryptionKey(Initializer.getInstance());
         this.iv = 0;
     }
 
@@ -144,7 +145,9 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
     public EncryptedCertificateBuilder
     addEncryptedByteArray(int fieldId, byte[] value) {
         byte[] encryptedValue =
-            encryptData(secretKey, serializeLong(iv++), value);
+            encryptData(
+                Initializer.getInstance(), secretKey, serializeLong(iv++),
+                value);
 
         addByteArray(fieldId, encryptedValue);
 
@@ -162,7 +165,9 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
     public EncryptedCertificateBuilder
     addEncryptedSharedSecret(UUID entityId, EncryptionPublicKey publicKey) {
         byte[] encryptedKey =
-            encryptKey(keyPair.getPrivateKey(), publicKey, secretKey);
+            encryptKey(
+                Initializer.getInstance(), keyPair.getPrivateKey(), publicKey,
+                secretKey);
 
         //build a dummy fragment using the entity UUID and public key for now
         CertificateBuilder fragmentBuilder =
@@ -187,24 +192,28 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
 
     /**
      * Generate an encryption key suitable for this builder.
+     *
+     * @param nativeInst    Pointer to the native instance.
      */
-    private static native byte[] generateEncryptionKey();
+    private static native byte[] generateEncryptionKey(long nativeInst);
 
     /**
      * Encrypt data in the input buffer, returning an encrypted buffer.
      *
-     * @param key   The key to use to encrypt this data.
-     * @param iv    The initialization vector to use.
-     * @param input The input to encrypt.
+     * @param nativeInst    Pointer to the native instance.
+     * @param key           The key to use to encrypt this data.
+     * @param iv            The initialization vector to use.
+     * @param input         The input to encrypt.
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
      */
     private static native byte[] encryptData(
-        byte[] key, byte[] iv, byte[] input);
+        long nativeInst, byte[] key, byte[] iv, byte[] input);
 
     /**
      * Encrypt the key with a long-term key between two entities.
      *
+     * @param nativeInst        Pointer to the native instance.
      * @param localPrivateKey   The private key for this entity.
      * @param peerPublicKey     The public key of the peer.
      * @param inputKey          The input key to be encrypted.
@@ -212,6 +221,6 @@ public class EncryptedCertificateBuilder extends CertificateBuilder {
      * @return the encrypted key with iv / HMAC prepended / appended.
      */
     private static native byte[] encryptKey(
-        EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-        byte[] inputKey);
+        long nativeInst, EncryptionPrivateKey localPrivateKey,
+        EncryptionPublicKey peerPublicKey, byte[] inputKey);
 }

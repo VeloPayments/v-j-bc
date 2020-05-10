@@ -20,8 +20,8 @@
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_crypt_GenericStreamCipher_decryptNative(
-        JNIEnv *env, jclass UNUSED(clazz), jbyteArray secretKey,
-        jbyteArray input)
+        JNIEnv *env, jclass UNUSED(clazz), jlong nativeInst,
+        jbyteArray secretKey, jbyteArray input)
 {
     jbyteArray retval = NULL;
 
@@ -32,8 +32,13 @@ Java_com_velopayments_blockchain_crypt_GenericStreamCipher_decryptNative(
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != secretKey);
     MODEL_ASSERT(NULL != input);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

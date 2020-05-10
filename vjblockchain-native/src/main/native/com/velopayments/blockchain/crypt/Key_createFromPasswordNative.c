@@ -22,8 +22,8 @@
  */
 JNIEXPORT jbyteArray JNICALL
 Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
-        JNIEnv *env, jclass UNUSED(clazz), jbyteArray password, jbyteArray salt,
-        jint iterations, jboolean sha512)
+        JNIEnv *env, jclass UNUSED(clazz), jlong nativeInst,
+        jbyteArray password, jbyteArray salt, jint iterations, jboolean sha512)
 {
     jobject retval = NULL;
 
@@ -35,6 +35,11 @@ Java_com_velopayments_blockchain_crypt_Key_createFromPasswordNative(
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

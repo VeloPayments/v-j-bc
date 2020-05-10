@@ -1,5 +1,7 @@
 package com.velopayments.blockchain.crypt;
 
+import com.velopayments.blockchain.init.Initializer;
+
 /**
  * Generic stream cipher.  This class exposes the suite provided stream
  * cipher as defined in the Velochain specification to encrypt and MAC
@@ -18,12 +20,11 @@ public class GenericStreamCipher {
      * FIXME: not currently appending HMAC
      */
     public static byte[] encrypt(byte[] key, byte[] iv, byte[] input) {
-        return encryptNative(key, iv, input);
+        return encryptNative(Initializer.getInstance(), key, iv, input);
     }
 
     private static native byte[] encryptNative(
-            byte[] key, byte[] iv, byte[] input);
-
+            long nativeInst, byte[] key, byte[] iv, byte[] input);
 
     /**
      * Decrypt the input value using the provided secret key.
@@ -34,10 +35,9 @@ public class GenericStreamCipher {
      * @return the decrypted value.
      */
     public static byte[] decrypt(byte[] secretKey, byte[] input) {
-        return decryptNative(secretKey, input);
+        return decryptNative(Initializer.getInstance(), secretKey, input);
     }
 
-    private static native byte[] decryptNative(byte[] secretKey, byte[] input);
-
-
+    private static native byte[] decryptNative(
+            long nativeInst, byte[] secretKey, byte[] input);
 }

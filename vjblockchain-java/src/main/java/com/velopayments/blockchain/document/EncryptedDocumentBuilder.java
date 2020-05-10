@@ -3,6 +3,7 @@ package com.velopayments.blockchain.document;
 import com.velopayments.blockchain.crypt.EncryptionKeyPair;
 import com.velopayments.blockchain.crypt.EncryptionPrivateKey;
 import com.velopayments.blockchain.crypt.EncryptionPublicKey;
+import com.velopayments.blockchain.init.Initializer;
 
 import java.io.*;
 import java.security.SecureRandom;
@@ -18,13 +19,12 @@ public class EncryptedDocumentBuilder {
     private InputStream source;
     private OutputStream destination;
 
-
     /**
      * Protected constructor.  The create*() static methods should be used.
      */
     protected EncryptedDocumentBuilder(EncryptionKeyPair keyPair) {
         this.keyPair = keyPair;
-        this.secretKey = generateEncryptionKey();
+        this.secretKey = generateEncryptionKey(Initializer.getInstance());
     }
 
     /**
@@ -69,7 +69,10 @@ public class EncryptedDocumentBuilder {
      * @return the shared secret
      */
     public byte[] createEncryptedSharedSecret(EncryptionPublicKey publicKey) {
-        return encryptKey(keyPair.getPrivateKey(), publicKey, secretKey);
+        return
+            encryptKey(
+                Initializer.getInstance(), keyPair.getPrivateKey(), publicKey,
+                secretKey);
     }
 
     /**
@@ -101,7 +104,9 @@ public class EncryptedDocumentBuilder {
             byte[] chunk = Arrays.copyOf(buffer, r);
 
             // encrypt chunk
-            byte[] encryptedChunk = encryptData(secretKey, iv, chunk, offset);
+            byte[] encryptedChunk =
+                encryptData(
+                    Initializer.getInstance(), secretKey, iv, chunk, offset);
 
             // increment offset by bytes written
             offset += r;
@@ -113,24 +118,30 @@ public class EncryptedDocumentBuilder {
 
     /**
      * Generate an encryption key suitable for this builder.
+     *
+     * @param nativeInst    The native instance pointer.
      */
-    private static native byte[] generateEncryptionKey();
+    private static native byte[] generateEncryptionKey(
+            long nativeInst);
 
     /**
      * Encrypt data in the input buffer, returning an encrypted buffer.
      *
-     * @param key    The key to use to encrypt this data.
-     * @param iv     The initialization vector to use.
-     * @param chunk  The input to encrypt.
-     * @param offset The number of bytes of input previously encrypted.
+     * @param nativeInst    The native instance pointer.
+     * @param key           The key to use to encrypt this data.
+     * @param iv            The initialization vector to use.
+     * @param chunk         The input to encrypt.
+     * @param offset        The number of bytes of input previously encrypted.
      *
      * @return the encrypted data with iv / HMAC prepended / appended.
      */
-    private static native byte[] encryptData(byte[] key, byte[] iv, byte[] chunk, long offset);
+    private static native byte[] encryptData(
+            long nativeInst, byte[] key, byte[] iv, byte[] chunk, long offset);
 
     /**
      * Encrypt the key with a long-term key between two entities.
      *
+     * @param nativeInst        The native instance pointer.
      * @param localPrivateKey   The private key for this entity.
      * @param peerPublicKey     The public key of the peer.
      * @param inputKey          The input key to be encrypted.
@@ -138,7 +149,7 @@ public class EncryptedDocumentBuilder {
      * @return the encrypted key with iv / HMAC prepended / appended.
      */
     private static native byte[] encryptKey(
-            EncryptionPrivateKey localPrivateKey, EncryptionPublicKey peerPublicKey,
-            byte[] inputKey);
+            long nativeInst, EncryptionPrivateKey localPrivateKey,
+            EncryptionPublicKey peerPublicKey, byte[] inputKey);
 
 }

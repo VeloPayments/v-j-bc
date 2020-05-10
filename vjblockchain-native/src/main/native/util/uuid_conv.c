@@ -14,19 +14,26 @@
  * Convert a C byte array to a Java UUID.
  *
  * \param env               Java environment.
+ * \param nativeInst        Native instance pointer.
  * \param uuid_bytes        The 128-bit UUID in serialized byte form.
  *
  * \returns a Java UUID object, or NULL if the UUID could not be converted.
  * Note that if this method returns NULL, it will throw an
  * IllegalArgumentException.
  */
-jobject uuidFromBytes(JNIEnv* env, const uint8_t* uuid_bytes)
+jobject uuidFromBytes(
+    JNIEnv* env, jlong nativeInst, const uint8_t* uuid_bytes)
 {
     uint64_t msb, lsb;
 
     /* function contract enforcement */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != uuid_bytes);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     msb = (((uint64_t)uuid_bytes[ 0]) << 56)
         | (((uint64_t)uuid_bytes[ 1]) << 48)
@@ -56,12 +63,23 @@ jobject uuidFromBytes(JNIEnv* env, const uint8_t* uuid_bytes)
  * Convert a Java UUID to a C byte array.
  *
  * \param env               Java environment.
+ * \param nativeInst        Native instance pointer.
  * \param uuid              The Java UUID object.
  * \param uuid_bytes        The buffer to receive the UUID.
  */
-void uuidToBytes(JNIEnv* env, jobject uuid, uint8_t* uuid_bytes)
+void uuidToBytes(
+    JNIEnv* env, jlong nativeInst, jobject uuid, uint8_t* uuid_bytes)
 {
     uint64_t msb, lsb;
+
+    MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
+    MODEL_ASSERT(NULL != uuid);
+    MODEL_ASSERT(NULL != uuid_bytes);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     msb = (*env)->CallLongMethod(
         env, uuid, native_inst->UUID.getMostSignificantBits);

@@ -4,10 +4,6 @@ import com.velopayments.blockchain.init.Initializer;
 
 public class SigningPrivateKey {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Create a private signing key from a raw byte array.
      *
@@ -30,10 +26,10 @@ public class SigningPrivateKey {
      * @param message The byte array to sign.
      */
     public Signature sign(Message message) {
-        return signNative(message);
+        return signNative(Initializer.getInstance(), message);
     }
 
-    private native Signature signNative(Message message);
+    private native Signature signNative(long nativeInst, Message message);
 
     private byte[] rawBytes;
 }

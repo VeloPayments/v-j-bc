@@ -19,15 +19,21 @@
  * Signature: (Lcom/velopayments/blockchain/crypt/Signature;Lcom/velopayments/blockchain/crypt/Message;)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_velopayments_blockchain_crypt_SigningPublicKey_verifyNative(
-    JNIEnv* env, jobject that, jobject signature, jobject message)
+    JNIEnv* env, jobject that, jlong nativeInst, jobject signature,
+    jobject message)
 {
     jboolean retval = JNI_FALSE;
 
     /* function contract enforcement. */
     MODEL_ASSERT(MODEL_PROP_VALID_JNI_ENV(env));
+    MODEL_ASSERT(0 != nativeInst);
     MODEL_ASSERT(NULL != that);
     MODEL_ASSERT(NULL != signature);
     MODEL_ASSERT(NULL != message);
+
+    /* get a pointer to the native instance. */
+    vjblockchain_native_instance* native_inst =
+        (vjblockchain_native_instance*)nativeInst;
 
     /* verify that the vjblockchain library has been initialized. */
     if (!native_inst || !native_inst->initialized)

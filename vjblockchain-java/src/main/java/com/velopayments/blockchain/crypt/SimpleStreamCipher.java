@@ -17,10 +17,6 @@ import com.velopayments.blockchain.init.Initializer;
  */
 public class SimpleStreamCipher {
 
-    static {
-        Initializer.init();
-    }
-
     /**
      * Generate a SimpleStreamCipher from a random Key.
      */
@@ -49,7 +45,7 @@ public class SimpleStreamCipher {
      * @param input The input byte array to encrypt.
      */
     public byte[] encrypt(byte[] input) {
-        return encryptNative(input);
+        return encryptNative(Initializer.getInstance(), input);
     }
 
     /**
@@ -59,11 +55,11 @@ public class SimpleStreamCipher {
      * @param input The input byte array to decrypt.
      */
     public byte[] decrypt(byte[] input) {
-        return decryptNative(input);
+        return decryptNative(Initializer.getInstance(), input);
     }
 
-    private native byte[] encryptNative(byte[] input);
-    private native byte[] decryptNative(byte[] input);
+    private native byte[] encryptNative(long nativeInst, byte[] input);
+    private native byte[] decryptNative(long nativeInst, byte[] input);
 
     private Key key;
 }

@@ -14,10 +14,6 @@ import java.util.Arrays;
  */
 public class HMAC {
 
-    static {
-        Initializer.init();
-    }
-
     private byte[] key;
 
     public HMAC(byte[] key) {
@@ -31,7 +27,7 @@ public class HMAC {
      * @return the MAC
      */
     public byte[] createHMACLong(byte[] message) {
-        return digestNative(key, message, false);
+        return digestNative(Initializer.getInstance(), key, message, false);
     }
 
     /**
@@ -41,7 +37,7 @@ public class HMAC {
      * @return the MAC
      */
     public byte[] createHMACShort(byte[] message) {
-        return digestNative(key, message, true);
+        return digestNative(Initializer.getInstance(), key, message, true);
     }
 
     public byte[] createHMACShort(byte[][] messages) {
@@ -50,12 +46,13 @@ public class HMAC {
         {
             throw new NullPointerException("null message");
         }
-        return digestArrNative(key, messages, true);
+        return digestArrNative(Initializer.getInstance(), key, messages, true);
     }
 
 
-    private native byte[] digestNative(byte[] key, byte[] message, boolean shortHmac);
+    private native byte[] digestNative(
+            long nativeInst, byte[] key, byte[] message, boolean shortHmac);
 
-    private native byte[] digestArrNative(byte[] key, byte[][] messages, boolean shortHmac);
-
+    private native byte[] digestArrNative(
+            long nativeInst, byte[] key, byte[][] messages, boolean shortHmac);
 }
