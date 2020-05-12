@@ -40,9 +40,9 @@ public class RemoteAgentIT {
         try {
             conn.connect();
             System.out.println("handshake success!");
-            UUID firstId = conn.getLatestBlockId();
+            UUID firstId = conn.getLatestBlockId().get();
             System.out.println("Initial Block UUID: " + firstId);
-            for (int i = 0; i < 2000; ++i) {
+            for (int i = 0; i < 20; ++i) {
                 System.out.println("Submitting txn: " + i);
                 Certificate txn =
                     makeTransactionCertificate(
@@ -63,13 +63,15 @@ public class RemoteAgentIT {
 
             System.out.println("Sleeping for 10 seconds...");
             Thread.sleep(10000);
-            Optional<UUID> prevIdMaybe = Optional.of(conn.getLatestBlockId());
+            Optional<UUID> prevIdMaybe =
+                Optional.of(conn.getLatestBlockId().get());
 
             while (prevIdMaybe.isPresent()) {
                 UUID prevId = prevIdMaybe.get();
                 System.out.println("New Block UUID: " + prevId);
                 if (prevId.compareTo(firstId) != 0) {
-                    Optional<Certificate> blockCert = conn.getBlockById(prevId);
+                    Optional<Certificate> blockCert =
+                        conn.getBlockById(prevId).get();
                     if (blockCert.isPresent()) {
                         System.out.println("Read block " + prevId + " from agentd");
                         readBlockCert(blockCert.get());
@@ -78,14 +80,15 @@ public class RemoteAgentIT {
                     }
                 }
 
-                prevIdMaybe = conn.getPrevBlockId(prevId);
+                prevIdMaybe = conn.getPrevBlockId(prevId).get();
                 if (!prevIdMaybe.isPresent()) {
                     System.out.println("No other block IDs found.");
                 }
             }
 
             /* query our single transaction. */
-            Optional<Certificate> singleCert = conn.getTransactionById(certId);
+            Optional<Certificate> singleCert =
+                conn.getTransactionById(certId).get();
             if (singleCert.isPresent()) {
                 System.out.println("Query for " + certId + " successful!");
             } else {
@@ -94,7 +97,7 @@ public class RemoteAgentIT {
 
             /* there is no next transaction id. */
             Optional<UUID> nextId =
-                conn.getNextTransactionIdForTransactionById(certId);
+                conn.getNextTransactionIdForTransactionById(certId).get();
             if (nextId.isPresent()) {
                 System.out.println("*** Txn Next Id FAIL.");
             } else {
@@ -103,7 +106,7 @@ public class RemoteAgentIT {
 
             /* there is no prev transaction id. */
             Optional<UUID> prevId =
-                conn.getPreviousTransactionIdForTransactionById(certId);
+                conn.getPreviousTransactionIdForTransactionById(certId).get();
             if (prevId.isPresent()) {
                 System.out.println("*** Txn Prev Id FAIL.");
             } else {
@@ -111,7 +114,7 @@ public class RemoteAgentIT {
             }
 
             /* there is a block id. */
-            Optional<UUID> blockId = conn.getTransactionBlockId(certId);
+            Optional<UUID> blockId = conn.getTransactionBlockId(certId).get();
             if (blockId.isPresent()) {
                 System.out.println("    Block ID found: " + blockId.get());
             } else {
@@ -120,7 +123,7 @@ public class RemoteAgentIT {
 
             /* get the first txn id for the artifact id. */
             Optional<UUID> firstTxnId =
-                conn.getFirstTransactionIdForArtifactById(artifactId);
+                conn.getFirstTransactionIdForArtifactById(artifactId).get();
             if (firstTxnId.isPresent()) {
                 System.out.println(
                     "    First Txn ID found: " + firstTxnId.get());
@@ -130,7 +133,7 @@ public class RemoteAgentIT {
 
             /* get the last txn id for the artifact id. */
             Optional<UUID> lastTxnId =
-                conn.getLastTransactionIdForArtifactById(artifactId);
+                conn.getLastTransactionIdForArtifactById(artifactId).get();
             if (lastTxnId.isPresent()) {
                 System.out.println(
                     "    Last Txn ID found: " + lastTxnId.get());
@@ -140,7 +143,7 @@ public class RemoteAgentIT {
 
             /* get the block ID by block height. */
             Optional<UUID> heightId =
-                conn.getBlockIdByBlockHeight(1);
+                conn.getBlockIdByBlockHeight(1).get();
             if (heightId.isPresent()) {
                 System.out.println("Block ID at height 1: " + heightId.get());
             } else {

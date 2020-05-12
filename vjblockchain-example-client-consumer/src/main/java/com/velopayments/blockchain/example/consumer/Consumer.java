@@ -5,6 +5,7 @@ import com.velopayments.blockchain.client.*;
 import com.velopayments.blockchain.crypt.*;
 import java.io.*;
 import java.nio.file.*;
+import java.util.concurrent.*;
 import java.util.*;
 
 public class Consumer implements Runnable {
@@ -53,11 +54,12 @@ public class Consumer implements Runnable {
     /**
      * Read certificates from blockchain.
      */
-    private void readCerts(VelochainConnection conn) throws IOException {
+    private void readCerts(VelochainConnection conn)
+    throws ExecutionException, IOException, InterruptedException {
         UUID lastBlockId = ROOT_UUID;
 
         for (;;) {
-            Optional<UUID> nextBlockId = conn.getNextBlockId(lastBlockId);
+            Optional<UUID> nextBlockId = conn.getNextBlockId(lastBlockId).get();
             if (nextBlockId.isPresent()) {
                 readBlock(conn, nextBlockId.orElse(ROOT_UUID));
                 lastBlockId = nextBlockId.orElse(ROOT_UUID);
@@ -74,9 +76,10 @@ public class Consumer implements Runnable {
      * Read the provided block.
      */
     private void
-    readBlock(VelochainConnection conn, UUID blockId) throws IOException {
+    readBlock(VelochainConnection conn, UUID blockId)
+    throws ExecutionException, IOException, InterruptedException {
         Certificate cert =
-            conn.getBlockById(blockId).orElseThrow(
+            conn.getBlockById(blockId).get().orElseThrow(
                 () -> new IOException("Could not read block " + blockId));
         byte[] block = cert.toByteArray();
 

@@ -39,7 +39,7 @@ public interface VelochainConnection {
      *
      * @return the latest block UUID.
      */
-    UUID getLatestBlockId() throws IOException;
+    CompletableFuture<UUID> getLatestBlockId() throws IOException;
 
     /**
      * Given a block UUID, return the next block UUID if available.
@@ -50,7 +50,8 @@ public interface VelochainConnection {
      *
      * @return the next block UUID.
      */
-    Optional<UUID> getNextBlockId(UUID blockId) throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getNextBlockId(UUID blockId) throws IOException;
 
     /**
      * Given a block UUID, return the previous block UUID if available.
@@ -61,7 +62,8 @@ public interface VelochainConnection {
      *
      * @return the previous block UUID.
      */
-    Optional<UUID> getPrevBlockId(UUID blockId) throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getPrevBlockId(UUID blockId) throws IOException;
 
 
     /**
@@ -74,7 +76,8 @@ public interface VelochainConnection {
      *
      * @return the block UUID associated with the transaction UUID.
      */
-    Optional<UUID> getTransactionBlockId(UUID txnId) throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getTransactionBlockId(UUID txnId) throws IOException;
 
 
     /**
@@ -86,7 +89,8 @@ public interface VelochainConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
-    Optional<Certificate> getBlockById(UUID blockId) throws IOException;
+    CompletableFuture<Optional<Certificate>>
+    getBlockById(UUID blockId) throws IOException;
 
     /**
      * Get the block id for a given block height.
@@ -95,7 +99,8 @@ public interface VelochainConnection {
      *
      * @return the block UUID at the given height, or empty if not found.
      */
-    Optional<UUID> getBlockIdByBlockHeight(long height) throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getBlockIdByBlockHeight(long height) throws IOException;
 
     /**
      * Get a transaction for a given UUID.
@@ -106,7 +111,8 @@ public interface VelochainConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
-    Optional<Certificate> getTransactionById(UUID txnId) throws IOException;
+    CompletableFuture<Optional<Certificate>>
+    getTransactionById(UUID txnId) throws IOException;
 
 
     /**
@@ -116,8 +122,8 @@ public interface VelochainConnection {
      *
      * @return the first transaction id for a given artifact id.
      */
-    Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
-            throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getFirstTransactionIdForArtifactById(UUID artifactId) throws IOException;
 
 
     /**
@@ -127,8 +133,8 @@ public interface VelochainConnection {
      *
      * @return the last transaction id for a given artifact id.
      */
-    Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
-            throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getLastTransactionIdForArtifactById(UUID artifactId) throws IOException;
 
 
     /**
@@ -138,8 +144,8 @@ public interface VelochainConnection {
      *
      * @return the previous transaction ID associated with this transaction ID.
      */
-    Optional<UUID> getPreviousTransactionIdForTransactionById(UUID txnId)
-            throws IOException;
+    CompletableFuture<Optional<UUID>>
+    getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException;
 
 
     /**
@@ -149,7 +155,6 @@ public interface VelochainConnection {
      *
      * @return the next transaction ID associated with this transaction ID.
      */
-    Optional<UUID> getNextTransactionIdForTransactionById(UUID txnId)
-            throws IOException;
-
+    CompletableFuture<Optional<UUID>>
+    getNextTransactionIdForTransactionById(UUID txnId) throws IOException;
 }

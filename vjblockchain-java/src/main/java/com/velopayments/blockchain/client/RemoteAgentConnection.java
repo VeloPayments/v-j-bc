@@ -70,88 +70,118 @@ public class RemoteAgentConnection implements VelochainConnection {
 
         try {
             protocolHandler.submit(transaction);
-            return CompletableFuture.completedFuture(TransactionStatus.SUCCEEDED);
+            /* sleep for 250 milliseconds before completing. */
+            Thread.sleep(250);
+            return
+                CompletableFuture.completedFuture(
+                    TransactionStatus.SUCCEEDED);
+        } catch (InterruptedException e) {
+            return
+                CompletableFuture.completedFuture(
+                    TransactionStatus.SUCCEEDED);
         } catch (Exception e) {
-            return CompletableFuture.completedFuture(TransactionStatus.FAILED);
+            return
+                CompletableFuture.completedFuture(
+                    TransactionStatus.FAILED);
         }
     }
 
     @Override
-    public UUID getLatestBlockId()
+    public CompletableFuture<UUID>getLatestBlockId()
     throws IOException {
 
-        return protocolHandler.getLatestBlockId();
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getLatestBlockId());
     }
 
     @Override
-    public Optional<UUID> getNextBlockId(UUID blockId)
+    public CompletableFuture<Optional<UUID>> getNextBlockId(UUID blockId)
     throws IOException {
 
-        return protocolHandler.getNextBlockId(blockId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getNextBlockId(blockId));
     }
 
     @Override
-    public Optional<UUID> getPrevBlockId(UUID blockId)
+    public CompletableFuture<Optional<UUID>> getPrevBlockId(UUID blockId)
     throws IOException {
 
-        return protocolHandler.getPrevBlockId(blockId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getPrevBlockId(blockId));
     }
 
     @Override
-    public Optional<UUID> getTransactionBlockId(UUID txnId)
+    public CompletableFuture<Optional<UUID>> getTransactionBlockId(UUID txnId)
     throws IOException {
 
-        return protocolHandler.getTransactionBlockId(txnId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getTransactionBlockId(txnId));
     }
 
     @Override
-    public Optional<Certificate> getBlockById(UUID blockId)
+    public CompletableFuture<Optional<Certificate>> getBlockById(UUID blockId)
     throws IOException {
 
-        return protocolHandler.getBlockById(blockId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getBlockById(blockId));
     }
 
     @Override
-    public Optional<UUID> getBlockIdByBlockHeight(long height)
-    throws IOException {
+    public CompletableFuture<Optional<UUID>>
+    getBlockIdByBlockHeight(long height) throws IOException {
 
-        return protocolHandler.getBlockIdByBlockHeight(height);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getBlockIdByBlockHeight(height));
     }
 
     @Override
-    public Optional<Certificate> getTransactionById(UUID txnId)
-    throws IOException {
+    public CompletableFuture<Optional<Certificate>>
+    getTransactionById(UUID txnId) throws IOException {
 
-        return protocolHandler.getTransactionById(txnId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getTransactionById(txnId));
     }
 
     @Override
-    public Optional<UUID> getFirstTransactionIdForArtifactById(UUID artifactId)
-    throws IOException {
+    public CompletableFuture<Optional<UUID>>
+    getFirstTransactionIdForArtifactById(UUID artifactId) throws IOException {
 
-        return protocolHandler.getArtifactFirstTxnId(artifactId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getArtifactFirstTxnId(artifactId));
     }
 
     @Override
-    public Optional<UUID> getLastTransactionIdForArtifactById(UUID artifactId)
-    throws IOException {
+    public CompletableFuture<Optional<UUID>>
+    getLastTransactionIdForArtifactById(UUID artifactId) throws IOException {
 
-        return protocolHandler.getArtifactLastTxnId(artifactId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getArtifactLastTxnId(artifactId));
     }
 
     @Override
-    public Optional<UUID> getPreviousTransactionIdForTransactionById(UUID txnId)
-    throws IOException {
+    public CompletableFuture<Optional<UUID>>
+    getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException {
 
-        return protocolHandler.getTransactionPreviousId(txnId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getTransactionPreviousId(txnId));
     }
 
     @Override
-    public Optional<UUID> getNextTransactionIdForTransactionById(UUID txnId)
-    throws IOException {
+    public CompletableFuture<Optional<UUID>>
+    getNextTransactionIdForTransactionById(UUID txnId) throws IOException {
 
-        return protocolHandler.getTransactionNextId(txnId);
+        return
+            CompletableFuture.completedFuture(
+                protocolHandler.getTransactionNextId(txnId));
     }
-
-
 }
