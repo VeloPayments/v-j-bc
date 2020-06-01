@@ -98,4 +98,13 @@ public interface ProtocolHandler {
      * @param height The block height.
      */
     Optional<UUID> getBlockIdByBlockHeight(long height) throws IOException;
+
+    /**
+     * Get the current connection status.
+     *
+     * @return 0 if the connection is valid.
+     *
+     * @throws IOException derivative if the connection is not valid.
+     */
+    int getConnectionStatus() throws IOException;
 }

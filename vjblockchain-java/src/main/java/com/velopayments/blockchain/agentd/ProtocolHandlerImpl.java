@@ -42,6 +42,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_FIRST_TXN_BY_ID_GET               = 32L;
     public static final long
         UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET                = 33L;
+    public static final long UNAUTH_PROTOCOL_REQ_ID_STATUS_GET         = 40960L;
 
     private DataChannel dataChannel;
     private UUID agentId;
@@ -265,6 +266,15 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         writeGetBlockIdByBlockHeight(height);
 
         return readGetBlockIdByBlockHeight();
+    }
+
+    @Override
+    public int
+    getConnectionStatus() throws IOException {
+
+        writeGetConnectionStatus();
+
+        return readGetConnectionStatus();
     }
 
     /**
@@ -1640,4 +1650,80 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         return Optional.of(UuidUtil.getUUIDFromBytes(blockIdBytes));
     }
 
+    private void writeGetConnectionStatus() throws IOException {
+
+        /* | Get Connection Status request packet.                         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_STATUS_GET              |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        byte[] request = new byte[8];
+
+        // bytes 0-3: UNAUTH_PROTOCOL_REQ_ID_STATUS_GET
+        byte[] reqBytes =
+            ByteUtil.htonl(
+                (int)UNAUTH_PROTOCOL_REQ_ID_STATUS_GET);
+        System.arraycopy(reqBytes, 0, request, 0, 4);
+
+        // bytes 4-7: offset
+        byte[] offsetBytes = ByteUtil.htonl(0);
+        System.arraycopy(offsetBytes, 0, request, 4, 4);
+
+        // send the request to the server
+        dataChannel.send(outerEnvelopeWriter.encryptPayload(
+            sharedSecret, request));
+    }
+
+    private int
+    readGetConnectionStatus() throws IOException {
+
+        // receive the header: type, size
+        byte[] header = dataChannel.recv(5);
+        int payloadSize = outerEnvelopeReader.decryptHeader(
+            sharedSecret, header);
+
+        if (payloadSize < 12) // at least 3 x 4 bytes
+        {
+            throw new InvalidPayloadSizeException("Invalid payload size ("
+                + payloadSize + "). Expected at least 12 bytes.");
+        }
+
+        // read the HMAC and the payload.
+        byte[] encryptedPayload = dataChannel.recv(payloadSize + 32);
+
+        // decrypt the payload
+        byte[] decryptedPayload = outerEnvelopeReader.decryptPayload(
+            sharedSecret, header, encryptedPayload);
+
+        /* | Get Connection Status response packet.                        | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | DATA                                           | SIZE         | */
+        /* | ---------------------------------------------- | ------------ | */
+        /* | UNAUTH_PROTOCOL_REQ_ID_STATUS_GET              |   4 bytes    | */
+        /* | status                                         |   4 bytes    | */
+        /* | offset                                         |   4 bytes    | */
+        /* | ---------------------------------------------- | ------------ | */
+
+        // verify request ID
+        long requestId = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 0, 4));
+        if (requestId != UNAUTH_PROTOCOL_REQ_ID_STATUS_GET) {
+            throw new InvalidRequestIdException(
+                "Invalid request ID: " + requestId);
+        }
+
+        // get status
+        long status = ByteUtil.ntohl(
+            Arrays.copyOfRange(decryptedPayload, 4, 8));
+        if (status != 0) {
+            /* doesn't matter, but make it non-zero. */
+            return 1;
+        }
+
+        /* success. */
+        return 0;
+    }
 }

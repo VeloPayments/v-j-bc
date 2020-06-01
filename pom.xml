@@ -18,7 +18,7 @@
     </modules>
 
     <properties>
-        <vjblockchain.version>0.3.3</vjblockchain.version>
+        <vjblockchain.version>0.3.4</vjblockchain.version>
     </properties>
 
 </project>
