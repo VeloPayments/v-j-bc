@@ -184,4 +184,13 @@ public class RemoteAgentConnection implements VelochainConnection {
             CompletableFuture.completedFuture(
                 protocolHandler.getTransactionNextId(txnId));
     }
+
+    @Override
+    public CompletableFuture<Integer>
+    getConnectionStatus() throws IOException {
+
+        return
+            CompletableFuture.completedFuture(
+                Integer.valueOf(protocolHandler.getConnectionStatus()));
+    }
 }

@@ -86,6 +86,14 @@ public class RemoteAgentIT {
                 }
             }
 
+            /* get connection status. */
+            Integer status = conn.getConnectionStatus().get();
+            if (0 == status.intValue()) {
+                System.out.println("###### connection is good.");
+            } else {
+                System.out.println("**** connection is bad.");
+            }
+
             /* query our single transaction. */
             Optional<Certificate> singleCert =
                 conn.getTransactionById(certId).get();

@@ -157,4 +157,14 @@ public interface VelochainConnection {
      */
     CompletableFuture<Optional<UUID>>
     getNextTransactionIdForTransactionById(UUID txnId) throws IOException;
+
+    /**
+     * Get the current connection status.
+     *
+     * @return 0 if the connection is valid.
+     *
+     * @throws IOException derivative if the connection is not valid.
+     */
+    CompletableFuture<Integer>
+    getConnectionStatus() throws IOException;
 }
