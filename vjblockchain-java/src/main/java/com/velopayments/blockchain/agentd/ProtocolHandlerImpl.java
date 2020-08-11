@@ -44,6 +44,9 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         UNAUTH_PROTOCOL_REQ_ID_ARTIFACT_LAST_TXN_BY_ID_GET                = 33L;
     public static final long UNAUTH_PROTOCOL_REQ_ID_STATUS_GET         = 40960L;
 
+    public static final int PROTOCOL_ERROR_MALFORMED_REQUEST       = 0x080A000E;
+    public static final int PROTOCOL_ERROR_UNAUTHORIZED            = 0x080A0010;
+
     private DataChannel dataChannel;
     private UUID agentId;
     private UUID entityId;
@@ -356,8 +359,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 Arrays.copyOfRange(responseHeader, 1, 5));
         if (responseLength != 164)
         {
-            throw new InvalidPayloadSizeException("Invalid response size ("
-                    + responseLength + ").  Expected 164 bytes.");
+            handleHandshakeInitiateError(responseLength);
         }
 
         // read the rest of the message
@@ -423,7 +425,12 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
                 UuidUtil.getBytesFromUUID(agentId),
                 Arrays.copyOfRange(response, 20, 36)))
         {
-            throw new AgentVerificationException("Invalid agentId.");
+            UUID badId = UuidUtil.getUUIDFromBytes(
+                Arrays.copyOfRange(response, 20, 36));
+
+            throw new AgentVerificationException(
+                "Invalid agentId (expected " + agentId + " and got " + badId
+                + ")");
         }
 
         byte[] serverPublicKey = Arrays.copyOfRange(response, 36, 68);
@@ -458,6 +465,34 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         // success - we have a shared secret
 
         return serverChallengeNonce;
+    }
+
+    private void handleHandshakeInitiateError(int responseLength)
+            throws IOException {
+        if (responseLength < 12) {
+            throw new InvalidPayloadSizeException("Invalid response size ("
+                    + responseLength + ").  Expected 164 bytes.");
+        } else {
+            byte[] response = dataChannel.recv(responseLength);
+
+            //get the status code.
+            long status = ByteUtil.ntohl(
+                Arrays.copyOfRange(response, 8, 12));
+
+            //decode it
+            switch ((int)status)
+            {
+                case PROTOCOL_ERROR_MALFORMED_REQUEST:
+                    throw new AgentVerificationException(
+                        "Malformed client request.");
+                case PROTOCOL_ERROR_UNAUTHORIZED:
+                    throw new AgentVerificationException(
+                        "Client not authorized.");
+                default:
+                    throw new AgentVerificationException(
+                        "Client not authorized.");
+            }
+        }
     }
 
     protected static byte[] computeSharedSecret(EncryptionPrivateKey clientPrivateKey,
