@@ -50,6 +50,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
     private DataChannel dataChannel;
     private UUID agentId;
     private UUID entityId;
+    private EncryptionPublicKey agentPublicEncKey;
     private EncryptionPrivateKey entityPrivateEncKey;
     private OuterEnvelopeReader outerEnvelopeReader;
     private OuterEnvelopeWriter outerEnvelopeWriter;
@@ -59,6 +60,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
 
     public ProtocolHandlerImpl(
             DataChannel dataChannel, UUID agentId, UUID entityId,
+            EncryptionPublicKey agentPublicEncKey,
             EncryptionPrivateKey entityPrivateEncKey,
             OuterEnvelopeReader outerEnvelopeReader,
             OuterEnvelopeWriter outerEnvelopeWriter,
@@ -67,6 +69,7 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         this.dataChannel = dataChannel;
         this.agentId = agentId;
         this.entityId = entityId;
+        this.agentPublicEncKey = agentPublicEncKey;
         this.entityPrivateEncKey = entityPrivateEncKey;
         this.outerEnvelopeReader = outerEnvelopeReader;
         this.outerEnvelopeWriter = outerEnvelopeWriter;
@@ -434,6 +437,16 @@ public class ProtocolHandlerImpl implements ProtocolHandler {
         }
 
         byte[] serverPublicKey = Arrays.copyOfRange(response, 36, 68);
+
+        // verify agent public encryption key
+        if (!EqualsUtil.constantTimeEqual(
+                agentPublicEncKey.getRawBytes(),
+                serverPublicKey))
+        {
+            throw new AgentVerificationException(
+                "Server public key does not match expected public key. " +
+                "Possible MITM attack!");
+        }
 
         byte[] serverKeyNonce = Arrays.copyOfRange(response, 68,100);
 
