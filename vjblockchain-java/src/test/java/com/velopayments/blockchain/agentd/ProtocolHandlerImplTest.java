@@ -32,6 +32,7 @@ public class ProtocolHandlerImplTest {
     DataChannel dataChannel;
     UUID agentId;
     UUID entityId;
+    EncryptionPublicKey agentPublicKey;
     EncryptionPrivateKey entityPrivateKey;
     OuterEnvelopeReader outerEnvelopeReader;
     OuterEnvelopeWriter outerEnvelopeWriter;
@@ -55,13 +56,14 @@ public class ProtocolHandlerImplTest {
         dataChannel = mock(DataChannel.class);
         agentId = UUID.randomUUID();
         entityId = UUID.randomUUID();
+        agentPublicKey = EncryptionKeyPair.generate().getPublicKey();
         entityPrivateKey = EncryptionKeyPair.generate().getPrivateKey();
         outerEnvelopeReader = mock(OuterEnvelopeReader.class);
         outerEnvelopeWriter = mock(OuterEnvelopeWriter.class);
         random = mock(SecureRandom.class);
 
         protocolHandler = new ProtocolHandlerImpl(dataChannel, agentId,
-                entityId, entityPrivateKey, outerEnvelopeReader,
+                entityId, agentPublicKey, entityPrivateKey, outerEnvelopeReader,
                 outerEnvelopeWriter, random);
 
         // predetermine the random values and program the rng
@@ -803,8 +805,7 @@ public class ProtocolHandlerImplTest {
         System.arraycopy(UuidUtil.getBytesFromUUID(agentdId), 0, response,
                 20, 16);
 
-        byte[] serverPublicKey = new byte[32];
-        sr.nextBytes(serverPublicKey);
+        byte[] serverPublicKey = agentPublicKey.getRawBytes();
         System.arraycopy(serverPublicKey, 0, response, 36,32);
 
         byte[] serverKeyNonce = new byte[32];
