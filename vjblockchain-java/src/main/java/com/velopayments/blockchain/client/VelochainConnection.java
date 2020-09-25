@@ -5,7 +5,6 @@ import com.velopayments.blockchain.cert.Certificate;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Connect to an agent and perform basic client functions.
@@ -26,9 +25,9 @@ public interface VelochainConnection {
      *
      * @param transaction       The transaction to be added.
      *
-     * @return a Future which evaluates into the status of the transaction.
+     * @return the submission status of the transaction.
      */
-    CompletableFuture<TransactionStatus> submit(Certificate transaction)
+    TransactionStatus submit(Certificate transaction)
             throws IOException;
 
 
@@ -39,7 +38,7 @@ public interface VelochainConnection {
      *
      * @return the latest block UUID.
      */
-    CompletableFuture<UUID> getLatestBlockId() throws IOException;
+    UUID getLatestBlockId() throws IOException;
 
     /**
      * Given a block UUID, return the next block UUID if available.
@@ -50,7 +49,7 @@ public interface VelochainConnection {
      *
      * @return the next block UUID.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getNextBlockId(UUID blockId) throws IOException;
 
     /**
@@ -62,7 +61,7 @@ public interface VelochainConnection {
      *
      * @return the previous block UUID.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getPrevBlockId(UUID blockId) throws IOException;
 
 
@@ -76,7 +75,7 @@ public interface VelochainConnection {
      *
      * @return the block UUID associated with the transaction UUID.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getTransactionBlockId(UUID txnId) throws IOException;
 
 
@@ -89,7 +88,7 @@ public interface VelochainConnection {
      *
      * @return the raw bytes for a given block, or empty if not found.
      */
-    CompletableFuture<Optional<Certificate>>
+    Optional<Certificate>
     getBlockById(UUID blockId) throws IOException;
 
     /**
@@ -99,7 +98,7 @@ public interface VelochainConnection {
      *
      * @return the block UUID at the given height, or empty if not found.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getBlockIdByBlockHeight(long height) throws IOException;
 
     /**
@@ -111,7 +110,7 @@ public interface VelochainConnection {
      *
      * @return the raw bytes for a given transaction, or empty() if not found.
      */
-    CompletableFuture<Optional<Certificate>>
+    Optional<Certificate>
     getTransactionById(UUID txnId) throws IOException;
 
 
@@ -122,7 +121,7 @@ public interface VelochainConnection {
      *
      * @return the first transaction id for a given artifact id.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getFirstTransactionIdForArtifactById(UUID artifactId) throws IOException;
 
 
@@ -133,7 +132,7 @@ public interface VelochainConnection {
      *
      * @return the last transaction id for a given artifact id.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getLastTransactionIdForArtifactById(UUID artifactId) throws IOException;
 
 
@@ -144,7 +143,7 @@ public interface VelochainConnection {
      *
      * @return the previous transaction ID associated with this transaction ID.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getPreviousTransactionIdForTransactionById(UUID txnId) throws IOException;
 
 
@@ -155,7 +154,7 @@ public interface VelochainConnection {
      *
      * @return the next transaction ID associated with this transaction ID.
      */
-    CompletableFuture<Optional<UUID>>
+    Optional<UUID>
     getNextTransactionIdForTransactionById(UUID txnId) throws IOException;
 
     /**
@@ -165,6 +164,6 @@ public interface VelochainConnection {
      *
      * @throws IOException derivative if the connection is not valid.
      */
-    CompletableFuture<Integer>
+    Integer
     getConnectionStatus() throws IOException;
 }
