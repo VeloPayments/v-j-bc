@@ -59,7 +59,7 @@ public class Consumer implements Runnable {
         UUID lastBlockId = ROOT_UUID;
 
         for (;;) {
-            Optional<UUID> nextBlockId = conn.getNextBlockId(lastBlockId).get();
+            Optional<UUID> nextBlockId = conn.getNextBlockId(lastBlockId);
             if (nextBlockId.isPresent()) {
                 readBlock(conn, nextBlockId.orElse(ROOT_UUID));
                 lastBlockId = nextBlockId.orElse(ROOT_UUID);
@@ -79,7 +79,7 @@ public class Consumer implements Runnable {
     readBlock(VelochainConnection conn, UUID blockId)
     throws ExecutionException, IOException, InterruptedException {
         Certificate cert =
-            conn.getBlockById(blockId).get().orElseThrow(
+            conn.getBlockById(blockId).orElseThrow(
                 () -> new IOException("Could not read block " + blockId));
         byte[] block = cert.toByteArray();
 
